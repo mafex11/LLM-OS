@@ -1,0 +1,418 @@
+{
+  "6747ca79ebfb": {
+    "query_pattern": "Open chrome and.",
+    "solution_steps": [
+      {
+        "action": "Launch Tool",
+        "params": {
+          "name": "Google Chrome"
+        },
+        "result": "Google Chrome was already running. Switched to existing window. Desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-14T19:54:21.245336",
+    "created_at": "2025-09-14T19:53:24.061811",
+    "tags": [
+      "browser"
+    ]
+  },
+  "57859077e614": {
+    "query_pattern": "open chrome",
+    "solution_steps": [
+      {
+        "action": "Launch Tool",
+        "params": {
+          "name": "Google Chrome"
+        },
+        "result": "Google Chrome was already running. Switched to existing window. Desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-14T19:54:35.513201",
+    "created_at": "2025-09-14T19:54:35.513209",
+    "tags": [
+      "browser"
+    ]
+  },
+  "2efb3b9532b7": {
+    "query_pattern": "open new tab and open youtube on chrome",
+    "solution_steps": [
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Google Chrome"
+        },
+        "result": "Switched to Google Chrome window."
+      },
+      {
+        "action": "Shortcut Tool",
+        "params": {
+          "shortcut": [
+            "ctrl",
+            "t"
+          ]
+        },
+        "result": "Pressed ctrl+t."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            960,
+            40
+          ],
+          "text": "youtube.com",
+          "clear": "true",
+          "press_enter": "true"
+        },
+        "result": "Typed youtube.com on  Element with ControlType PaneControl at (960,40)."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-14T20:47:33.773633",
+    "created_at": "2025-09-14T19:58:11.102464",
+    "tags": [
+      "browser"
+    ]
+  },
+  "bddec4a2e4a7": {
+    "query_pattern": "open chrome, new tab, search for youtube",
+    "solution_steps": [
+      {
+        "action": "Launch Tool",
+        "params": {
+          "name": "Google Chrome"
+        },
+        "result": "Google Chrome was already running. Switched to existing window. Desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            2355,
+            20
+          ],
+          "button": "left",
+          "clicks": 1
+        },
+        "result": "Single left Clicked on New Tab Element with ControlType ButtonControl at (2355,20)."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            1177,
+            20
+          ],
+          "text": "YouTube",
+          "clear": "true",
+          "caret_position": "idle",
+          "press_enter": "true"
+        },
+        "result": "Typed YouTube on  Element with ControlType PaneControl at (1177,20)."
+      },
+      {
+        "action": "Wait Tool",
+        "params": {
+          "duration": 5
+        },
+        "result": "Waited for 5 seconds."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            1026,
+            63
+          ],
+          "text": "youtube.com",
+          "clear": "true",
+          "caret_position": "idle",
+          "press_enter": "true"
+        },
+        "result": "Typed youtube.com on  Element with ControlType PaneControl at (1026,63)."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            1042,
+            63
+          ],
+          "text": "YouTube",
+          "clear": "true",
+          "caret_position": "idle",
+          "press_enter": "true"
+        },
+        "result": "Typed YouTube on  Element with ControlType PaneControl at (1042,63)."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-14T20:48:50.710859",
+    "created_at": "2025-09-14T20:48:50.710873",
+    "tags": [
+      "browser"
+    ]
+  },
+  "19f836ff2c78": {
+    "query_pattern": "open calculator",
+    "solution_steps": [
+      {
+        "action": "Launch Tool",
+        "params": {
+          "name": "calculator"
+        },
+        "result": "Calculator launched and desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-14T21:07:06.999125",
+    "created_at": "2025-09-14T21:07:06.999136",
+    "tags": []
+  },
+  "c63db8be6b5f": {
+    "query_pattern": "open calculator and calculate 2+2",
+    "solution_steps": [
+      {
+        "action": "Launch Tool",
+        "params": {
+          "name": "calculator"
+        },
+        "result": "Calculator launched and desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            1280,
+            370
+          ],
+          "text": "2+2",
+          "clear": "true"
+        },
+        "result": "Typed 2+2 on Display is 2 Element with ControlType TextControl at (1280,370)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            1390,
+            750
+          ],
+          "button": "left",
+          "clicks": 1
+        },
+        "result": "Single left Clicked on  Element with ControlType PaneControl at (1390,750)."
+      },
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Calculator"
+        },
+        "result": "Switched to Calculator window."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            1931,
+            1353
+          ],
+          "button": "left",
+          "clicks": 1
+        },
+        "result": "Single left Clicked on Desktop Element with ControlType ListControl at (1931,1353)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            2092,
+            1389
+          ],
+          "button": "left",
+          "clicks": 1
+        },
+        "result": "Single left Clicked on Equals Element with ControlType ButtonControl at (2092,1389)."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-14T21:32:57.693960",
+    "created_at": "2025-09-14T21:31:44.544952",
+    "tags": []
+  },
+  "ffc5e7866988": {
+    "query_pattern": "open chrome and open youtube.com",
+    "solution_steps": [
+      {
+        "action": "Launch Tool",
+        "params": {
+          "name": "Google Chrome"
+        },
+        "result": "Google Chrome was already running. Switched to existing window. Desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            1042,
+            63
+          ],
+          "text": "youtube.com",
+          "clear": "true",
+          "press_enter": "true"
+        },
+        "result": "Typed youtube.com on  Element with ControlType PaneControl at (1042,63)."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-14T22:26:52.092112",
+    "created_at": "2025-09-14T22:26:52.092123",
+    "tags": [
+      "browser"
+    ]
+  },
+  "c165f3b27dcc": {
+    "query_pattern": "open chrome and search for youtube.com and then search sssniper wolf videos on youtube",
+    "solution_steps": [
+      {
+        "action": "Launch Tool",
+        "params": {
+          "name": "Google Chrome"
+        },
+        "result": "Google Chrome was already running. Switched to existing window. Desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            961,
+            40
+          ],
+          "text": "youtube.com",
+          "clear": "true",
+          "press_enter": "true"
+        },
+        "result": "Typed youtube.com on  Element with ControlType PaneControl at (961,40)."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            1759,
+            155
+          ],
+          "text": "sssniper wolf videos",
+          "clear": "true",
+          "press_enter": "true"
+        },
+        "result": "Typed sssniper wolf videos on Search Element with ControlType EditControl at (1759,155)."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-14T22:31:26.504428",
+    "created_at": "2025-09-14T22:28:46.235950",
+    "tags": [
+      "browser"
+    ]
+  },
+  "dc68826d4f1b": {
+    "query_pattern": "open chrome, new tab, youtube.com and search for sssniper wolf videos on youtube",
+    "solution_steps": [
+      {
+        "action": "Launch Tool",
+        "params": {
+          "name": "Google Chrome"
+        },
+        "result": "Google Chrome was already running. Switched to existing window. Desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            1042,
+            63
+          ],
+          "text": "youtube.com",
+          "clear": "true",
+          "press_enter": "true"
+        },
+        "result": "Typed youtube.com on  Element with ControlType PaneControl at (1042,63)."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            1233,
+            112
+          ],
+          "text": "ssniper wolf videos",
+          "clear": "true",
+          "press_enter": "true"
+        },
+        "result": "Typed ssniper wolf videos on Search Element with ControlType ComboBoxControl at (1233,112)."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-14T22:30:05.713085",
+    "created_at": "2025-09-14T22:30:05.713095",
+    "tags": [
+      "browser"
+    ]
+  },
+  "0e9282d66f41": {
+    "query_pattern": "Open chrome, open new tab, then search for youtube and then on youtube search for sss sniper wolf.",
+    "solution_steps": [
+      {
+        "action": "Launch Tool",
+        "params": {
+          "name": "Google Chrome"
+        },
+        "result": "Google Chrome was already running. Switched to existing window. Desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions."
+      },
+      {
+        "action": "Shortcut Tool",
+        "params": {
+          "shortcut": [
+            "ctrl",
+            "t"
+          ]
+        },
+        "result": "Pressed ctrl+t."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            1026,
+            63
+          ],
+          "text": "youtube.com",
+          "clear": "true",
+          "press_enter": "true"
+        },
+        "result": "Typed youtube.com on  Element with ControlType PaneControl at (1026,63)."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            1233,
+            112
+          ],
+          "text": "sss sniper wolf",
+          "clear": "true",
+          "press_enter": "true"
+        },
+        "result": "Typed sss sniper wolf on  Element with ControlType GroupControl at (1233,112)."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-14T22:32:12.378488",
+    "created_at": "2025-09-14T22:32:12.378497",
+    "tags": [
+      "browser"
+    ]
+  }
+}
