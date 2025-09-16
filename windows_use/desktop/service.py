@@ -32,8 +32,9 @@ class Desktop:
             
         active_app,apps=(apps[0],apps[1:]) if len(apps)>0 else (None,[])
         if use_vision:
-            annotated_screenshot=tree.annotated_screenshot(tree_state.interactive_nodes,scale=0.5)
-            screenshot=self.screenshot_in_bytes(annotated_screenshot)
+            # Capture full-screen screenshot for accurate coordinate mapping
+            full_screenshot=self.get_screenshot(scale=1.0)
+            screenshot=self.screenshot_in_bytes(full_screenshot)
         else:
             screenshot=None
         self.desktop_state=DesktopState(apps=apps,active_app=active_app,screenshot=screenshot,tree_state=tree_state)

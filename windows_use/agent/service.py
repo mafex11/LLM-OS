@@ -2,6 +2,7 @@ from windows_use.agent.tools.service import click_tool, type_tool, launch_tool, 
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from windows_use.agent.utils import extract_agent_data, image_message
 from langchain_core.language_models.chat_models import BaseChatModel
+from windows_use.agent.ollama_client import OllamaChat
 from windows_use.agent.registry.views import ToolResult
 from windows_use.agent.registry.service import Registry
 from windows_use.agent.prompt.service import Prompt
@@ -61,7 +62,8 @@ class Agent:
         self.use_vision=use_vision
         self.enable_conversation=enable_conversation
         self.literal_mode=literal_mode
-        self.llm = llm
+        # Default to local Ollama gemma3:latest if no LLM supplied
+        self.llm = llm or OllamaChat(model="gemma3:latest")
         self.watch_cursor = WatchCursor()
         self.desktop = Desktop()
         self.console=Console(file=sys.stderr)  # Use stderr to avoid interfering with stdin
@@ -384,7 +386,7 @@ class Agent:
             'previous_observation':None
         }
         try:
-            with self.desktop.auto_minimize(),self.watch_cursor:
+            with self.desktop.auto_minimize():
                 response=self.graph.invoke(state,config={'recursion_limit':self.max_steps*10})         
         except Exception as error:
             response={
