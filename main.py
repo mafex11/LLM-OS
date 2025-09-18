@@ -7,7 +7,7 @@ import os
 import subprocess
 import json
 import time
-from windows_use.agent.ollama_client import OllamaChat
+# from windows_use.agent.ollama_client import OllamaChat
 
 load_dotenv()
 
@@ -122,8 +122,8 @@ def main():
     display_running_programs(running_programs)
     
     # Initialize agent with running programs context
-    llm = OllamaChat(model="gemma3:latest", base_url="http://localhost:11434")
-    agent = Agent(llm=llm, browser='chrome', use_vision=True, enable_conversation=True, literal_mode=True)
+    llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.7)
+    agent = Agent(llm=llm, browser='chrome', use_vision=False, enable_conversation=True, literal_mode=True)
     
     # Store running programs in agent for context
     agent.running_programs = running_programs

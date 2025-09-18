@@ -166,8 +166,8 @@
         "result": "Calculator launched and desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions."
       }
     ],
-    "success_count": 1,
-    "last_used": "2025-09-14T21:07:06.999125",
+    "success_count": 2,
+    "last_used": "2025-09-18T11:46:58.530953",
     "created_at": "2025-09-14T21:07:06.999136",
     "tags": []
   },
@@ -411,6 +411,81 @@
     "success_count": 1,
     "last_used": "2025-09-14T22:32:12.378488",
     "created_at": "2025-09-14T22:32:12.378497",
+    "tags": [
+      "browser"
+    ]
+  },
+  "b07654d3242e": {
+    "query_pattern": "what tabs are open on comet?",
+    "solution_steps": [
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Comet"
+        },
+        "result": "Switched to Comet window."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-18T13:33:06.476925",
+    "created_at": "2025-09-18T11:49:49.504841",
+    "tags": []
+  },
+  "e8a4f4333af3": {
+    "query_pattern": "what tabs are open in comet",
+    "solution_steps": [
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Comet"
+        },
+        "result": "Switched to Comet window."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-18T12:37:59.013615",
+    "created_at": "2025-09-18T12:37:59.013631",
+    "tags": []
+  },
+  "99f187c9ab1b": {
+    "query_pattern": "what about chrome",
+    "solution_steps": [
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Chrome"
+        },
+        "result": "Switched to Chrome window."
+      },
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Chrome"
+        },
+        "result": "Switched to Chrome window."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-18T12:38:34.879445",
+    "created_at": "2025-09-18T12:38:34.879452",
+    "tags": [
+      "browser"
+    ]
+  },
+  "6063106f0a26": {
+    "query_pattern": "what tabs are open in chrome",
+    "solution_steps": [
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Chrome"
+        },
+        "result": "Switched to Chrome window."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-18T13:33:17.746196",
+    "created_at": "2025-09-18T13:33:17.746207",
     "tags": [
       "browser"
     ]

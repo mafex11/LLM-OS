@@ -11,6 +11,7 @@ import threading
 import time
 from typing import Optional
 import pyautogui
+import atexit
 
 
 class DesktopLoader:
@@ -187,11 +188,24 @@ class DesktopLoader:
         
         if self.root:
             try:
+                # Stop progress bar first
+                if self.progress_bar:
+                    self.progress_bar.stop()
+                    
+                # Clear variables to prevent cleanup issues
+                if self.progress_var:
+                    self.progress_var = None
+                if self.status_var:
+                    self.status_var = None
+                    
+                # Properly quit and destroy
                 self.root.quit()
                 self.root.destroy()
-            except:
+            except Exception:
                 pass
-            self.root = None
+            finally:
+                self.root = None
+                self.progress_bar = None
             
         if self.animation_thread and self.animation_thread.is_alive():
             self.animation_thread.join(timeout=1)
@@ -209,6 +223,8 @@ class LoaderManager:
     def __init__(self):
         self.loader: Optional[DesktopLoader] = None
         self.is_enabled = True
+        # Register cleanup function to run on program exit
+        atexit.register(self.cleanup)
         
     def start_loader(self, status: str = "Starting task..."):
         """Start the loader with initial status."""
@@ -245,3 +261,12 @@ class LoaderManager:
     def is_loader_visible(self) -> bool:
         """Check if loader is currently visible."""
         return self.loader is not None and self.loader.is_visible()
+        
+    def cleanup(self):
+        """Cleanup method called on program exit to prevent tkinter exceptions."""
+        if self.loader:
+            try:
+                self.loader.hide()
+            except Exception:
+                pass
+            self.loader = None

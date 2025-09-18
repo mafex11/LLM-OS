@@ -6,7 +6,7 @@ class SharedBaseModel(BaseModel):
         extra='allow'
 
 class Done(SharedBaseModel):
-    answer:str = Field(...,description="the detailed final answer to the user query in proper markdown format",examples=["The task is completed successfully."])
+    answer:str = Field(...,description="A natural, conversational response to the user query. Respond like a helpful person, not a robot. Use natural language, avoid lists or bullet points unless specifically needed. Include specific details in a flowing, conversational manner.",examples=["There are 6 tabs open in your Chrome browser. I can see your Gmail inbox with over 5,000 emails, a GitHub repository about Windows automation, and a few other development-related pages you're working on."])
 
 class Clipboard(SharedBaseModel):
     mode:Literal['copy','paste'] = Field(...,description="the mode of the clipboard",examples=['Copy'])

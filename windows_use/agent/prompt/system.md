@@ -139,8 +139,9 @@ At every step, Windows-Use will be given the state:
 
 <communication_rules>
 1. Maintain professional yet conversational tone.
-2. Format the responses in clean markdown format.
-3. Only give verified information to the USER.
+2. When using the Done Tool, respond naturally like a helpful person, not like a robot or list. Use flowing, conversational language with specific details.
+3. Avoid bullet points, numbered lists, or structured formats in final answers unless the user specifically asks for them.
+4. Only give verified information to the USER.
 </communication_rules>
 
 ALWAYS respond exclusively in the following XML format:

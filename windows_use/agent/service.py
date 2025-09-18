@@ -2,7 +2,8 @@ from windows_use.agent.tools.service import click_tool, type_tool, launch_tool, 
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from windows_use.agent.utils import extract_agent_data, image_message
 from langchain_core.language_models.chat_models import BaseChatModel
-from windows_use.agent.ollama_client import OllamaChat
+# from windows_use.agent.ollama_client import OllamaChat
+from langchain_google_genai.chat_models import ChatGoogleGenerativeAI
 from windows_use.agent.registry.views import ToolResult
 from windows_use.agent.registry.service import Registry
 from windows_use.agent.prompt.service import Prompt
@@ -62,8 +63,8 @@ class Agent:
         self.use_vision=use_vision
         self.enable_conversation=enable_conversation
         self.literal_mode=literal_mode
-        # Default to local Ollama gemma3:latest if no LLM supplied
-        self.llm = llm or OllamaChat(model="gemma3:latest")
+        # self.llm = llm or OllamaChat(model="gemma3:latest")
+        self.llm = llm or ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.7)
         self.watch_cursor = WatchCursor()
         self.desktop = Desktop()
         self.console=Console(file=sys.stderr)  # Use stderr to avoid interfering with stdin
