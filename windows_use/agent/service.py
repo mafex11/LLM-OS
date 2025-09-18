@@ -2,7 +2,8 @@ from windows_use.agent.tools.service import click_tool, type_tool, launch_tool, 
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from windows_use.agent.utils import extract_agent_data, image_message
 from langchain_core.language_models.chat_models import BaseChatModel
-from windows_use.agent.ollama_client import OllamaChat
+# from windows_use.agent.ollama_client import OllamaChat
+from langchain_google_genai.chat_models import ChatGoogleGenerativeAI
 from windows_use.agent.registry.views import ToolResult
 from windows_use.agent.registry.service import Registry
 from windows_use.agent.prompt.service import Prompt
@@ -62,8 +63,8 @@ class Agent:
         self.use_vision=use_vision
         self.enable_conversation=enable_conversation
         self.literal_mode=literal_mode
-        # Default to local Ollama gemma3:latest if no LLM supplied
-        self.llm = llm or OllamaChat(model="gemma3:latest")
+        # self.llm = llm or OllamaChat(model="gemma3:latest")
+        self.llm = llm or ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.7)
         self.watch_cursor = WatchCursor()
         self.desktop = Desktop()
         self.console=Console(file=sys.stderr)  # Use stderr to avoid interfering with stdin
@@ -283,6 +284,13 @@ class Agent:
         self.show_status("Finalizing", name, "Preparing final response")
         
         tool_result = self.registry.execute(tool_name=name, desktop=None, **params)
+        
+        # NEW: If this is a Done Tool, process the response conversationally
+        if name == 'Done Tool':
+            original_query = state.get('input', '')
+            conversational_response = self._make_conversational(tool_result.content, original_query)
+            tool_result.content = conversational_response
+        
         ai_message = AIMessage(content=Prompt.answer_prompt(agent_data=agent_data, tool_result=tool_result))
         
         # Show completion
@@ -290,6 +298,46 @@ class Agent:
         
         logger.info(colored(f"📜: Final Answer: {tool_result.content}",color='cyan',attrs=['bold']))
         return {**state,'agent_data':None,'messages':[ai_message],'previous_observation':None,'output':tool_result.content}
+
+    def _make_conversational(self, raw_answer: str, original_query: str) -> str:
+        """Convert raw answer to conversational response using LLM"""
+        conversational_prompt = f"""You are a helpful assistant. Convert this raw response into a natural, conversational answer as if you're talking to a friend. Be warm, friendly, and human-like.
+
+User asked: "{original_query}"
+Raw answer: "{raw_answer}"
+
+Guidelines:
+- Sound natural and conversational, like you're talking to someone you know
+- Don't use bullet points, numbered lists, or structured formats unless the information really needs it
+- Be specific but natural - include the actual details from the raw answer
+- Use contractions and casual language where appropriate 
+- Add context or brief explanations to make it more helpful
+- If it's a list of things (like tabs, files, etc.), present them in a flowing, conversational way
+
+Examples of good conversational responses:
+- Instead of: "Tab 1: Gmail, Tab 2: GitHub, Tab 3: Twitter"  
+- Say: "You've got 3 tabs open right now - your Gmail inbox, a GitHub repository, and Twitter"
+
+- Instead of: "File saved successfully. Location: C:\\Users\\Documents\\file.txt"
+- Say: "Perfect! I've saved your file to the Documents folder as file.txt"
+
+Convert the raw answer above into a natural, conversational response:"""
+        
+        try:
+            response = self.llm.invoke([HumanMessage(content=conversational_prompt)])
+            conversational_result = response.content.strip()
+            
+            # Log the conversion for debugging
+            logger.info(colored(f"🗣️  Conversational processing:", color='yellow'))
+            logger.info(colored(f"   Raw: {raw_answer[:100]}{'...' if len(raw_answer) > 100 else ''}", color='yellow'))
+            logger.info(colored(f"   Conversational: {conversational_result[:100]}{'...' if len(conversational_result) > 100 else ''}", color='yellow'))
+            
+            return conversational_result
+            
+        except Exception as e:
+            logger.error(f"Failed to make response conversational: {e}")
+            logger.warning("Falling back to original response")
+            return raw_answer  # Fallback to original
 
     def main_controller(self,state:AgentState):
         if state.get('steps')<state.get('max_steps'):

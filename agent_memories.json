@@ -166,8 +166,8 @@
         "result": "Calculator launched and desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions."
       }
     ],
-    "success_count": 1,
-    "last_used": "2025-09-14T21:07:06.999125",
+    "success_count": 2,
+    "last_used": "2025-09-18T11:46:58.530953",
     "created_at": "2025-09-14T21:07:06.999136",
     "tags": []
   },
@@ -414,5 +414,205 @@
     "tags": [
       "browser"
     ]
+  },
+  "b07654d3242e": {
+    "query_pattern": "what tabs are open on comet?",
+    "solution_steps": [
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Opera"
+        },
+        "result": "Switched to Opera window."
+      }
+    ],
+    "success_count": 2,
+    "last_used": "2025-09-18T14:10:46.255619",
+    "created_at": "2025-09-18T11:49:49.504841",
+    "tags": []
+  },
+  "e8a4f4333af3": {
+    "query_pattern": "what tabs are open in comet",
+    "solution_steps": [
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Comet"
+        },
+        "result": "Switched to Comet window."
+      }
+    ],
+    "success_count": 2,
+    "last_used": "2025-09-18T14:39:55.334102",
+    "created_at": "2025-09-18T12:37:59.013631",
+    "tags": []
+  },
+  "99f187c9ab1b": {
+    "query_pattern": "what about chrome",
+    "solution_steps": [
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Chrome"
+        },
+        "result": "Switched to Chrome window."
+      },
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Chrome"
+        },
+        "result": "Switched to Chrome window."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-18T12:38:34.879445",
+    "created_at": "2025-09-18T12:38:34.879452",
+    "tags": [
+      "browser"
+    ]
+  },
+  "6063106f0a26": {
+    "query_pattern": "what tabs are open in chrome",
+    "solution_steps": [
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Chrome"
+        },
+        "result": "Switched to Chrome window."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-18T13:33:17.746196",
+    "created_at": "2025-09-18T13:33:17.746207",
+    "tags": [
+      "browser"
+    ]
+  },
+  "c3f79ee4069f": {
+    "query_pattern": "What tabs are open in commit?",
+    "solution_steps": [
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Comet"
+        },
+        "result": "Switched to Comet window."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-18T14:11:02.751502",
+    "created_at": "2025-09-18T14:11:02.751516",
+    "tags": []
+  },
+  "2f0b8516780e": {
+    "query_pattern": "open youtube for me in chrome",
+    "solution_steps": [
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Inbox (5,527) - sudhanshuk1140@gmail.com - Gmail - Google Chrome"
+        },
+        "result": "Switched to Inbox (5,527) - Sudhanshuk1140@Gmail.Com - Gmail - Google Chrome window."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            2355,
+            20
+          ],
+          "button": "left",
+          "clicks": 1
+        },
+        "result": "Single left Clicked on New Tab Element with ControlType ButtonControl at (2355,20)."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            1275,
+            71
+          ],
+          "text": "youtube.com",
+          "clear": "true",
+          "press_enter": "true"
+        },
+        "result": "Typed youtube.com on  Element with ControlType PaneControl at (1275,71)."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-18T14:42:15.508893",
+    "created_at": "2025-09-18T14:42:15.508901",
+    "tags": [
+      "browser"
+    ]
+  },
+  "0e590baef0ae": {
+    "query_pattern": "now turn on the iphone 17 video",
+    "solution_steps": [
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Inbox (5,527) - sudhanshuk1140@gmail.com - Gmail - Google Chrome"
+        },
+        "result": "Switched to Inbox (5,527) - Sudhanshuk1140@Gmail.Com - Gmail - Google Chrome window."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            1233,
+            112
+          ],
+          "button": "left",
+          "clicks": 1
+        },
+        "result": "Single left Clicked on  Element with ControlType GroupControl at (1233,112)."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            1233,
+            112
+          ],
+          "text": "iPhone 17 Pro Max Review - Even BETTER Than You Think! ",
+          "clear": "true",
+          "caret_position": "idle",
+          "press_enter": "false"
+        },
+        "result": "Typed iPhone 17 Pro Max Review - Even BETTER Than You Think!  on Search Element with ControlType ComboBoxControl at (1233,112)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            1502,
+            107
+          ],
+          "button": "left",
+          "clicks": 1
+        },
+        "result": "Single left Clicked on  Element with ControlType GroupControl at (1502,107)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            1417,
+            205
+          ],
+          "button": "left",
+          "clicks": 1
+        },
+        "result": "Single left Clicked on  Element with ControlType GroupControl at (1417,205)."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-18T14:44:36.772155",
+    "created_at": "2025-09-18T14:44:36.772165",
+    "tags": []
   }
 }

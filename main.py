@@ -7,7 +7,7 @@ import os
 import subprocess
 import json
 import time
-from windows_use.agent.ollama_client import OllamaChat
+# from windows_use.agent.ollama_client import OllamaChat
 
 load_dotenv()
 
@@ -25,7 +25,7 @@ def safe_input(prompt="\n💬 You: "):
     time.sleep(0.1)
     
     try:
-        # Use a timeout to prevent hanging
+        # Use threading to handle input safely
         result = [None]
         
         def input_thread():
@@ -36,10 +36,9 @@ def safe_input(prompt="\n💬 You: "):
         
         thread = threading.Thread(target=input_thread, daemon=True)
         thread.start()
-        thread.join(timeout=30)  # 30 second timeout
+        thread.join()  # No timeout - wait indefinitely
         
         if result[0] is None:
-            print("\n⏰ Input timeout. Type 'quit' to exit.")
             return "quit"
         
         return result[0]
@@ -122,8 +121,8 @@ def main():
     display_running_programs(running_programs)
     
     # Initialize agent with running programs context
-    llm = OllamaChat(model="gemma3:latest", base_url="http://localhost:11434")
-    agent = Agent(llm=llm, browser='chrome', use_vision=True, enable_conversation=True, literal_mode=True)
+    llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.7)
+    agent = Agent(llm=llm, browser='chrome', use_vision=False, enable_conversation=True, literal_mode=True)
     
     # Store running programs in agent for context
     agent.running_programs = running_programs
