@@ -25,7 +25,7 @@ def safe_input(prompt="\n💬 You: "):
     time.sleep(0.1)
     
     try:
-        # Use a timeout to prevent hanging
+        # Use threading to handle input safely
         result = [None]
         
         def input_thread():
@@ -36,10 +36,9 @@ def safe_input(prompt="\n💬 You: "):
         
         thread = threading.Thread(target=input_thread, daemon=True)
         thread.start()
-        thread.join(timeout=30)  # 30 second timeout
+        thread.join()  # No timeout - wait indefinitely
         
         if result[0] is None:
-            print("\n⏰ Input timeout. Type 'quit' to exit.")
             return "quit"
         
         return result[0]
