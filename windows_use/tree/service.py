@@ -19,7 +19,7 @@ class Tree:
         self.precise_detector = PreciseElementDetector(desktop)
 
     def get_state(self)->TreeState:
-        sleep(0.5)
+        sleep(0.2)  # Reduced from 0.5 to 0.2 seconds
         # Get the root control of the desktop
         root=GetRootControl()
         interactive_nodes,informative_nodes,scrollable_nodes=self.get_appwise_nodes(node=root)
@@ -30,7 +30,7 @@ class Tree:
         Get precise element detection for a specific application.
         If app_name is None, falls back to regular detection.
         """
-        sleep(0.5)
+        sleep(0.2)  # Reduced from 0.5 to 0.2 seconds
         
         if app_name and app_name.lower() in ['calculator', 'calc']:
             # Use precise detection for calculator

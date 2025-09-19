@@ -8,6 +8,7 @@ from windows_use.agent.registry.views import ToolResult
 from windows_use.agent.registry.service import Registry
 from windows_use.agent.prompt.service import Prompt
 from windows_use.agent.memory import MemoryManager
+from windows_use.agent.performance import PerformanceMonitor, timed
 from live_inspect.watch_cursor import WatchCursor
 from langgraph.graph import START,END,StateGraph
 from windows_use.agent.views import AgentResult
@@ -77,6 +78,8 @@ class Agent:
         self.current_task_steps = []  # Track steps for current task
         # Loader management
         self.loader_manager = LoaderManager()
+        # Performance monitoring
+        self.performance_monitor = PerformanceMonitor()
 
     def clear_conversation(self):
         """Clear the conversation history"""
@@ -180,6 +183,7 @@ class Agent:
                 loader_status += f" ({details})"
             self.loader_manager.update_loader(loader_status)
 
+    @timed("reason")
     def reason(self,state:AgentState):
         steps=state.get('steps')
         max_steps=state.get('max_steps')
@@ -188,14 +192,22 @@ class Agent:
         # Show reasoning status
         self.show_status("Thinking", "Planning Next Action", f"Step {steps}/{max_steps}")
         
-        # Refresh desktop state if previous action was Launch Tool to get fresh coordinates
+        # Only refresh desktop state if previous action was Launch Tool and state is stale
         if steps > 1:  # Not the first step
             previous_observation = state.get('previous_observation', '')
             if 'launched and desktop state refreshed' in previous_observation:
-                self.show_status("Refreshing", "Desktop State", "Getting updated coordinates for planning")
-                # Use precise detection if we're working with a specific app
-                target_app = self._should_use_precise_detection(state.get('input', ''))
-                fresh_desktop_state = self.desktop.get_state(use_vision=self.use_vision, target_app=target_app)
+                # Check if desktop state is recent enough
+                import time
+                current_time = time.time()
+                if (not hasattr(self.desktop, '_last_state_time') or 
+                    current_time - getattr(self.desktop, '_last_state_time', 0) > 1.0):
+                    self.show_status("Refreshing", "Desktop State", "Getting updated coordinates for planning")
+                    # Use precise detection if we're working with a specific app
+                    target_app = self._should_use_precise_detection(state.get('input', ''))
+                    fresh_desktop_state = self.desktop.get_state(use_vision=self.use_vision, target_app=target_app)
+                    self.desktop._last_state_time = current_time
+                else:
+                    fresh_desktop_state = self.desktop.desktop_state
                 # Update the last message with fresh desktop state
                 if messages:
                     last_message = messages[-1]
@@ -222,6 +234,7 @@ class Agent:
             message=HumanMessage(content=Prompt.previous_observation_prompt(steps=steps,max_steps=max_steps,observation=state.get('previous_observation')))
             return {**state,'agent_data':agent_data,'messages':[message],'steps':steps+1}
 
+    @timed("action")
     def action(self,state:AgentState):
         steps=state.get('steps')
         max_steps=state.get('max_steps')
@@ -237,13 +250,19 @@ class Agent:
         progress = int((steps / max_steps) * 100)
         self.update_loader_progress(progress, f"Step {steps}/{max_steps} - {name}")
         
-        # Refresh desktop state before actions that require coordinates
+        # Only refresh desktop state before coordinate-based actions if it's stale
         if name in ['Click Tool', 'Type Tool', 'Scroll Tool', 'Drag Tool', 'Move Tool']:
             # Use precise detection for specific applications
             target_app = self._should_use_precise_detection(str(params))
             
-            self.desktop.get_state(use_vision=self.use_vision, target_app=target_app)
-            self.show_status("Refreshing", "Desktop State", "Getting updated coordinates")
+            # Only refresh if we don't have recent desktop state
+            import time
+            current_time = time.time()
+            if (not hasattr(self.desktop, '_last_state_time') or 
+                current_time - getattr(self.desktop, '_last_state_time', 0) > 1.5):
+                self.desktop.get_state(use_vision=self.use_vision, target_app=target_app)
+                self.desktop._last_state_time = current_time
+                self.show_status("Refreshing", "Desktop State", "Getting updated coordinates")
         
         logger.info(colored(f"🔧: Action: {name}({', '.join(f'{k}={v}' for k, v in params.items())})",color='blue',attrs=['bold']))
         tool_result = self.registry.execute(tool_name=name, desktop=self.desktop, **params)
@@ -268,9 +287,18 @@ class Agent:
         if tool_result.is_success and name == 'Launch Tool':
             self.show_status("Refreshing", "Desktop State", "Getting fresh coordinates after launch")
             self.desktop.get_state(use_vision=self.use_vision)
+            self.desktop._last_state_time = time.time()
         
         logger.info(colored(f"🔭: Observation: {shorten(observation,500,placeholder='...')}",color='green',attrs=['bold']))
-        desktop_state = self.desktop.get_state(use_vision=self.use_vision)
+        # Only get fresh desktop state if we don't have recent state
+        import time
+        current_time = time.time()
+        if (not hasattr(self.desktop, '_last_state_time') or 
+            current_time - getattr(self.desktop, '_last_state_time', 0) > 1.0):
+            desktop_state = self.desktop.get_state(use_vision=self.use_vision)
+            self.desktop._last_state_time = current_time
+        else:
+            desktop_state = self.desktop.desktop_state or self.desktop.get_state(use_vision=self.use_vision)
         prompt=Prompt.observation_prompt(query=state.get('input'),steps=steps,max_steps=max_steps, tool_result=tool_result, desktop_state=desktop_state)
         human_message=image_message(prompt=prompt,image=desktop_state.screenshot) if self.use_vision and desktop_state.screenshot else HumanMessage(content=prompt)
         return {**state,'agent_data':None,'messages':[ai_message, human_message],'previous_observation':observation}
@@ -363,6 +391,7 @@ Convert the raw answer above into a natural, conversational response:"""
 
         return graph.compile(debug=False)
 
+    @timed("invoke")
     def invoke(self,query: str)->AgentResult:
         # Show initial status
         self.show_status("Starting", "Task Analysis", f"Processing: '{query[:50]}{'...' if len(query) > 50 else ''}'")
@@ -377,9 +406,19 @@ Convert the raw answer above into a natural, conversational response:"""
         memory_hit = self.check_memory(query)
         
         steps=1
-        desktop_state = self.desktop.get_state(use_vision=self.use_vision)
-        language=self.desktop.get_default_language()
-        tools_prompt = self.registry.get_tools_prompt()
+        
+        # Parallel execution of independent operations for faster startup
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            # Submit parallel tasks
+            desktop_future = executor.submit(self.desktop.get_state, self.use_vision)
+            language_future = executor.submit(self.desktop.get_default_language)
+            tools_future = executor.submit(self.registry.get_tools_prompt)
+            
+            # Collect results
+            desktop_state = desktop_future.result()
+            language = language_future.result()
+            tools_prompt = tools_future.result()
         
         # Create or reuse system message
         if self.system_message is None or not self.enable_conversation:
