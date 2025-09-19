@@ -1,6 +1,6 @@
 <div align="center">
 
-  <h1>🪟 Windows-Use</h1>
+  <h1>🪟 AI-OS</h1>
   <a href="https://pepy.tech/project/windows-use">
     <img src="https://static.pepy.tech/badge/windows-use" alt="PyPI Downloads">
   </a>
@@ -104,26 +104,3 @@ Talk to your computer. Watch it get things done.
 
 Agent interacts directly with your Windows OS at GUI layer to perform actions. While the agent is designed to act intelligently and safely, it can make mistakes that might bring undesired system behaviour or cause unintended changes. Try to run the agent in a sandbox envirnoment.
 
-## 🪪 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please check the [CONTRIBUTING](CONTRIBUTING) file for setup and development workflow.
-
-Made with ❤️ by [Jeomon George](https://github.com/Jeomon)
-
----
-
-## Citation
-
-```bibtex
-@software{
-  author       = {George, Jeomon},
-  title        = {Windows-Use: Enable AI to control Windows OS},
-  year         = {2025},
-  publisher    = {GitHub},
-  url={https://github.com/CursorTouch/Windows-Use}
-}
-```
