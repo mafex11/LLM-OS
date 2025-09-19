@@ -120,9 +120,9 @@ def main():
     running_programs = get_running_programs()
     display_running_programs(running_programs)
     
-    # Initialize agent with running programs context
-    llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.7)
-    agent = Agent(llm=llm, browser='chrome', use_vision=False, enable_conversation=True, literal_mode=True)
+    # Initialize agent with running programs context - using faster settings
+    llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.3)  # Reduced temperature for faster, more focused responses
+    agent = Agent(llm=llm, browser='chrome', use_vision=False, enable_conversation=True, literal_mode=True, max_steps=15)  # Reduced max_steps from 20 to 15
     
     # Store running programs in agent for context
     agent.running_programs = running_programs
@@ -130,11 +130,23 @@ def main():
     # Enable loader by default (can be disabled with 'loader off' command)
     agent.set_loader_enabled(True)
     
+    # Pre-warm the system for faster first response
+    print("⚡ Pre-warming system for faster response...")
+    try:
+        # Initialize desktop state cache
+        agent.desktop.get_state(use_vision=False)
+        print("✅ System pre-warmed successfully!")
+    except Exception as e:
+        print(f"⚠️  Pre-warming failed: {e}")
+        print("System will still work, but first response may be slower.")
+    
     print("\nCommands:")
     print("  - Type your query to interact with the agent")
     print("  - Type 'voice' to enable voice input mode")
     print("  - Type 'clear' to clear conversation history")
     print("  - Type 'loader on/off' to enable/disable visual loader")
+    print("  - Type 'speed on/off' to enable/disable speed optimizations")
+    print("  - Type 'perf' to show performance statistics")
     print("  - Type 'quit', 'exit', or 'q' to exit")
     print("  - Type 'help' to show this help message")
     print("  - Type 'programs' to refresh running programs list")
@@ -162,6 +174,15 @@ def main():
             elif query.lower() == 'loader off':
                 agent.set_loader_enabled(False)
                 print("🔄 Visual loader disabled!")
+                continue
+            elif query.lower() == 'speed on':
+                agent.desktop.cache_timeout = 1.0  # More aggressive caching
+                print("⚡ Speed optimizations enabled!")
+                continue
+            elif query.lower() == 'speed off':
+                agent.desktop.cache_timeout = 0.1  # Less caching
+                agent.desktop.clear_cache()  # Clear existing cache
+                print("🐌 Speed optimizations disabled!")
                 continue
             elif query.lower() == 'help':
                 print("\n🤖 Windows-Use Agent Help")
@@ -224,6 +245,9 @@ def main():
                     agent.clear_memories()
                 else:
                     print("Memory clear cancelled.")
+                continue
+            elif query.lower() == 'perf':
+                agent.performance_monitor.print_stats()
                 continue
             elif query.lower() == 'voice':
                 print("\n🎤 Voice Input Mode")

@@ -19,6 +19,11 @@ import io
 class Desktop:
     def __init__(self):
         self.desktop_state=None
+        self._screenshot_cache = None
+        self._screenshot_cache_time = 0
+        self._apps_cache = None
+        self._apps_cache_time = 0
+        self.cache_timeout = 2.0  # Cache screenshots and apps for 2 seconds
         
     def get_state(self,use_vision:bool=False, target_app:str=None)->DesktopState:
         tree=Tree(self)
@@ -171,8 +176,16 @@ class Desktop:
         return no_children or is_name
         
     def get_apps(self) -> list[App]:
+        import time
+        current_time = time.time()
+        
+        # Check if we have cached apps that are still valid
+        if (self._apps_cache is not None and 
+            current_time - self._apps_cache_time < self.cache_timeout):
+            return self._apps_cache
+        
         try:
-            sleep(0.5)
+            sleep(0.2)  # Reduced from 0.5 to 0.2 seconds
             desktop = GetRootControl()  # Get the desktop control
             elements = desktop.GetChildren()
             apps = []
@@ -186,6 +199,11 @@ class Desktop:
         except Exception as ex:
             print(f"Error: {ex}")
             apps = []
+        
+        # Cache the apps
+        self._apps_cache = apps
+        self._apps_cache_time = current_time
+        
         return apps
     
     def get_dpi_scaling():
@@ -196,16 +214,43 @@ class Desktop:
     
     def screenshot_in_bytes(self,screenshot:PILImage)->bytes:
         buffer=BytesIO()
-        screenshot.save(buffer,format='PNG')
+        # Use JPEG with quality 85 for faster processing and smaller size
+        screenshot.save(buffer, format='JPEG', quality=85, optimize=True)
         img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-        data_uri = f"data:image/png;base64,{img_base64}"
+        data_uri = f"data:image/jpeg;base64,{img_base64}"
         return data_uri
 
     def get_screenshot(self,scale:float=0.7)->Image.Image:
+        import time
+        current_time = time.time()
+        
+        # Check if we have a cached screenshot that's still valid
+        if (self._screenshot_cache is not None and 
+            current_time - self._screenshot_cache_time < self.cache_timeout):
+            return self._screenshot_cache
+        
+        # Take new screenshot
         screenshot=pyautogui.screenshot()
-        size=(screenshot.width*scale, screenshot.height*scale)
-        screenshot.thumbnail(size=size, resample=Image.Resampling.LANCZOS)
+        
+        # Only scale if scale != 1.0 to avoid unnecessary processing
+        if scale != 1.0:
+            size=(int(screenshot.width*scale), int(screenshot.height*scale))
+            screenshot.thumbnail(size=size, resample=Image.Resampling.LANCZOS)
+        
+        # Cache the screenshot
+        self._screenshot_cache = screenshot
+        self._screenshot_cache_time = current_time
+        
         return screenshot
+    
+    def clear_cache(self):
+        """Clear all cached data to force fresh state"""
+        self._screenshot_cache = None
+        self._screenshot_cache_time = 0
+        self._apps_cache = None
+        self._apps_cache_time = 0
+        if hasattr(self, '_last_state_time'):
+            delattr(self, '_last_state_time')
     
     @contextmanager
     def auto_minimize(self):
