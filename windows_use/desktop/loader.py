@@ -57,7 +57,7 @@ class DesktopLoader:
         # Title
         title_label = tk.Label(
             main_frame, 
-            text="🤖 Windows-Use Agent", 
+            text="Windows-Use Agent", 
             font=('Arial', 14, 'bold'),
             fg='#00ff88',
             bg='#2b2b2b'
@@ -138,14 +138,16 @@ class DesktopLoader:
         self.is_running = True
         self.stop_animation = False
         
-        # Create window in a separate thread to avoid blocking
-        def create_window():
-            self._create_loader_window()
-            self.update_status(status)
-            self.progress_bar.start(10)  # Start indeterminate animation
+        # Create window on main thread to avoid Tkinter threading issues
+        self._create_loader_window()
+        self.update_status(status)
+        self.progress_bar.start(10)  # Start indeterminate animation
+        
+        # Start mainloop in a separate thread to avoid blocking
+        def run_mainloop():
             self.root.mainloop()
             
-        self.animation_thread = threading.Thread(target=create_window, daemon=True)
+        self.animation_thread = threading.Thread(target=run_mainloop, daemon=True)
         self.animation_thread.start()
         
         # Small delay to ensure window is created
@@ -158,8 +160,12 @@ class DesktopLoader:
         Args:
             status: New status message
         """
-        if self.status_var:
-            self.status_var.set(status)
+        if self.status_var and self.root:
+            try:
+                # Schedule the update on the main thread
+                self.root.after(0, lambda: self.status_var.set(status))
+            except:
+                pass  # Ignore if window is being destroyed
             
     def update_progress(self, progress: int, status: str = None):
         """
@@ -169,11 +175,16 @@ class DesktopLoader:
             progress: Progress percentage (0-100)
             status: Optional status message
         """
-        if self.progress_var:
-            self.progress_var.set(f"{progress}%")
-            
-        if status and self.status_var:
-            self.status_var.set(status)
+        if self.root:
+            try:
+                # Schedule the update on the main thread
+                if self.progress_var:
+                    self.root.after(0, lambda: self.progress_var.set(f"{progress}%"))
+                    
+                if status and self.status_var:
+                    self.root.after(0, lambda: self.status_var.set(status))
+            except:
+                pass  # Ignore if window is being destroyed
             
         # Switch to determinate mode for specific progress
         if self.progress_bar and progress >= 0:

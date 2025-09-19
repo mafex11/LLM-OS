@@ -153,7 +153,7 @@ class VoiceService:
                 )
             
             self.is_listening = True
-            console.print(f"[green]🎤 Listening for voice input... (Mode: {self.voice_mode})[/green]")
+            console.print(f"[green]Listening for voice input... (Mode: {self.voice_mode})[/green]")
             if self.voice_mode == 'wake_word':
                 console.print(f"[cyan]Say '{self.wake_word}' to activate[/cyan]")
             
@@ -178,7 +178,7 @@ class VoiceService:
                 self.recorder.stop()
             except:
                 pass
-        console.print("[yellow]🎤 Stopped listening for voice input[/yellow]")
+        console.print("[yellow]Stopped listening for voice input[/yellow]")
     
     def _listen_worker(self):
         """Worker thread for voice listening."""
@@ -197,19 +197,19 @@ class VoiceService:
     def _on_transcription_update(self, text: str):
         """Handle real-time transcription updates."""
         if text and text.strip():
-            console.print(f"[blue]🎤 Heard: {text}[/blue]")
+            console.print(f"[blue]Heard: {text}[/blue]")
             if self.transcription_callback:
                 self.transcription_callback(text)
     
     def _on_wake_word_detected(self):
         """Handle wake word detection."""
-        console.print(f"[green]🎯 Wake word '{self.wake_word}' detected![/green]")
+        console.print(f"[green]Wake word '{self.wake_word}' detected![/green]")
         if self.wake_word_callback:
             self.wake_word_callback()
     
     def _on_wake_word_timeout(self):
         """Handle wake word timeout."""
-        console.print("[yellow]⏰ Wake word timeout - stopping listening[/yellow]")
+        console.print("[yellow]Wake word timeout - stopping listening[/yellow]")
         self.stop_listening()
     
     def set_voice_mode(self, mode: Literal['push_to_talk', 'continuous', 'wake_word']):

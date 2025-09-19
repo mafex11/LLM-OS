@@ -222,7 +222,7 @@ def scrape_tool(url:str,desktop:Desktop=None)->str:
 @tool('Human Tool',args_schema=Human)
 def human_tool(question:str,desktop:Desktop=None)->str:
     'Ask the user a question for clarification, permission, or additional information. Use this when you need user input before proceeding with an action.'
-    return f"❓ USER QUESTION: {question}\n\nPlease respond with your answer, and I'll continue based on your response."
+    return f"USER QUESTION: {question}\n\nPlease respond with your answer, and I'll continue based on your response."
 
 @tool('Voice Input Tool',args_schema=VoiceInput)
 def voice_input_tool(duration:int,wake_word:str,mode:Literal['push_to_talk','continuous','wake_word'],desktop:Desktop=None)->str:
@@ -244,7 +244,7 @@ def voice_input_tool(duration:int,wake_word:str,mode:Literal['push_to_talk','con
             transcription_result = text
         
         def on_wake_word():
-            print(f"🎯 Wake word '{wake_word}' detected! Listening for command...")
+            print(f"Wake word '{wake_word}' detected! Listening for command...")
         
         success = voice_service.start_listening(
             duration=duration,
