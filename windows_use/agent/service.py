@@ -141,7 +141,7 @@ class Agent:
         """Check if we have a memory for this query"""
         solution_steps = self.memory_manager.get_memory_solution(query)
         if solution_steps:
-            self.console.print(f"[bold green]🧠 Found memory for similar task![/bold green]")
+            self.console.print(f"[bold green]Found memory for similar task![/bold green]")
             self.console.print(f"[dim]Previous solution had {len(solution_steps)} steps[/dim]")
             return f"Found previous solution with {len(solution_steps)} steps. Applying known solution..."
         return ""
@@ -150,7 +150,7 @@ class Agent:
         """Save a successful task solution to memory"""
         if steps:
             key = self.memory_manager.add_memory(query, steps, tags)
-            self.console.print(f"[bold green]💾 Saved solution to memory (ID: {key})[/bold green]")
+            self.console.print(f"[bold green]Saved solution to memory (ID: {key})[/bold green]")
 
     def get_memory_stats(self) -> dict:
         """Get memory statistics"""
@@ -163,16 +163,16 @@ class Agent:
     def clear_memories(self):
         """Clear all memories"""
         self.memory_manager.clear_memories()
-        self.console.print("[bold yellow]🧠 All memories cleared[/bold yellow]")
+        self.console.print("[bold yellow]All memories cleared[/bold yellow]")
 
     def show_status(self, status: str, action_name: str = None, details: str = None):
         """Display real-time status updates"""
         if action_name:
-            self.console.print(f"[bold blue]🔄 {status}[/bold blue] - [cyan]{action_name}[/cyan]")
+            self.console.print(f"[bold blue]{status}[/bold blue] - [cyan]{action_name}[/cyan]")
             if details:
                 self.console.print(f"   [dim]{details}[/dim]")
         else:
-            self.console.print(f"[bold blue]🔄 {status}[/bold blue]")
+            self.console.print(f"[bold blue]{status}[/bold blue]")
             
         # Update loader if it's visible
         if self.loader_manager.is_loader_visible():
@@ -225,10 +225,10 @@ class Agent:
         message=self.llm.invoke(messages)
         logger.info(f"Iteration: {steps}")
         agent_data = extract_agent_data(message=message)
-        logger.info(colored(f"📝: Evaluate: {agent_data.evaluate}",color='yellow',attrs=['bold']))
-        logger.info(colored(f"📒: Memory: {agent_data.memory}",color='light_green',attrs=['bold']))
-        logger.info(colored(f"📚: Plan: {agent_data.plan}",color='light_blue',attrs=['bold']))
-        logger.info(colored(f"💭: Thought: {agent_data.thought}",color='light_magenta',attrs=['bold']))
+        logger.info(colored(f"Evaluate: {agent_data.evaluate}",color='yellow',attrs=['bold']))
+        logger.info(colored(f"Memory: {agent_data.memory}",color='light_green',attrs=['bold']))
+        logger.info(colored(f"Plan: {agent_data.plan}",color='light_blue',attrs=['bold']))
+        logger.info(colored(f"Thought: {agent_data.thought}",color='light_magenta',attrs=['bold']))
         last_message = state.get('messages').pop()
         if isinstance(last_message, HumanMessage):
             message=HumanMessage(content=Prompt.previous_observation_prompt(steps=steps,max_steps=max_steps,observation=state.get('previous_observation')))
@@ -264,7 +264,7 @@ class Agent:
                 self.desktop._last_state_time = current_time
                 self.show_status("Refreshing", "Desktop State", "Getting updated coordinates")
         
-        logger.info(colored(f"🔧: Action: {name}({', '.join(f'{k}={v}' for k, v in params.items())})",color='blue',attrs=['bold']))
+        logger.info(colored(f"Action: {name}({', '.join(f'{k}={v}' for k, v in params.items())})",color='blue',attrs=['bold']))
         tool_result = self.registry.execute(tool_name=name, desktop=self.desktop, **params)
         observation=tool_result.content if tool_result.is_success else tool_result.error
         
@@ -279,9 +279,9 @@ class Agent:
         
         # Show completion status
         if tool_result.is_success:
-            self.show_status("Completed", name, "✅ Success")
+            self.show_status("Completed", name, "Success")
         else:
-            self.show_status("Failed", name, f"❌ {observation[:50]}...")
+            self.show_status("Failed", name, f"{observation[:50]}...")
         
         # Force desktop state refresh after Launch Tool to get updated coordinates
         if tool_result.is_success and name == 'Launch Tool':
@@ -289,7 +289,7 @@ class Agent:
             self.desktop.get_state(use_vision=self.use_vision)
             self.desktop._last_state_time = time.time()
         
-        logger.info(colored(f"🔭: Observation: {shorten(observation,500,placeholder='...')}",color='green',attrs=['bold']))
+        logger.info(colored(f"Observation: {shorten(observation,500,placeholder='...')}",color='green',attrs=['bold']))
         # Only get fresh desktop state if we don't have recent state
         import time
         current_time = time.time()
@@ -322,9 +322,9 @@ class Agent:
         ai_message = AIMessage(content=Prompt.answer_prompt(agent_data=agent_data, tool_result=tool_result))
         
         # Show completion
-        self.show_status("Done", "Task Complete", "✅ All actions completed")
+        self.show_status("Done", "Task Complete", "All actions completed")
         
-        logger.info(colored(f"📜: Final Answer: {tool_result.content}",color='cyan',attrs=['bold']))
+        logger.info(colored(f"Final Answer: {tool_result.content}",color='cyan',attrs=['bold']))
         return {**state,'agent_data':None,'messages':[ai_message],'previous_observation':None,'output':tool_result.content}
 
     def _make_conversational(self, raw_answer: str, original_query: str) -> str:
@@ -356,7 +356,7 @@ Convert the raw answer above into a natural, conversational response:"""
             conversational_result = response.content.strip()
             
             # Log the conversion for debugging
-            logger.info(colored(f"🗣️  Conversational processing:", color='yellow'))
+            logger.info(colored(f"Conversational processing:", color='yellow'))
             logger.info(colored(f"   Raw: {raw_answer[:100]}{'...' if len(raw_answer) > 100 else ''}", color='yellow'))
             logger.info(colored(f"   Conversational: {conversational_result[:100]}{'...' if len(conversational_result) > 100 else ''}", color='yellow'))
             

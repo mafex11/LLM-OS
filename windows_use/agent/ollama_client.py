@@ -82,12 +82,12 @@ class OllamaChat:
         url = f"{self.base_url}/api/chat"
         
         try:
-            print(f"🔄 Calling Ollama: {self.model} at {url}")
-            print(f"📝 Messages: {len(converted_messages)} messages")
+            print(f"Calling Ollama: {self.model} at {url}")
+            print(f"Messages: {len(converted_messages)} messages")
             # Check if we have images
             image_count = sum(1 for msg in converted_messages if msg.get("images"))
             if image_count > 0:
-                print(f"🖼️  Images: {image_count} messages with images")
+                print(f"Images: {image_count} messages with images")
             
             response = requests.post(url, json=payload, timeout=self.request_timeout)
             response.raise_for_status()
@@ -99,14 +99,14 @@ class OllamaChat:
                 msg = data.get("message") or {}
                 content = msg.get("content") or data.get("response") or ""
             
-            print(f"✅ Ollama response received: {len(content)} chars")
+            print(f"Ollama response received: {len(content)} chars")
             return AIMessage(content=content)
             
         except requests.exceptions.Timeout:
-            print(f"⏰ Ollama timeout after {self.request_timeout}s")
+            print(f"Ollama timeout after {self.request_timeout}s")
             return AIMessage(content="Error: Ollama request timed out. The model may be processing a large image.")
         except requests.exceptions.RequestException as e:
-            print(f"❌ Ollama request error: {e}")
+            print(f"Ollama request error: {e}")
             if hasattr(e, 'response') and e.response is not None:
                 try:
                     error_data = e.response.json()
@@ -115,7 +115,7 @@ class OllamaChat:
                     print(f"Error response: {e.response.text}")
             return AIMessage(content=f"Error: Failed to communicate with Ollama: {e}")
         except Exception as e:
-            print(f"❌ Unexpected error: {e}")
+            print(f"Unexpected error: {e}")
             return AIMessage(content=f"Error: Unexpected error calling Ollama: {e}")
 
 

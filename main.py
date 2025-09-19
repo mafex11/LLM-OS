@@ -11,11 +11,15 @@ import time
 
 load_dotenv()
 
-def safe_input(prompt="\n💬 You: "):
-    """Safe input function that ensures the prompt is always shown."""
+# Disable readline to prevent pyreadline3 access violation issues on Windows
+import os
+os.environ['PYTHONIOENCODING'] = 'utf-8'
+
+def safe_input(prompt="\nYou: "):
+    """Safe input function that avoids pyreadline3 issues on Windows."""
     import sys
     import time
-    import threading
+    import msvcrt
     
     # Force flush any pending output
     sys.stdout.flush()
@@ -25,31 +29,48 @@ def safe_input(prompt="\n💬 You: "):
     time.sleep(0.1)
     
     try:
-        # Use threading to handle input safely
-        result = [None]
+        # Try the standard input() first
+        user_input = input(prompt).strip()
+        return user_input if user_input else ""
         
-        def input_thread():
-            try:
-                result[0] = input(prompt).strip()
-            except (EOFError, KeyboardInterrupt):
-                result[0] = "quit"
-        
-        thread = threading.Thread(target=input_thread, daemon=True)
-        thread.start()
-        thread.join()  # No timeout - wait indefinitely
-        
-        if result[0] is None:
-            return "quit"
-        
-        return result[0]
-        
-    except Exception as e:
-        print(f"\n❌ Input error: {e}")
+    except (EOFError, KeyboardInterrupt):
         return "quit"
+    except Exception as e:
+        print(f"\nInput error: {e}")
+        print("Falling back to alternative input method...")
+        
+        # Fallback: Use msvcrt for Windows console input
+        try:
+            print(prompt, end='', flush=True)
+            user_input = ""
+            while True:
+                char = msvcrt.getch()
+                if char == b'\r':  # Enter key
+                    print()  # New line
+                    break
+                elif char == b'\x08':  # Backspace
+                    if user_input:
+                        user_input = user_input[:-1]
+                        print('\b \b', end='', flush=True)
+                elif char == b'\x03':  # Ctrl+C
+                    return "quit"
+                else:
+                    try:
+                        char_str = char.decode('utf-8')
+                        user_input += char_str
+                        print(char_str, end='', flush=True)
+                    except UnicodeDecodeError:
+                        pass  # Skip invalid characters
+            
+            return user_input.strip() if user_input else ""
+            
+        except Exception as fallback_error:
+            print(f"\nFallback input also failed: {fallback_error}")
+            return "quit"
 
 def show_ready_indicator():
     """Show a visual indicator that the system is ready for input."""
-    print("✨ Ready for your next command...")
+    print("Ready for your next command...")
 
 def get_running_programs():
     """Get list of currently running programs using PowerShell"""
@@ -79,20 +100,20 @@ def get_running_programs():
             
             return running_programs
         else:
-            print(f"⚠️  Warning: Could not get running programs: {result.stderr}")
+            print(f"Warning: Could not get running programs: {result.stderr}")
             return []
             
     except Exception as e:
-        print(f"⚠️  Warning: Error getting running programs: {e}")
+        print(f"Warning: Error getting running programs: {e}")
         return []
 
 def display_running_programs(programs):
     """Display running programs in a formatted way"""
     if not programs:
-        print("📱 No programs with visible windows detected")
+        print("No programs with visible windows detected")
         return
     
-    print("📱 Currently Running Programs:")
+    print("Currently Running Programs:")
     print("-" * 40)
     
     # Group by process name
@@ -112,11 +133,20 @@ def display_running_programs(programs):
     print("-" * 40)
 
 def main():
-    print("🤖 Windows-Use Agent with Conversation Support")
+    # Disable readline to prevent pyreadline3 issues on Windows
+    try:
+        import readline
+        # Disable readline history and completion
+        readline.set_history_length(0)
+        readline.clear_history()
+    except (ImportError, AttributeError):
+        pass
+    
+    print("Windows-Use Agent with Conversation Support")
     print("=" * 50)
     
     # Check for running programs at startup
-    print("🔍 Checking for running programs...")
+    print("Checking for running programs...")
     running_programs = get_running_programs()
     display_running_programs(running_programs)
     
@@ -131,13 +161,13 @@ def main():
     agent.set_loader_enabled(True)
     
     # Pre-warm the system for faster first response
-    print("⚡ Pre-warming system for faster response...")
+    print("Pre-warming system for faster response...")
     try:
         # Initialize desktop state cache
         agent.desktop.get_state(use_vision=False)
-        print("✅ System pre-warmed successfully!")
+        print("System pre-warmed successfully!")
     except Exception as e:
-        print(f"⚠️  Pre-warming failed: {e}")
+        print(f"Pre-warming failed: {e}")
         print("System will still work, but first response may be slower.")
     
     print("\nCommands:")
@@ -161,31 +191,31 @@ def main():
                 
             # Handle special commands
             if query.lower() in ['quit', 'exit', 'q']:
-                print("👋 Goodbye!")
+                print("Goodbye!")
                 break
             elif query.lower() == 'clear':
                 agent.clear_conversation()
-                print("🧹 Conversation history cleared!")
+                print("Conversation history cleared!")
                 continue
             elif query.lower() == 'loader on':
                 agent.set_loader_enabled(True)
-                print("🔄 Visual loader enabled!")
+                print("Visual loader enabled!")
                 continue
             elif query.lower() == 'loader off':
                 agent.set_loader_enabled(False)
-                print("🔄 Visual loader disabled!")
+                print("Visual loader disabled!")
                 continue
             elif query.lower() == 'speed on':
                 agent.desktop.cache_timeout = 1.0  # More aggressive caching
-                print("⚡ Speed optimizations enabled!")
+                print("Speed optimizations enabled!")
                 continue
             elif query.lower() == 'speed off':
                 agent.desktop.cache_timeout = 0.1  # Less caching
                 agent.desktop.clear_cache()  # Clear existing cache
-                print("🐌 Speed optimizations disabled!")
+                print("Speed optimizations disabled!")
                 continue
             elif query.lower() == 'help':
-                print("\n🤖 Windows-Use Agent Help")
+                print("\nWindows-Use Agent Help")
                 print("-" * 30)
                 print("This agent can help you with Windows automation tasks like:")
                 print("• Opening applications")
@@ -212,7 +242,7 @@ def main():
                 print("• 'loader on/off' - Enable/disable visual loader overlay")
                 continue
             elif query.lower() == 'programs':
-                print("🔄 Refreshing running programs...")
+                print("Refreshing running programs...")
                 running_programs = get_running_programs()
                 agent.running_programs = running_programs
                 display_running_programs(running_programs)
@@ -220,7 +250,7 @@ def main():
             elif query.lower() == 'memories':
                 memories = agent.list_memories()
                 if memories:
-                    print("\n🧠 Stored Task Solutions:")
+                    print("\nStored Task Solutions:")
                     print("-" * 30)
                     for i, memory in enumerate(memories, 1):
                         print(f"{i}. Query: {memory['query']}")
@@ -229,11 +259,11 @@ def main():
                         print(f"   Tags: {', '.join(memory['tags']) if memory['tags'] else 'None'}")
                         print()
                 else:
-                    print("🧠 No memories stored yet. Complete some tasks to build memory!")
+                    print("No memories stored yet. Complete some tasks to build memory!")
                 continue
             elif query.lower() == 'memory stats':
                 stats = agent.get_memory_stats()
-                print(f"\n📊 Memory Statistics:")
+                print(f"\nMemory Statistics:")
                 print(f"Total memories: {stats['total_memories']}")
                 print(f"Total successes: {stats['total_successes']}")
                 if stats['total_memories'] > 0:
@@ -250,7 +280,7 @@ def main():
                 agent.performance_monitor.print_stats()
                 continue
             elif query.lower() == 'voice':
-                print("\n🎤 Voice Input Mode")
+                print("\nVoice Input Mode")
                 print("-" * 30)
                 print("Choose voice input mode:")
                 print("1. Wake word mode (say 'hey windows use' to activate)")
@@ -262,7 +292,7 @@ def main():
                 choice = safe_input("\nEnter choice (1-5): ")
                 
                 if choice == '1':
-                    print("\n🎯 Wake word mode activated!")
+                    print("\nWake word mode activated!")
                     print("Say 'hey windows use' followed by your command")
                     print("Example: 'hey windows use, open notepad'")
                     print("Press Ctrl+C to stop voice mode")
@@ -272,7 +302,7 @@ def main():
                         voice_service = VoiceService(wake_word="hey windows use", voice_mode="wake_word", model="base")
                         
                         if not voice_service.is_available():
-                            print("❌ Voice service not available. Please check audio devices.")
+                            print("Voice service not available. Please check audio devices.")
                             continue
                         
                         # Start continuous wake word listening
@@ -280,7 +310,7 @@ def main():
                         
                         def on_transcription(text: str):
                             nonlocal transcription_result
-                            print(f"\n🎤 Command: {text}")
+                            print(f"\nCommand: {text}")
                             # Process the command through the agent
                             response = agent.invoke(text)
                             agent.console.print(Markdown(response.content or response.error))
@@ -292,10 +322,10 @@ def main():
                                 except Exception as e:
                                     print(f"TTS Error: {e}")
                             
-                            print("\n🎯 Listening for next command...")
+                            print("\nListening for next command...")
                         
                         def on_wake_word():
-                            print("🎯 Wake word detected! Listening for command...")
+                            print("Wake word detected! Listening for command...")
                         
                         voice_service.start_listening(
                             duration=300,  # 5 minutes
@@ -308,17 +338,17 @@ def main():
                             time.sleep(1)
                             
                     except KeyboardInterrupt:
-                        print("\n🎤 Voice mode stopped.")
+                        print("\nVoice mode stopped.")
                         if 'voice_service' in locals():
                             voice_service.stop_listening()
                     except ImportError:
-                        print("❌ Voice functionality not available. Please install RealtimeSTT and audio dependencies.")
+                        print("Voice functionality not available. Please install RealtimeSTT and audio dependencies.")
                     except Exception as e:
-                        print(f"❌ Voice error: {e}")
+                        print(f"Voice error: {e}")
                     continue
                     
                 elif choice == '2':
-                    print("\n🎤 Push-to-talk mode activated!")
+                    print("\nPush-to-talk mode activated!")
                     print("Press Enter to start speaking, then Enter again to stop")
                     print("Press Ctrl+C to exit voice mode")
                     
@@ -327,12 +357,12 @@ def main():
                         voice_service = VoiceService(voice_mode="push_to_talk", model="base")
                         
                         if not voice_service.is_available():
-                            print("❌ Voice service not available. Please check audio devices.")
+                            print("Voice service not available. Please check audio devices.")
                             continue
                         
                         while True:
                             safe_input("\nPress Enter to start speaking...")
-                            print("🎤 Listening... (Press Enter to stop)")
+                            print("Listening... (Press Enter to stop)")
                             
                             transcription_result = None
                             
@@ -368,7 +398,7 @@ def main():
                             voice_service.stop_listening()
                             
                             if transcription_result:
-                                print(f"\n🎤 Command: {transcription_result}")
+                                print(f"\nCommand: {transcription_result}")
                                 response = agent.invoke(transcription_result)
                                 agent.console.print(Markdown(response.content or response.error))
                                 
@@ -382,15 +412,15 @@ def main():
                                 print("No command detected.")
                                 
                     except KeyboardInterrupt:
-                        print("\n🎤 Voice mode stopped.")
+                        print("\nVoice mode stopped.")
                     except ImportError:
-                        print("❌ Voice functionality not available. Please install RealtimeSTT and audio dependencies.")
+                        print("Voice functionality not available. Please install RealtimeSTT and audio dependencies.")
                     except Exception as e:
-                        print(f"❌ Voice error: {e}")
+                        print(f"Voice error: {e}")
                     continue
                     
                 elif choice == '3':
-                    print("\n🎤 Continuous mode activated!")
+                    print("\nContinuous mode activated!")
                     print("Always listening for commands...")
                     print("Press Ctrl+C to stop voice mode")
                     
@@ -399,11 +429,11 @@ def main():
                         voice_service = VoiceService(voice_mode="continuous", model="base")
                         
                         if not voice_service.is_available():
-                            print("❌ Voice service not available. Please check audio devices.")
+                            print("Voice service not available. Please check audio devices.")
                             continue
                         
                         def on_transcription(text: str):
-                            print(f"\n🎤 Command: {text}")
+                            print(f"\nCommand: {text}")
                             response = agent.invoke(text)
                             agent.console.print(Markdown(response.content or response.error))
                             
@@ -414,7 +444,7 @@ def main():
                                 except Exception as e:
                                     print(f"TTS Error: {e}")
                             
-                            print("\n🎤 Listening for next command...")
+                            print("\nListening for next command...")
                         
                         voice_service.start_listening(
                             duration=300,  # 5 minutes
@@ -426,17 +456,17 @@ def main():
                             time.sleep(1)
                             
                     except KeyboardInterrupt:
-                        print("\n🎤 Voice mode stopped.")
+                        print("\nVoice mode stopped.")
                         if 'voice_service' in locals():
                             voice_service.stop_listening()
                     except ImportError:
-                        print("❌ Voice functionality not available. Please install RealtimeSTT and audio dependencies.")
+                        print("Voice functionality not available. Please install RealtimeSTT and audio dependencies.")
                     except Exception as e:
-                        print(f"❌ Voice error: {e}")
+                        print(f"Voice error: {e}")
                     continue
                     
                 elif choice == '4':
-                    print("\n🔊 Testing voice output...")
+                    print("\nTesting voice output...")
                     test_text = safe_input("Enter text to speak: ")
                     if test_text:
                         try:
@@ -444,9 +474,9 @@ def main():
                             voice_service = VoiceService()
                             voice_service.speak(test_text)
                         except ImportError:
-                            print("❌ Voice functionality not available. Please install TTS dependencies.")
+                            print("Voice functionality not available. Please install TTS dependencies.")
                         except Exception as e:
-                            print(f"❌ Voice error: {e}")
+                            print(f"Voice error: {e}")
                     continue
                     
                 elif choice == '5':
@@ -456,15 +486,31 @@ def main():
                     print("Invalid choice. Returning to main menu.")
                     continue
             
+        except KeyboardInterrupt:
+            print("\n\nGoodbye!")
+            break
+        except Exception as input_error:
+            print(f"\nInput system error: {input_error}")
+            print("Attempting to recover...")
+            try:
+                # Try a simple input as last resort
+                query = input("\nYou: ").strip()
+                if not query:
+                    continue
+            except:
+                print("Input system completely failed. Exiting...")
+                break
+        
+        try:
             # Process the query
             print()  # Add spacing
             response = agent.invoke(query)
             
             # Check if the agent is asking a question
-            if response.content and "❓ USER QUESTION:" in response.content:
-                print(f"\n🤖 Agent: {response.content}")
+            if response.content and "USER QUESTION:" in response.content:
+                print(f"\nAgent: {response.content}")
                 # Get user response and continue the conversation
-                user_response = safe_input("\n💬 Your answer: ")
+                user_response = safe_input("\nYour answer: ")
                 if user_response:
                     # Continue the conversation with the user's response
                     print()  # Add spacing
@@ -487,10 +533,10 @@ def main():
             sys.stderr.flush()
             
         except KeyboardInterrupt:
-            print("\n\n👋 Goodbye!")
+            print("\n\nGoodbye!")
             break
         except Exception as e:
-            print(f"\n❌ Error: {e}")
+            print(f"\nError: {e}")
             print("Please try again or type 'quit' to exit.")
 
 if __name__ == "__main__":

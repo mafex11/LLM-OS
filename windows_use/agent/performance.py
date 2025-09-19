@@ -46,13 +46,13 @@ class PerformanceMonitor:
         """Print performance statistics"""
         stats = self.get_stats()
         if not stats:
-            print("📊 No performance data collected yet")
+            print("No performance data collected yet")
             return
         
-        print("\n📊 Performance Statistics:")
+        print("\nPerformance Statistics:")
         print("-" * 50)
         for operation, data in stats.items():
-            print(f"🔧 {operation}:")
+            print(f"{operation}:")
             print(f"   Count: {data['count']}")
             print(f"   Avg Time: {data['avg_time']:.3f}s")
             print(f"   Min Time: {data['min_time']:.3f}s")
@@ -95,7 +95,7 @@ def timed(operation_name: str = None):
                 if monitor:
                     duration = monitor.end_timer(op_name)
                     if duration > 1.0:  # Log slow operations
-                        print(f"⚠️  Slow operation: {op_name} took {duration:.3f}s")
+                        print(f"Slow operation: {op_name} took {duration:.3f}s")
         
         return wrapper
     return decorator
