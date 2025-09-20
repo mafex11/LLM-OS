@@ -95,33 +95,53 @@ def click_tool(loc:tuple[int,int],button:Literal['left','right','middle']='left'
     cursor.move_to(loc)
     pg.sleep(0.1)  # Small delay to ensure cursor movement completes
     
-    # Get the element under cursor and validate it's clickable
-    control=desktop.get_element_under_cursor()
-    parent=control.GetParentControl()
-    
-    # For search bars and input fields, try to ensure we're clicking on the right element
-    if control.ControlTypeName in ['EditControl', 'ComboBoxControl']:
-        # Double-check we're on the right element by verifying coordinates are within bounds
-        box = control.BoundingRectangle
-        if not (box.left <= x <= box.right and box.top <= y <= box.bottom):
-            # If coordinates are outside the element bounds, try clicking the center
-            center_x, center_y = box.xcenter(), box.ycenter()
-            cursor.move_to((center_x, center_y))
-            pg.sleep(0.1)
+    # Try multiple click methods with retry logic
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            # Method 1: Try UI automation first (most accurate)
             control = desktop.get_element_under_cursor()
-            x, y = center_x, center_y
-    
-    # Perform the click
-    if parent.Name=="Desktop":
-        pg.click(x=x,y=y,button=button,clicks=clicks)
-    else:
-        pg.mouseDown()
-        pg.click(button=button,clicks=clicks)
-        pg.mouseUp()
-    
-    pg.sleep(1.0)
-    num_clicks={1:'Single',2:'Double',3:'Triple'}
-    return f'{num_clicks.get(clicks)} {button} Clicked on {control.Name} Element with ControlType {control.ControlTypeName} at ({x},{y}).'
+            parent = control.GetParentControl()
+            
+            # For search bars and input fields, try to ensure we're clicking on the right element
+            if control.ControlTypeName in ['EditControl', 'ComboBoxControl']:
+                # Double-check we're on the right element by verifying coordinates are within bounds
+                box = control.BoundingRectangle
+                if not (box.left <= x <= box.right and box.top <= y <= box.bottom):
+                    # If coordinates are outside the element bounds, try clicking the center
+                    center_x, center_y = box.xcenter(), box.ycenter()
+                    cursor.move_to((center_x, center_y))
+                    pg.sleep(0.1)
+                    control = desktop.get_element_under_cursor()
+                    x, y = center_x, center_y
+            
+            # Perform the click
+            if parent.Name == "Desktop":
+                pg.click(x=x, y=y, button=button, clicks=clicks)
+            else:
+                pg.mouseDown()
+                pg.click(button=button, clicks=clicks)
+                pg.mouseUp()
+            
+            pg.sleep(1.0)
+            num_clicks = {1: 'Single', 2: 'Double', 3: 'Triple'}
+            return f'{num_clicks.get(clicks)} {button} Clicked on {control.Name} Element with ControlType {control.ControlTypeName} at ({x},{y}).'
+            
+        except Exception as e:
+            if attempt < max_retries - 1:
+                print(f"Click attempt {attempt + 1} failed: {e}, retrying...")
+                pg.sleep(0.5)  # Wait before retry
+                continue
+            else:
+                # Final fallback: Use direct pyautogui click without UI automation
+                print(f"UI automation failed, using direct click: {e}")
+                try:
+                    pg.click(x=x, y=y, button=button, clicks=clicks)
+                    pg.sleep(1.0)
+                    num_clicks = {1: 'Single', 2: 'Double', 3: 'Triple'}
+                    return f'{num_clicks.get(clicks)} {button} Clicked at coordinates ({x},{y}) using direct method.'
+                except Exception as final_error:
+                    return f'Click failed after all retry attempts: {final_error}'
 
 @tool('Type Tool',args_schema=Type)
 def type_tool(loc:tuple[int,int],text:str,clear:Literal['true','false']='false',caret_position:Literal['start','idle','end']='idle',press_enter:Literal['true','false']='false',desktop:Desktop=None):

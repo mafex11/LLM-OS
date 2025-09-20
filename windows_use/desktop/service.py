@@ -2,6 +2,8 @@ from uiautomation import Control, GetRootControl, IsIconic, IsZoomed, IsWindowVi
 from windows_use.desktop.config import EXCLUDED_APPS, BROWSER_NAMES
 from windows_use.desktop.views import DesktopState,App,Size
 from windows_use.tree.service import Tree
+from windows_use.desktop.intelligent_detector import IntelligentDetector, TaskType
+from windows_use.desktop.adaptive_detector import AdaptiveDetector
 from PIL.Image import Image as PILImage
 from contextlib import contextmanager
 from fuzzywuzzy import process
@@ -24,6 +26,10 @@ class Desktop:
         self._apps_cache = None
         self._apps_cache_time = 0
         self.cache_timeout = 2.0  # Cache screenshots and apps for 2 seconds
+        self.intelligent_detector = IntelligentDetector(self)
+        self.adaptive_detector = AdaptiveDetector(self)
+        self.use_intelligent_detection = True  # Enable by default
+        self.use_adaptive_detection = True  # Enable adaptive detection by default
         
     def get_state(self,use_vision:bool=False, target_app:str=None)->DesktopState:
         tree=Tree(self)
@@ -44,6 +50,156 @@ class Desktop:
             screenshot=None
         self.desktop_state=DesktopState(apps=apps,active_app=active_app,screenshot=screenshot,tree_state=tree_state)
         return self.desktop_state
+    
+    def get_adaptive_state(self, task_type: str = None, query: str = "", use_vision: bool = False, target_app: str = None, force_refresh: bool = False) -> DesktopState:
+        """
+        Get desktop state using adaptive detection - chooses the fastest method for each task.
+        """
+        apps = self.get_apps()
+        active_app, apps = (apps[0], apps[1:]) if len(apps) > 0 else (None, [])
+        
+        # Use adaptive detection if enabled
+        if self.use_adaptive_detection:
+            try:
+                interactive_nodes, informative_nodes, scrollable_nodes = self.adaptive_detector.detect_elements_adaptive(
+                    task_type=task_type,
+                    query=query,
+                    target_app=target_app,
+                    force_refresh=force_refresh
+                )
+                
+                # Create tree state with adaptive results
+                from windows_use.tree.views import TreeState
+                tree_state = TreeState(
+                    interactive_nodes=interactive_nodes,
+                    informative_nodes=informative_nodes,
+                    scrollable_nodes=scrollable_nodes
+                )
+            except Exception as e:
+                print(f"Adaptive detection failed, falling back to intelligent: {e}")
+                # Fallback to intelligent detection
+                return self.get_intelligent_state(task_type, query, use_vision, target_app)
+        else:
+            # Use intelligent detection
+            return self.get_intelligent_state(task_type, query, use_vision, target_app)
+        
+        # Handle screenshot if needed
+        if use_vision:
+            full_screenshot = self.get_screenshot(scale=1.0)
+            screenshot = self.screenshot_in_bytes(full_screenshot)
+        else:
+            screenshot = None
+            
+        self.desktop_state = DesktopState(
+            apps=apps,
+            active_app=active_app,
+            screenshot=screenshot,
+            tree_state=tree_state
+        )
+        return self.desktop_state
+
+    def get_intelligent_state(self, task_type: str = None, query: str = "", use_vision: bool = False, target_app: str = None) -> DesktopState:
+        """
+        Get desktop state using intelligent element detection based on task context.
+        """
+        apps = self.get_apps()
+        active_app, apps = (apps[0], apps[1:]) if len(apps) > 0 else (None, [])
+        
+        # Use intelligent detection if enabled
+        if self.use_intelligent_detection:
+            # Determine task type from query if not provided
+            if not task_type:
+                task_type = self._determine_task_type(query)
+            
+            # Use intelligent detection
+            try:
+                interactive_nodes, informative_nodes, scrollable_nodes = self.intelligent_detector.detect_elements(
+                    task_type=task_type,
+                    query=query,
+                    target_app=target_app
+                )
+                
+                # Create tree state with intelligent results
+                from windows_use.tree.views import TreeState
+                tree_state = TreeState(
+                    interactive_nodes=interactive_nodes,
+                    informative_nodes=informative_nodes,
+                    scrollable_nodes=scrollable_nodes
+                )
+            except Exception as e:
+                print(f"Intelligent detection failed, falling back to standard: {e}")
+                # Fallback to standard detection
+                tree = Tree(self)
+                if target_app:
+                    tree_state = tree.get_precise_state(target_app)
+                else:
+                    tree_state = tree.get_state()
+        else:
+            # Use standard detection
+            tree = Tree(self)
+            if target_app:
+                tree_state = tree.get_precise_state(target_app)
+            else:
+                tree_state = tree.get_state()
+        
+        # Handle screenshot if needed
+        if use_vision:
+            full_screenshot = self.get_screenshot(scale=1.0)
+            screenshot = self.screenshot_in_bytes(full_screenshot)
+        else:
+            screenshot = None
+            
+        self.desktop_state = DesktopState(
+            apps=apps,
+            active_app=active_app,
+            screenshot=screenshot,
+            tree_state=tree_state
+        )
+        return self.desktop_state
+    
+    def set_intelligent_detection(self, enabled: bool):
+        """Enable or disable intelligent element detection."""
+        self.use_intelligent_detection = enabled
+        print(f"🧠 Intelligent detection {'enabled' if enabled else 'disabled'}")
+    
+    def set_adaptive_detection(self, enabled: bool):
+        """Enable or disable adaptive element detection."""
+        self.use_adaptive_detection = enabled
+        if enabled:
+            self.adaptive_detector.clear_cache()  # Clear cache when enabling
+        print(f"⚡ Adaptive detection {'enabled' if enabled else 'disabled'}")
+    
+    def get_detection_stats(self) -> dict:
+        """Get detection performance statistics."""
+        stats = {
+            'intelligent_enabled': self.use_intelligent_detection,
+            'adaptive_enabled': self.use_adaptive_detection,
+            'cache_timeout': self.cache_timeout
+        }
+        
+        if hasattr(self, 'adaptive_detector'):
+            stats.update(self.adaptive_detector.get_detection_stats())
+        
+        return stats
+    
+    def _determine_task_type(self, query: str) -> TaskType:
+        """Determine task type from query string."""
+        query_lower = query.lower()
+        
+        if any(word in query_lower for word in ['type', 'enter', 'input', 'write', 'fill', 'search']):
+            return TaskType.TEXT_INPUT
+        elif any(word in query_lower for word in ['click', 'press', 'tap', 'select', 'button']):
+            return TaskType.BUTTON_CLICK
+        elif any(word in query_lower for word in ['tab', 'browser', 'window', 'page']):
+            return TaskType.TAB_OPERATION
+        elif any(word in query_lower for word in ['read', 'show', 'list', 'display', 'what']):
+            return TaskType.READING
+        elif any(word in query_lower for word in ['scroll', 'up', 'down']):
+            return TaskType.SCROLLING
+        elif any(word in query_lower for word in ['form', 'fill', 'submit']):
+            return TaskType.FORM_FILLING
+        else:
+            return TaskType.NAVIGATION
     
     def get_window_element_from_element(self,element:Control)->Control|None:
         while element is not None:

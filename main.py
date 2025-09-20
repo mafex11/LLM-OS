@@ -157,8 +157,6 @@ def main():
     # Store running programs in agent for context
     agent.running_programs = running_programs
     
-    # Enable loader by default (can be disabled with 'loader off' command)
-    agent.set_loader_enabled(True)
     
     # Pre-warm the system for faster first response
     print("Pre-warming system for faster response...")
@@ -174,8 +172,9 @@ def main():
     print("  - Type your query to interact with the agent")
     print("  - Type 'voice' to enable voice input mode")
     print("  - Type 'clear' to clear conversation history")
-    print("  - Type 'loader on/off' to enable/disable visual loader")
     print("  - Type 'speed on/off' to enable/disable speed optimizations")
+    print("  - Type 'smart on/off' to enable/disable intelligent detection")
+    print("  - Type 'adaptive on/off' to enable/disable adaptive detection")
     print("  - Type 'perf' to show performance statistics")
     print("  - Type 'quit', 'exit', or 'q' to exit")
     print("  - Type 'help' to show this help message")
@@ -197,14 +196,6 @@ def main():
                 agent.clear_conversation()
                 print("Conversation history cleared!")
                 continue
-            elif query.lower() == 'loader on':
-                agent.set_loader_enabled(True)
-                print("Visual loader enabled!")
-                continue
-            elif query.lower() == 'loader off':
-                agent.set_loader_enabled(False)
-                print("Visual loader disabled!")
-                continue
             elif query.lower() == 'speed on':
                 agent.desktop.cache_timeout = 1.0  # More aggressive caching
                 print("Speed optimizations enabled!")
@@ -213,6 +204,18 @@ def main():
                 agent.desktop.cache_timeout = 0.1  # Less caching
                 agent.desktop.clear_cache()  # Clear existing cache
                 print("Speed optimizations disabled!")
+                continue
+            elif query.lower() == 'smart on':
+                agent.desktop.set_intelligent_detection(True)
+                continue
+            elif query.lower() == 'smart off':
+                agent.desktop.set_intelligent_detection(False)
+                continue
+            elif query.lower() == 'adaptive on':
+                agent.desktop.set_adaptive_detection(True)
+                continue
+            elif query.lower() == 'adaptive off':
+                agent.desktop.set_adaptive_detection(False)
                 continue
             elif query.lower() == 'help':
                 print("\nWindows-Use Agent Help")
@@ -239,7 +242,6 @@ def main():
                 print("• 'clear memories' - Clear all stored memories")
                 print("\nSystem Commands:")
                 print("• 'programs' - Refresh running programs list")
-                print("• 'loader on/off' - Enable/disable visual loader overlay")
                 continue
             elif query.lower() == 'programs':
                 print("Refreshing running programs...")
@@ -278,6 +280,10 @@ def main():
                 continue
             elif query.lower() == 'perf':
                 agent.performance_monitor.print_stats()
+                print("\n🔍 Detection System Stats:")
+                detection_stats = agent.desktop.get_detection_stats()
+                for key, value in detection_stats.items():
+                    print(f"  {key}: {value}")
                 continue
             elif query.lower() == 'voice':
                 print("\nVoice Input Mode")

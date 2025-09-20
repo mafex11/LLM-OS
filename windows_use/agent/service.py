@@ -13,7 +13,6 @@ from live_inspect.watch_cursor import WatchCursor
 from langgraph.graph import START,END,StateGraph
 from windows_use.agent.views import AgentResult
 from windows_use.desktop.service import Desktop
-from windows_use.desktop.loader import LoaderManager
 from windows_use.agent.state import AgentState
 from langchain_core.tools import BaseTool
 from rich.markdown import Markdown
@@ -76,8 +75,6 @@ class Agent:
         # Memory management
         self.memory_manager = MemoryManager()
         self.current_task_steps = []  # Track steps for current task
-        # Loader management
-        self.loader_manager = LoaderManager()
         # Performance monitoring
         self.performance_monitor = PerformanceMonitor()
 
@@ -86,17 +83,40 @@ class Agent:
         self.conversation_history = []
         self.system_message = None
         
-    def set_loader_enabled(self, enabled: bool):
-        """Enable or disable the visual loader"""
-        self.loader_manager.set_enabled(enabled)
-        
-    def update_loader_progress(self, progress: int, status: str = None):
-        """Update loader progress and status"""
-        if status:
-            self.loader_manager.update_loader(status, progress)
-        else:
-            self.loader_manager.update_loader(f"Progress: {progress}%", progress)
     
+    def _should_refresh_desktop_state(self, action_name: str, query: str, current_time: float) -> bool:
+        """Determine if desktop state needs to be refreshed based on action and context."""
+        
+        # Always refresh for first action
+        if not hasattr(self.desktop, '_last_state_time'):
+            return True
+        
+        # Check time-based refresh
+        time_since_refresh = current_time - getattr(self.desktop, '_last_state_time', 0)
+        
+        # Different refresh intervals for different actions
+        if action_name == 'Type Tool':
+            # For typing, only refresh if it's been more than 10 seconds or if we don't have focused element
+            return time_since_refresh > 10.0 or not self._has_focused_element()
+        elif action_name == 'Click Tool':
+            # For clicking, refresh more frequently but not every time
+            return time_since_refresh > 5.0
+        elif action_name in ['Scroll Tool', 'Drag Tool', 'Move Tool']:
+            # For movement actions, refresh more frequently
+            return time_since_refresh > 3.0
+        else:
+            # Default refresh interval
+            return time_since_refresh > 5.0
+    
+    def _has_focused_element(self) -> bool:
+        """Check if we have a focused element available."""
+        try:
+            from uiautomation import GetFocusedControl
+            focused = GetFocusedControl()
+            return focused is not None
+        except:
+            return False
+
     def _should_use_precise_detection(self, query: str, action_name: str = None) -> str:
         """
         Determine if we should use precise detection for a specific application.
@@ -174,14 +194,6 @@ class Agent:
         else:
             self.console.print(f"[bold blue]{status}[/bold blue]")
             
-        # Update loader if it's visible
-        if self.loader_manager.is_loader_visible():
-            loader_status = f"{status}"
-            if action_name:
-                loader_status += f" - {action_name}"
-            if details:
-                loader_status += f" ({details})"
-            self.loader_manager.update_loader(loader_status)
 
     @timed("reason")
     def reason(self,state:AgentState):
@@ -246,23 +258,33 @@ class Agent:
         # Show status update before action
         self.show_status("Executing", name, f"Step {steps}/{max_steps}")
         
-        # Update loader progress
-        progress = int((steps / max_steps) * 100)
-        self.update_loader_progress(progress, f"Step {steps}/{max_steps} - {name}")
         
-        # Only refresh desktop state before coordinate-based actions if it's stale
+        # Use adaptive detection for coordinate-based actions
         if name in ['Click Tool', 'Type Tool', 'Scroll Tool', 'Drag Tool', 'Move Tool']:
             # Use precise detection for specific applications
             target_app = self._should_use_precise_detection(str(params))
             
-            # Only refresh if we don't have recent desktop state
+            # Determine if we need to refresh based on action type and timing
             import time
             current_time = time.time()
-            if (not hasattr(self.desktop, '_last_state_time') or 
-                current_time - getattr(self.desktop, '_last_state_time', 0) > 1.5):
-                self.desktop.get_state(use_vision=self.use_vision, target_app=target_app)
+            query = state.get('input', '')
+            
+            # Smart refresh logic based on action type
+            needs_refresh = self._should_refresh_desktop_state(name, query, current_time)
+            
+            if needs_refresh:
+                # Use adaptive detection for optimal performance
+                self.desktop.get_adaptive_state(
+                    query=query,
+                    use_vision=self.use_vision, 
+                    target_app=target_app,
+                    force_refresh=True
+                )
                 self.desktop._last_state_time = current_time
-                self.show_status("Refreshing", "Desktop State", "Getting updated coordinates")
+                self.show_status("Refreshing", "Desktop State", "Getting adaptive element detection")
+            else:
+                # Use cached state for faster execution
+                self.show_status("Using", "Cached State", "Skipping refresh for speed")
         
         logger.info(colored(f"Action: {name}({', '.join(f'{k}={v}' for k, v in params.items())})",color='blue',attrs=['bold']))
         tool_result = self.registry.execute(tool_name=name, desktop=self.desktop, **params)
@@ -396,8 +418,6 @@ Convert the raw answer above into a natural, conversational response:"""
         # Show initial status
         self.show_status("Starting", "Task Analysis", f"Processing: '{query[:50]}{'...' if len(query) > 50 else ''}'")
         
-        # Start the loader
-        self.loader_manager.start_loader(f"Starting task: {query[:50]}{'...' if len(query) > 50 else ''}")
         
         # Reset current task steps for memory tracking
         self.current_task_steps = []
@@ -410,8 +430,8 @@ Convert the raw answer above into a natural, conversational response:"""
         # Parallel execution of independent operations for faster startup
         from concurrent.futures import ThreadPoolExecutor
         with ThreadPoolExecutor(max_workers=3) as executor:
-            # Submit parallel tasks
-            desktop_future = executor.submit(self.desktop.get_state, self.use_vision)
+            # Submit parallel tasks - use adaptive detection for optimal initial state
+            desktop_future = executor.submit(self.desktop.get_adaptive_state, None, query, self.use_vision)
             language_future = executor.submit(self.desktop.get_default_language)
             tools_future = executor.submit(self.registry.get_tools_prompt)
             
@@ -480,8 +500,6 @@ Convert the raw answer above into a natural, conversational response:"""
                 'output':None,
                 'error':f"Error: {error}"
             }
-            # Stop loader on error
-            self.loader_manager.stop_loader()
         
         # Add to conversation history if enabled
         if self.enable_conversation:
@@ -507,8 +525,6 @@ Convert the raw answer above into a natural, conversational response:"""
             
             self.save_successful_task(query, self.current_task_steps, tags)
         
-        # Stop the loader
-        self.loader_manager.stop_loader()
         
         return AgentResult(content=response['output'], error=response['error'])
 
