@@ -77,7 +77,7 @@ class Desktop:
     
     def is_app_running(self,name:str)->bool:
         apps=self.get_apps()
-        return process.extractOne(name,apps,score_cutoff=60) is not None
+        return process.extractOne(name,apps,score_cutoff=45) is not None
     
     def execute_command(self,command:str)->tuple[str,int]:
         try:

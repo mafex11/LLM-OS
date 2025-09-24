@@ -255,3 +255,28 @@ NoneType: None
 2025-09-18 14:10:46.030 - RealTimeSTT: realtimestt - INFO - State changed from 'transcribing' to 'inactive'
 2025-09-18 14:10:46.065 - RealTimeSTT: realtimestt - DEBUG - Model base completed transcription in 1.38 seconds
 2025-09-18 14:12:22.992 - RealTimeSTT: realtimestt - INFO - recording stopped
+2025-09-24 10:32:28.414 - RealTimeSTT: realtimestt - INFO - Starting RealTimeSTT
+2025-09-24 10:32:28.441 - RealTimeSTT: realtimestt - INFO - Initializing audio recording (creating pyAudio input stream, sample rate: 16000 buffer size: 512
+2025-09-24 10:32:28.465 - RealTimeSTT: realtimestt - INFO - Initializing WebRTC voice with Sensitivity 3
+2025-09-24 10:32:28.465 - RealTimeSTT: realtimestt - DEBUG - WebRTC VAD voice activity detection engine initialized successfully
+2025-09-24 10:32:57.808 - RealTimeSTT: realtimestt - DEBUG - Silero VAD voice activity detection engine initialized successfully
+2025-09-24 10:32:57.809 - RealTimeSTT: realtimestt - WARNING - Audio queue size exceeds latency limit. Current size: 485. Discarding old audio chunks.
+2025-09-24 10:32:57.810 - RealTimeSTT: realtimestt - DEBUG - Starting realtime worker
+2025-09-24 10:32:57.810 - RealTimeSTT: realtimestt - DEBUG - Waiting for main transcription model to start
+2025-09-24 10:35:07.520 - RealTimeSTT: realtimestt - DEBUG - Main transcription model ready
+2025-09-24 10:35:07.521 - RealTimeSTT: realtimestt - DEBUG - RealtimeSTT initialization completed successfully
+2025-09-24 10:35:07.524 - RealTimeSTT: realtimestt - INFO - Setting listen time
+2025-09-24 10:35:07.524 - RealTimeSTT: realtimestt - INFO - State changed from 'inactive' to 'listening'
+2025-09-24 10:35:11.650 - RealTimeSTT: realtimestt - DEBUG - Waiting for recording start
+2025-09-24 10:35:11.931 - RealTimeSTT: realtimestt - INFO - voice activity detected
+2025-09-24 10:35:11.931 - RealTimeSTT: realtimestt - INFO - recording started
+2025-09-24 10:35:11.931 - RealTimeSTT: realtimestt - INFO - State changed from 'listening' to 'recording'
+2025-09-24 10:35:11.931 - RealTimeSTT: realtimestt - DEBUG - Waiting for recording stop
+2025-09-24 10:35:45.416 - RealTimeSTT: realtimestt - INFO - recording stopped
+2025-09-24 10:35:45.424 - RealTimeSTT: realtimestt - DEBUG - No samples removed, final audio length: 552448
+2025-09-24 10:35:45.424 - RealTimeSTT: realtimestt - INFO - State changed from 'recording' to 'inactive'
+2025-09-24 10:35:45.612 - RealTimeSTT: realtimestt - DEBUG - Finishing recording thread
+2025-09-24 10:35:45.629 - RealTimeSTT: realtimestt - DEBUG - Terminating reader process
+2025-09-24 10:35:55.636 - RealTimeSTT: realtimestt - WARNING - Reader process did not terminate in time. Terminating forcefully.
+2025-09-24 10:35:55.637 - RealTimeSTT: realtimestt - DEBUG - Terminating transcription process
+2025-09-24 10:35:56.420 - RealTimeSTT: realtimestt - DEBUG - Finishing realtime thread

@@ -28,7 +28,7 @@ def launch_tool(name: str,desktop:Desktop=None) -> str:
         # Check if this was a switch to existing app or a new launch
         if "already running" in response.lower():
             # App was already running and we switched to it
-            pg.sleep(1.0)  # Brief wait for switch to complete
+            pg.sleep(0.5)  # Brief wait for switch to complete
             desktop.get_state(use_vision=False)
             return f'{name.title()} was already running. Switched to existing window. Desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions.'
         else:
@@ -36,10 +36,10 @@ def launch_tool(name: str,desktop:Desktop=None) -> str:
             consecutive_waits=3
             for _ in range(consecutive_waits):
                 if not desktop.is_app_running(name):
-                    pg.sleep(1.25)
+                    pg.sleep(1)
                 else:
                     # Wait a bit more for the app to fully load and render
-                    pg.sleep(2.0)
+                    pg.sleep(1)
                     # Refresh desktop state to get updated coordinates
                     desktop.get_state(use_vision=False)
                     return f'{name.title()} launched and desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions.'
