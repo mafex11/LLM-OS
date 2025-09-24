@@ -105,8 +105,399 @@
       }
     ],
     "success_count": 1,
-    "last_used": "2025-09-24T10:31:33.026675",
+    "last_used": "2025-09-24T14:02:21.485159",
     "created_at": "2025-09-24T10:31:33.026688",
+    "tags": []
+  },
+  "208385dbdbc4": {
+    "query_pattern": "open private firefox tab and search instagram and in usename enter saransrini and password saran12",
+    "solution_steps": [
+      {
+        "action": "Launch Tool",
+        "params": {
+          "name": "firefox"
+        },
+        "result": "Firefox launched and desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions."
+      },
+      {
+        "action": "Shortcut Tool",
+        "params": {
+          "shortcut": [
+            "ctrl",
+            "shift",
+            "p"
+          ]
+        },
+        "result": "Pressed ctrl+shift+p."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            955,
+            47
+          ],
+          "text": "instagram.com",
+          "clear": "true",
+          "press_enter": "true"
+        },
+        "result": "Typed instagram.com on Navigation Element with ControlType ToolBarControl at (955,47)."
+      },
+      {
+        "action": "Wait Tool",
+        "params": {
+          "duration": 5
+        },
+        "result": "Waited for 5 seconds."
+      },
+      {
+        "action": "Key Tool",
+        "params": {
+          "key": "f5"
+        },
+        "result": "Pressed the key f5."
+      },
+      {
+        "action": "Shortcut Tool",
+        "params": {
+          "shortcut": [
+            "ctrl",
+            "w"
+          ]
+        },
+        "result": "Pressed ctrl+w."
+      },
+      {
+        "action": "Shortcut Tool",
+        "params": {
+          "shortcut": [
+            "ctrl",
+            "shift",
+            "p"
+          ]
+        },
+        "result": "Pressed ctrl+shift+p."
+      },
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Mozilla Firefox Private Browsing"
+        },
+        "result": "Switched to Mozilla Firefox Private Browsing window."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            955,
+            47
+          ],
+          "text": "instagram.com",
+          "clear": "true",
+          "press_enter": "true"
+        },
+        "result": "Typed instagram.com on Navigation Element with ControlType ToolBarControl at (955,47)."
+      },
+      {
+        "action": "Wait Tool",
+        "params": {
+          "duration": 5
+        },
+        "result": "Waited for 5 seconds."
+      },
+      {
+        "action": "Key Tool",
+        "params": {
+          "key": "f5"
+        },
+        "result": "Pressed the key f5."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            955,
+            47
+          ],
+          "text": "Instagram",
+          "clear": "true",
+          "press_enter": "true"
+        },
+        "result": "Typed Instagram on Navigation Element with ControlType ToolBarControl at (955,47)."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-24T14:16:51.162463",
+    "created_at": "2025-09-24T14:08:36.050914",
+    "tags": []
+  },
+  "3d3ce9cfddf5": {
+    "query_pattern": "open private firefox tab and search instagram and in usename enter saransrini and password saran12and login using the given username and password",
+    "solution_steps": [
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Mozilla Firefox"
+        },
+        "result": "Switched to Mozilla Firefox window."
+      },
+      {
+        "action": "Shortcut Tool",
+        "params": {
+          "shortcut": [
+            "ctrl",
+            "shift",
+            "p"
+          ]
+        },
+        "result": "Pressed ctrl+shift+p."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            971,
+            47
+          ],
+          "button": "left",
+          "clicks": 1
+        },
+        "result": "Single left Clicked on Navigation Element with ControlType ToolBarControl at (971,47)."
+      },
+      {
+        "action": "Shortcut Tool",
+        "params": {
+          "shortcut": [
+            "ctrl",
+            "l"
+          ]
+        },
+        "result": "Pressed ctrl+l."
+      },
+      {
+        "action": "Wait Tool",
+        "params": {
+          "duration": 3
+        },
+        "result": "Waited for 3 seconds."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            960,
+            540
+          ],
+          "text": "Instagram",
+          "clear": "true",
+          "press_enter": "true"
+        },
+        "result": "Typed Instagram on Mozilla Firefox Element with ControlType WindowControl at (960,540)."
+      },
+      {
+        "action": "Scrape Tool",
+        "params": {
+          "url": "https://www.google.com"
+        },
+        "result": "Scraped the contents of the entire webpage:\nGoogle\n\n**Search** [Images](https://www.google.com/imghp?hl=en&tab=wi) [Maps](https://maps.google.co.in/maps?hl=en&tab=wl) [Play](https://play.google.com/?hl=en&tab=w8) [YouTube](https://www.youtube.com/?tab=w1) [News](https://news.google.com/?tab=wn) [Gmail](https://mail.google.com/mail/?tab=wm) [Drive](https://drive.google.com/?tab=wo) [More »](https://www.google.co.in/intl/en/about/products?tab=wh)\n\n[Web History](http://www.google.co.in/history/optout?hl=en) | [Settings](/preferences?hl=en) | [Sign in](https://accounts.google.com/ServiceLogin?hl=en&passive=true&continue=https://www.google.com/&ec=GAZAAQ)\n\n  \n\n![Google](/images/branding/googlelogo/1x/googlelogo_white_background_color_272x92dp.png)\n\n|  |  |  |\n| --- | --- | --- |\n|  |  | [Advanced search](/advanced_search?hl=en-IN&authuser=0) |\n\nGoogle offered in: [हिन्दी](https://www.google.com/setprefs?sig=0_zbZyJn6lUOPhO_aaly8pnYxZFMc%3D&hl=hi&source=homepage&sa=X&ved=0ahUKEwiosKn___CPAxWFHbkGHadRPZMQ2ZgBCAY) [বাংলা](https://www.google.com/setprefs?sig=0_zbZyJn6lUOPhO_aaly8pnYxZFMc%3D&hl=bn&source=homepage&sa=X&ved=0ahUKEwiosKn___CPAxWFHbkGHadRPZMQ2ZgBCAc) [తెలుగు](https://www.google.com/setprefs?sig=0_zbZyJn6lUOPhO_aaly8pnYxZFMc%3D&hl=te&source=homepage&sa=X&ved=0ahUKEwiosKn___CPAxWFHbkGHadRPZMQ2ZgBCAg) [मराठी](https://www.google.com/setprefs?sig=0_zbZyJn6lUOPhO_aaly8pnYxZFMc%3D&hl=mr&source=homepage&sa=X&ved=0ahUKEwiosKn___CPAxWFHbkGHadRPZMQ2ZgBCAk) [தமிழ்](https://www.google.com/setprefs?sig=0_zbZyJn6lUOPhO_aaly8pnYxZFMc%3D&hl=ta&source=homepage&sa=X&ved=0ahUKEwiosKn___CPAxWFHbkGHadRPZMQ2ZgBCAo) [ગુજરાતી](https://www.google.com/setprefs?sig=0_zbZyJn6lUOPhO_aaly8pnYxZFMc%3D&hl=gu&source=homepage&sa=X&ved=0ahUKEwiosKn___CPAxWFHbkGHadRPZMQ2ZgBCAs) [ಕನ್ನಡ](https://www.google.com/setprefs?sig=0_zbZyJn6lUOPhO_aaly8pnYxZFMc%3D&hl=kn&source=homepage&sa=X&ved=0ahUKEwiosKn___CPAxWFHbkGHadRPZMQ2ZgBCAw) [മലയാളം](https://www.google.com/setprefs?sig=0_zbZyJn6lUOPhO_aaly8pnYxZFMc%3D&hl=ml&source=homepage&sa=X&ved=0ahUKEwiosKn___CPAxWFHbkGHadRPZMQ2ZgBCA0) [ਪੰਜਾਬੀ](https://www.google.com/setprefs?sig=0_zbZyJn6lUOPhO_aaly8pnYxZFMc%3D&hl=pa&source=homepage&sa=X&ved=0ahUKEwiosKn___CPAxWFHbkGHadRPZMQ2ZgBCA4)\n\n[Advertising](/intl/en/ads/)[Business Solutions](http://www.google.co.in/services/)[About Google](/intl/en/about.html)[Google.co.in](https://www.google.com/setprefdomain?prefdom=IN&prev=https://www.google.co.in/&sig=K_IYA-aLwnlOU8cawp0194uOVOIrw%3D)\n\n© 2025 - [Privacy](/intl/en/policies/privacy/) - [Terms](/intl/en/policies/terms/)"
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-24T14:10:12.234047",
+    "created_at": "2025-09-24T14:10:12.234055",
+    "tags": []
+  },
+  "a6105c0a611b": {
+    "query_pattern": "yes",
+    "solution_steps": [
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Mozilla Firefox"
+        },
+        "result": "Switched to Mozilla Firefox window."
+      },
+      {
+        "action": "Shortcut Tool",
+        "params": {
+          "shortcut": [
+            "ctrl",
+            "t"
+          ]
+        },
+        "result": "Pressed ctrl+t."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            950,
+            45
+          ],
+          "text": "instagram.com",
+          "clear": "true"
+        },
+        "result": "Typed instagram.com on Navigation Element with ControlType ToolBarControl at (950,45)."
+      },
+      {
+        "action": "Key Tool",
+        "params": {
+          "key": "enter"
+        },
+        "result": "Pressed the key enter."
+      },
+      {
+        "action": "Wait Tool",
+        "params": {
+          "duration": 5
+        },
+        "result": "Waited for 5 seconds."
+      },
+      {
+        "action": "Shortcut Tool",
+        "params": {
+          "shortcut": [
+            "ctrl",
+            "r"
+          ]
+        },
+        "result": "Pressed ctrl+r."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            950,
+            45
+          ],
+          "text": "instagram.com",
+          "clear": "true"
+        },
+        "result": "Typed instagram.com on Navigation Element with ControlType ToolBarControl at (950,45)."
+      },
+      {
+        "action": "Key Tool",
+        "params": {
+          "key": "enter"
+        },
+        "result": "Pressed the key enter."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            950,
+            45
+          ],
+          "text": "Instagram",
+          "clear": "true"
+        },
+        "result": "Typed Instagram on Navigation Element with ControlType ToolBarControl at (950,45)."
+      },
+      {
+        "action": "Key Tool",
+        "params": {
+          "key": "enter"
+        },
+        "result": "Pressed the key enter."
+      },
+      {
+        "action": "Scrape Tool",
+        "params": {
+          "url": "https://www.google.com/search?q=Instagram"
+        },
+        "result": "Scraped the contents of the entire webpage:\nGoogle Search\n\nPlease click [here](/httpservice/retry/enablejs?sei=zq7TaPWrH8jb5OUPw4a0sQM) if you are not redirected within a few seconds.\n\nIf you're having trouble accessing Google Search, please [click here](/search?q=Instagram&sca_esv=9349b9a2334e1130&ie=UTF-8&emsg=SG_REL&sei=zq7TaPWrH8jb5OUPw4a0sQM), or send [feedback](https://support.google.com/websearch)."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-24T14:11:57.270526",
+    "created_at": "2025-09-24T14:11:57.270533",
+    "tags": []
+  },
+  "af8fb4209cd9": {
+    "query_pattern": "open firefox and open a instagram and go to reels tab and scroll reels for 4 minutes",
+    "solution_steps": [
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Firefox"
+        },
+        "result": "Switched to Firefox window."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            600,
+            50
+          ],
+          "text": "instagram.com",
+          "clear": "true",
+          "press_enter": "true"
+        },
+        "result": "Typed instagram.com on Search with Google or enter address Element with ControlType EditControl at (600,50)."
+      },
+      {
+        "action": "Wait Tool",
+        "params": {
+          "duration": 5
+        },
+        "result": "Waited for 5 seconds."
+      },
+      {
+        "action": "Shortcut Tool",
+        "params": {
+          "shortcut": [
+            "ctrl",
+            "r"
+          ]
+        },
+        "result": "Pressed ctrl+r."
+      },
+      {
+        "action": "Shortcut Tool",
+        "params": {
+          "shortcut": [
+            "ctrl",
+            "w"
+          ]
+        },
+        "result": "Pressed ctrl+w."
+      },
+      {
+        "action": "Shortcut Tool",
+        "params": {
+          "shortcut": [
+            "ctrl",
+            "t"
+          ]
+        },
+        "result": "Pressed ctrl+t."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            600,
+            50
+          ],
+          "text": "instagram.com",
+          "clear": "true",
+          "press_enter": "true"
+        },
+        "result": "Typed instagram.com on Search with Google or enter address Element with ControlType EditControl at (600,50)."
+      },
+      {
+        "action": "Wait Tool",
+        "params": {
+          "duration": 5
+        },
+        "result": "Waited for 5 seconds."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-09-24T14:14:31.183263",
+    "created_at": "2025-09-24T14:14:31.183272",
     "tags": []
   }
 }
