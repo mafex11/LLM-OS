@@ -3,6 +3,23 @@
     "query_pattern": "open calculator and calculate 2+2",
     "solution_steps": [
       {
+        "action": "Launch Tool",
+        "params": {
+          "name": "calculator"
+        },
+        "result": "Calculator launched and desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            78,
+            440
+          ]
+        },
+        "result": "Single left Clicked on  Element with ControlType GroupControl at (78,440)."
+      },
+      {
         "action": "Switch Tool",
         "params": {
           "name": "Calculator"
@@ -13,53 +30,45 @@
         "action": "Click Tool",
         "params": {
           "loc": [
-            834,
-            645
-          ],
-          "button": "left",
-          "clicks": 1
+            2234,
+            930
+          ]
         },
-        "result": "Single left Clicked on Two Element with ControlType ButtonControl at (834,645)."
+        "result": "Single left Clicked on Two Element with ControlType ButtonControl at (2234,930)."
       },
       {
         "action": "Click Tool",
         "params": {
           "loc": [
-            979,
-            653
-          ],
-          "button": "left",
-          "clicks": 1
+            2372,
+            933
+          ]
         },
-        "result": "Single left Clicked on Plus Element with ControlType ButtonControl at (979,653)."
+        "result": "Single left Clicked on Plus Element with ControlType ButtonControl at (2372,933)."
       },
       {
         "action": "Click Tool",
         "params": {
           "loc": [
-            819,
-            653
-          ],
-          "button": "left",
-          "clicks": 1
+            2241,
+            932
+          ]
         },
-        "result": "Single left Clicked on Two Element with ControlType ButtonControl at (819,653)."
+        "result": "Single left Clicked on Two Element with ControlType ButtonControl at (2241,932)."
       },
       {
         "action": "Click Tool",
         "params": {
           "loc": [
-            984,
-            706
-          ],
-          "button": "left",
-          "clicks": 1
+            2361,
+            973
+          ]
         },
-        "result": "Single left Clicked on Equals Element with ControlType ButtonControl at (984,706)."
+        "result": "Single left Clicked on Equals Element with ControlType ButtonControl at (2361,973)."
       }
     ],
-    "success_count": 2,
-    "last_used": "2025-09-24T12:43:56.452498",
+    "success_count": 4,
+    "last_used": "2025-09-24T22:06:00.345245",
     "created_at": "2025-09-24T10:29:23.510803",
     "tags": []
   },

@@ -23,6 +23,7 @@ from typing import Literal
 import logging
 import sys
 import time
+import ctypes
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -445,6 +446,11 @@ Convert the raw answer above into a natural, conversational response:"""
             'previous_observation':None
         }
         try:
+            # Ensure COM initialized in this thread (Agent graph may use threads internally)
+            try:
+                ctypes.windll.ole32.CoInitializeEx(0, 2)
+            except Exception:
+                pass
             with self.desktop.auto_minimize():
                 response=self.graph.invoke(state,config={'recursion_limit':self.max_steps*10})         
         except Exception as error:
