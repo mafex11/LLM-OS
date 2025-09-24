@@ -157,8 +157,6 @@ def main():
     # Store running programs in agent for context
     agent.running_programs = running_programs
     
-    # Enable loader by default (can be disabled with 'loader off' command)
-    agent.set_loader_enabled(True)
     
     # Pre-warm the system for faster first response
     print("Pre-warming system for faster response...")
@@ -174,9 +172,9 @@ def main():
     print("  - Type your query to interact with the agent")
     print("  - Type 'voice' to enable voice input mode")
     print("  - Type 'clear' to clear conversation history")
-    print("  - Type 'loader on/off' to enable/disable visual loader")
-    print("  - Type 'speed on/off' to enable/disable speed optimizations")
-    print("  - Type 'perf' to show performance statistics")
+    # print("  - Type 'loader on/off' to enable/disable visual loader")
+    # print("  - Type 'speed on/off' to enable/disable speed optimizations")
+    # print("  - Type 'perf' to show performance statistics")
     print("  - Type 'quit', 'exit', or 'q' to exit")
     print("  - Type 'help' to show this help message")
     print("  - Type 'programs' to refresh running programs list")
@@ -196,14 +194,6 @@ def main():
             elif query.lower() == 'clear':
                 agent.clear_conversation()
                 print("Conversation history cleared!")
-                continue
-            elif query.lower() == 'loader on':
-                agent.set_loader_enabled(True)
-                print("Visual loader enabled!")
-                continue
-            elif query.lower() == 'loader off':
-                agent.set_loader_enabled(False)
-                print("Visual loader disabled!")
                 continue
             elif query.lower() == 'speed on':
                 agent.desktop.cache_timeout = 1.0  # More aggressive caching
@@ -239,7 +229,6 @@ def main():
                 print("• 'clear memories' - Clear all stored memories")
                 print("\nSystem Commands:")
                 print("• 'programs' - Refresh running programs list")
-                print("• 'loader on/off' - Enable/disable visual loader overlay")
                 continue
             elif query.lower() == 'programs':
                 print("Refreshing running programs...")

@@ -13,7 +13,6 @@ from live_inspect.watch_cursor import WatchCursor
 from langgraph.graph import START,END,StateGraph
 from windows_use.agent.views import AgentResult
 from windows_use.desktop.service import Desktop
-from windows_use.desktop.loader import LoaderManager
 from windows_use.agent.state import AgentState
 from langchain_core.tools import BaseTool
 from rich.markdown import Markdown
@@ -23,6 +22,7 @@ from textwrap import shorten
 from typing import Literal
 import logging
 import sys
+import time
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -76,8 +76,6 @@ class Agent:
         # Memory management
         self.memory_manager = MemoryManager()
         self.current_task_steps = []  # Track steps for current task
-        # Loader management
-        self.loader_manager = LoaderManager()
         # Performance monitoring
         self.performance_monitor = PerformanceMonitor()
 
@@ -86,16 +84,6 @@ class Agent:
         self.conversation_history = []
         self.system_message = None
         
-    def set_loader_enabled(self, enabled: bool):
-        """Enable or disable the visual loader"""
-        self.loader_manager.set_enabled(enabled)
-        
-    def update_loader_progress(self, progress: int, status: str = None):
-        """Update loader progress and status"""
-        if status:
-            self.loader_manager.update_loader(status, progress)
-        else:
-            self.loader_manager.update_loader(f"Progress: {progress}%", progress)
     
     def _should_use_precise_detection(self, query: str, action_name: str = None) -> str:
         """
@@ -174,14 +162,6 @@ class Agent:
         else:
             self.console.print(f"[bold blue]{status}[/bold blue]")
             
-        # Update loader if it's visible
-        if self.loader_manager.is_loader_visible():
-            loader_status = f"{status}"
-            if action_name:
-                loader_status += f" - {action_name}"
-            if details:
-                loader_status += f" ({details})"
-            self.loader_manager.update_loader(loader_status)
 
     @timed("reason")
     def reason(self,state:AgentState):
@@ -197,7 +177,6 @@ class Agent:
             previous_observation = state.get('previous_observation', '')
             if 'launched and desktop state refreshed' in previous_observation:
                 # Check if desktop state is recent enough
-                import time
                 current_time = time.time()
                 if (not hasattr(self.desktop, '_last_state_time') or 
                     current_time - getattr(self.desktop, '_last_state_time', 0) > 1.0):
@@ -246,9 +225,6 @@ class Agent:
         # Show status update before action
         self.show_status("Executing", name, f"Step {steps}/{max_steps}")
         
-        # Update loader progress
-        progress = int((steps / max_steps) * 100)
-        self.update_loader_progress(progress, f"Step {steps}/{max_steps} - {name}")
         
         # Only refresh desktop state before coordinate-based actions if it's stale
         if name in ['Click Tool', 'Type Tool', 'Scroll Tool', 'Drag Tool', 'Move Tool']:
@@ -256,7 +232,6 @@ class Agent:
             target_app = self._should_use_precise_detection(str(params))
             
             # Only refresh if we don't have recent desktop state
-            import time
             current_time = time.time()
             if (not hasattr(self.desktop, '_last_state_time') or 
                 current_time - getattr(self.desktop, '_last_state_time', 0) > 1.5):
@@ -291,7 +266,6 @@ class Agent:
         
         logger.info(colored(f"Observation: {shorten(observation,500,placeholder='...')}",color='green',attrs=['bold']))
         # Only get fresh desktop state if we don't have recent state
-        import time
         current_time = time.time()
         if (not hasattr(self.desktop, '_last_state_time') or 
             current_time - getattr(self.desktop, '_last_state_time', 0) > 1.0):
@@ -396,8 +370,6 @@ Convert the raw answer above into a natural, conversational response:"""
         # Show initial status
         self.show_status("Starting", "Task Analysis", f"Processing: '{query[:50]}{'...' if len(query) > 50 else ''}'")
         
-        # Start the loader
-        self.loader_manager.start_loader(f"Starting task: {query[:50]}{'...' if len(query) > 50 else ''}")
         
         # Reset current task steps for memory tracking
         self.current_task_steps = []
@@ -480,8 +452,6 @@ Convert the raw answer above into a natural, conversational response:"""
                 'output':None,
                 'error':f"Error: {error}"
             }
-            # Stop loader on error
-            self.loader_manager.stop_loader()
         
         # Add to conversation history if enabled
         if self.enable_conversation:
@@ -507,8 +477,6 @@ Convert the raw answer above into a natural, conversational response:"""
             
             self.save_successful_task(query, self.current_task_steps, tags)
         
-        # Stop the loader
-        self.loader_manager.stop_loader()
         
         return AgentResult(content=response['output'], error=response['error'])
 

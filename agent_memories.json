@@ -1,91 +1,112 @@
 {
-  "b2bc5ccec379": {
-    "query_pattern": "what tabs are open in opera",
+  "c63db8be6b5f": {
+    "query_pattern": "open calculator and calculate 2+2",
     "solution_steps": [
       {
         "action": "Switch Tool",
         "params": {
-          "name": "Opera"
+          "name": "Calculator"
         },
-        "result": "Switched to Opera window."
+        "result": "Switched to Calculator window."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            834,
+            645
+          ],
+          "button": "left",
+          "clicks": 1
+        },
+        "result": "Single left Clicked on Two Element with ControlType ButtonControl at (834,645)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            979,
+            653
+          ],
+          "button": "left",
+          "clicks": 1
+        },
+        "result": "Single left Clicked on Plus Element with ControlType ButtonControl at (979,653)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            819,
+            653
+          ],
+          "button": "left",
+          "clicks": 1
+        },
+        "result": "Single left Clicked on Two Element with ControlType ButtonControl at (819,653)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            984,
+            706
+          ],
+          "button": "left",
+          "clicks": 1
+        },
+        "result": "Single left Clicked on Equals Element with ControlType ButtonControl at (984,706)."
       }
     ],
     "success_count": 2,
-    "last_used": "2025-09-19T22:44:38.744830",
-    "created_at": "2025-09-19T11:50:06.345692",
+    "last_used": "2025-09-24T12:43:56.452498",
+    "created_at": "2025-09-24T10:29:23.510803",
     "tags": []
   },
-  "7608a822bf9c": {
-    "query_pattern": "what is the specs of my pc?",
-    "solution_steps": [
-      {
-        "action": "Shell Tool",
-        "params": {
-          "command": "Get-ComputerInfo"
-        },
-        "result": "Status Code: 0\nResponse: \r\n\r\nWindowsBuildLabEx                                       : 26100.1.amd64fre.ge_release.240331-1435\r\nWindowsCurrentVersion                                   : 6.3\r\nWindowsEditionId                                        : Professional\r\nWindowsInstallationType                                 : Client\r\nWindowsInstallDateFromRegistry                          : 2/28/2025 7:33:03 AM\r\nWindowsProductId                                        : 00330-80000-00000-AA467\r\nWindowsProductName                                      : Windows 10 Pro\r\nWindowsRegisteredOrganization                           : \r\nWindowsRegisteredOwner                                  : esskayhd@outlook.com\r\nWindowsSystemRoot                                       : C:\\WINDOWS\r\nWindowsVersion                                          : 2009\r\nOSDisplayVersion                                        : 24H2\r\nBiosCharacteristics                                     : {7, 11, 12, 15...}\r\nBiosBIOSVersion                                         : {ALASKA - 1072009, 2.21, American Megatrends - 5000E}\r\nBiosBuildNumber                                         : \r\nBiosCaption                                             : 2.21\r\nBiosCodeSet                                             : \r\nBiosCurrentLanguage                                     : \r\nBiosDescription                                         : 2.21\r\nBiosEmbeddedControllerMajorVersion                      : 255\r\nBiosEmbeddedControllerMinorVersion                      : 255\r\nBiosFirmwareType                                        : Uefi\r\nBiosIdentificationCode                                  : \r\nBiosInstallableLanguages                                : \r\nBiosInstallDate                                         : \r\nBiosLanguageEdition                                     : \r\nBiosListOfLanguages                                     : \r\nBiosManufacturer                                        : American Megatrends Inc.\r\nBiosName                                                : 2.21\r\nBiosOtherTargetOS                                       : \r\nBiosPrimaryBIOS                                         : True\r\nBiosReleaseDate                                         : 6/10/2020 5:30:00 AM\r\nBiosSeralNumber                                         : To be filled by O.E.M.\r\nBiosSMBIOSBIOSVersion                                   : 2.21\r\nBiosSMBIOSMajorVersion                                  : 2\r\nBiosSMBIOSMinorVersion                                  : 8\r\nBiosSMBIOSPresent                                       : True\r\nBiosSoftwareElementState                                : Running\r\nBiosStatus                                              : OK\r\nBiosSystemBiosMajorVersion                              : 5\r\nBiosSystemBiosMinorVersion                              : 14\r\nBiosTargetOperatingSystem                               : 0\r\nBiosVersion                                             : ALASKA - 1072009\r\nCsAdminPasswordStatus                                   : Unknown\r\nCsAutomaticManagedPagefile                              : True\r\nCsAutomaticResetBootOption                              : True\r\nCsAutomaticResetCapability                              : True\r\nCsBootOptionOnLimit                                     : \r\nCsBootOptionOnWatchDog                                  : \r\nCsBootROMSupported                                      : True\r\nCsBootStatus                                            : {0, 0, 0, 0...}\r\nCsBootupState                                           : Normal boot\r\nCsCaption                                               : NZXTV2\r\nCsChassisBootupState                                    : Safe\r\nCsChassisSKUNumber                                      : To be filled by O.E.M.\r\nCsCurrentTimeZone                                       : 330\r\nCsDaylightInEffect                                      : \r\nCsDescription                                           : AT/AT COMPATIBLE\r\nCsDNSHostName                                           : NZXTv2\r\nCsDomain                                                : WORKGROUP\r\nCsDomainRole                                            : StandaloneWorkstation\r\nCsEnableDaylightSavingsTime                             : True\r\nCsFrontPanelResetStatus                                 : Unknown\r\nCsHypervisorPresent                                     : True\r\nCsInfraredSupported                                     : False\r\nCsInitialLoadInfo                                       : \r\nCsInstallDate                                           : \r\nCsKeyboardPasswordStatus                                : Unknown\r\nCsLastLoadInfo                                          : \r\nCsManufacturer                                          : Micro-Star International Co., Ltd.\r\nCsModel                                                 : MS-7B85\r\nCsName                                                  : NZXTV2\r\nCsNetworkAdapters                                       : {Ethernet, Wi-Fi, Bluetooth Network Connection}\r\nCsNetworkServerModeEnabled                              : True\r\nCsNumberOfLogicalProcessors                             : 12\r\nCsNumberOfProcessors                                    : 1\r\nCsProcessors                                            : {AMD Ryzen 7 2700 Eight-Core Processor          }\r\nCsOEMStringArray                                        : {To be filled by O.E.M.}\r\nCsPartOfDomain                                          : False\r\nCsPauseAfterReset                                       : -1\r\nCsPCSystemType                                          : Desktop\r\nCsPCSystemTypeEx                                        : Desktop\r\nCsPowerManagementCapabilities                           : \r\nCsPowerManagementSupported                              : \r\nCsPowerOnPasswordStatus                                 : Unknown\r\nCsPowerState                                            : Unknown\r\nCsPowerSupplyState                                      : Safe\r\nCsPrimaryOwnerContact                                   : \r\nCsPrimaryOwnerName                                      : esskayhd@outlook.com\r\nCsResetCapability                                       : Other\r\nCsResetCount                                            : -1\r\nCsResetLimit                                            : -1\r\nCsRoles                                                 : {LM_Workstation, LM_Server, NT}\r\nCsStatus                                                : OK\r\nCsSupportContactDescription                             : \r\nCsSystemFamily                                          : To be filled by O.E.M.\r\nCsSystemSKUNumber                                       : To be filled by O.E.M.\r\nCsSystemType                                            : x64-based PC\r\nCsThermalState                                          : Safe\r\nCsTotalPhysicalMemory                                   : 17119916032\r\nCsPhyicallyInstalledMemory                              : 16777216\r\nCsUserName                                              : NZXTv2\\esska\r\nCsWakeUpType                                            : PowerSwitch\r\nCsWorkgroup                                             : WORKGROUP\r\nOsName                                                  : Microsoft Windows 11 Pro\r\nOsType                                                  : WINNT\r\nOsOperatingSystemSKU                                    : 48\r\nOsVersion                                               : 10.0.26100\r\nOsCSDVersion                                            : \r\nOsBuildNumber                                           : 26100\r\nOsHotFixes                                              : {KB5064401, KB5048779, KB5050575, KB5065426...}\r\nOsBootDevice                                            : \\Device\\HarddiskVolume9\r\nOsSystemDevice                                          : \\Device\\HarddiskVolume11\r\nOsSystemDirectory                                       : C:\\WINDOWS\\system32\r\nOsSystemDrive                                           : C:\r\nOsWindowsDirectory                                      : C:\\WINDOWS\r\nOsCountryCode                                           : 1\r\nOsCurrentTimeZone                                       : 330\r\nOsLocaleID                                              : 0409\r\nOsLocale                                                : en-US\r\nOsLocalDateTime                                         : 9/19/2025 10:34:46 PM\r\nOsLastBootUpTime                                        : 9/15/2025 2:18:46 AM\r\nOsUptime                                                : 4.20:15:59.8138266\r\nOsBuildType                                             : Multiprocessor Free\r\nOsCodeSet                                               : 1252\r\nOsDataExecutionPreventionAvailable                      : True\r\nOsDataExecutionPrevention32BitApplications              : True\r\nOsDataExecutionPreventionDrivers                        : True\r\nOsDataExecutionPreventionSupportPolicy                  : OptIn\r\nOsDebug                                                 : False\r\nOsDistributed                                           : False\r\nOsEncryptionLevel                                       : 256\r\nOsForegroundApplicationBoost                            : Maximum\r\nOsTotalVisibleMemorySize                                : 16718668\r\nOsFreePhysicalMemory                                    : 3232812\r\nOsTotalVirtualMemorySize                                : 33495884\r\nOsFreeVirtualMemory                                     : 10029500\r\nOsInUseVirtualMemory                                    : 23466384\r\nOsTotalSwapSpaceSize                                    : \r\nOsSizeStoredInPagingFiles                               : 16777216\r\nOsFreeSpaceInPagingFiles                                : 15452104\r\nOsPagingFiles                                           : {C:\\pagefile.sys}\r\nOsHardwareAbstractionLayer                              : 10.0.26100.1\r\nOsInstallDate                                           : 2/28/2025 1:03:03 PM\r\nOsManufacturer                                          : Microsoft Corporation\r\nOsMaxNumberOfProcesses                                  : 4294967295\r\nOsMaxProcessMemorySize                                  : 137438953344\r\nOsMuiLanguages                                          : {en-US}\r\nOsNumberOfLicensedUsers                                 : \r\nOsNumberOfProcesses                                     : 302\r\nOsNumberOfUsers                                         : 2\r\nOsOrganization                                          : \r\nOsArchitecture                                          : 64-bit\r\nOsLanguage                                              : en-US\r\nOsProductSuites                                         : {TerminalServicesSingleSession}\r\nOsOtherTypeDescription                                  : \r\nOsPAEEnabled                                            : \r\nOsPortableOperatingSystem                               : False\r\nOsPrimary                                               : True\r\nOsProductType                                           : WorkStation\r\nOsRegisteredUser                                        : esskayhd@outlook.com\r\nOsSerialNumber                                          : 00330-80000-00000-AA467\r\nOsServicePackMajorVersion                               : 0\r\nOsServicePackMinorVersion                               : 0\r\nOsStatus                                                : OK\r\nOsSuites                                                : {TerminalServices, TerminalServicesSingleSession}\r\nOsServerLevel                                           : \r\nKeyboardLayout                                          : en-US\r\nTimeZone                                                : (UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi\r\nLogonServer                                             : \\\\NZXTV2\r\nPowerPlatformRole                                       : Desktop\r\nHyperVisorPresent                                       : True\r\nHyperVRequirementDataExecutionPreventionAvailable       : \r\nHyperVRequirementSecondLevelAddressTranslation          : \r\nHyperVRequirementVirtualizationFirmwareEnabled          : \r\nHyperVRequirementVMMonitorModeExtensions                : \r\nDeviceGuardSmartStatus                                  : Off\r\nDeviceGuardRequiredSecurityProperties                   : {0}\r\nDeviceGuardAvailableSecurityProperties                  : {BaseVirtualizationSupport, SecureBoot, DMAProtection, 5...}\r\nDeviceGuardSecurityServicesConfigured                   : {HypervisorEnforcedCodeIntegrity}\r\nDeviceGuardSecurityServicesRunning                      : {HypervisorEnforcedCodeIntegrity}\r\nDeviceGuardCodeIntegrityPolicyEnforcementStatus         : EnforcementMode\r\nDeviceGuardUserModeCodeIntegrityPolicyEnforcementStatus : Off\r\n\r\n\r\n\r\n"
-      }
-    ],
-    "success_count": 1,
-    "last_used": "2025-09-19T22:35:00.773689",
-    "created_at": "2025-09-19T22:35:00.773702",
-    "tags": []
-  },
-  "2717f80eceeb": {
-    "query_pattern": "what about the gpu?",
-    "solution_steps": [
-      {
-        "action": "Shell Tool",
-        "params": {
-          "command": "Get-WmiObject Win32_VideoController | Format-List Name, AdapterRAM, DriverVersion"
-        },
-        "result": "Status Code: 0\nResponse: \r\n\r\nName          : NVIDIA GeForce RTX 2060\r\nAdapterRAM    : 4293918720\r\nDriverVersion : 32.0.15.8115\r\n\r\n\r\n\r\n"
-      }
-    ],
-    "success_count": 1,
-    "last_used": "2025-09-19T22:35:41.865607",
-    "created_at": "2025-09-19T22:35:41.865622",
-    "tags": []
-  },
-  "5846357e25c6": {
-    "query_pattern": "what tabs are open on opera",
+  "4c1eb675967e": {
+    "query_pattern": "open firefox and open youtube",
     "solution_steps": [
       {
         "action": "Switch Tool",
         "params": {
-          "name": "Opera"
+          "name": "Firefox"
         },
-        "result": "Switched to Opera window."
-      }
-    ],
-    "success_count": 1,
-    "last_used": "2025-09-19T22:44:51.299474",
-    "created_at": "2025-09-19T22:44:51.299488",
-    "tags": []
-  },
-  "99f187c9ab1b": {
-    "query_pattern": "what about chrome",
-    "solution_steps": [
-      {
-        "action": "Switch Tool",
-        "params": {
-          "name": "mafex11/LLM-OS - Google Chrome"
-        },
-        "result": "Switched to Mafex11/Llm-Os - Google Chrome window."
+        "result": "Switched to Firefox window."
       },
       {
-        "action": "Switch Tool",
+        "action": "Click Tool",
         "params": {
-          "name": "python library for llm voice - Google Search - Opera"
+          "loc": [
+            1415,
+            22
+          ]
         },
-        "result": "Switched to Python Library For Llm Voice - Google Search - Opera window."
+        "result": "Single left Clicked on Open a new tab (Ctrl+T) Element with ControlType ButtonControl at (1415,22)."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            982,
+            64
+          ],
+          "text": "youtube.com",
+          "clear": "true",
+          "press_enter": "true"
+        },
+        "result": "Typed youtube.com on Search with Google or enter address Element with ControlType EditControl at (982,64)."
+      },
+      {
+        "action": "Wait Tool",
+        "params": {
+          "duration": 5
+        },
+        "result": "Waited for 5 seconds."
       }
     ],
     "success_count": 1,
-    "last_used": "2025-09-19T22:45:30.220485",
-    "created_at": "2025-09-19T22:45:30.220494",
-    "tags": [
-      "browser"
-    ]
+    "last_used": "2025-09-24T10:31:33.026675",
+    "created_at": "2025-09-24T10:31:33.026688",
+    "tags": []
   }
 }
