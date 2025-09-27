@@ -11,7 +11,7 @@ import requests
 
 cursor=SystemCursor()
 pg.FAILSAFE=False
-pg.PAUSE=1.0
+pg.PAUSE=0.1
 
 @tool('Done Tool',args_schema=Done)
 def done_tool(answer:str,desktop:Desktop=None):
@@ -28,7 +28,7 @@ def launch_tool(name: str,desktop:Desktop=None) -> str:
         # Check if this was a switch to existing app or a new launch
         if "already running" in response.lower():
             # App was already running and we switched to it
-            pg.sleep(0.5)  # Brief wait for switch to complete
+            pg.sleep(0.1)  # Brief wait for switch to complete
             desktop.get_state(use_vision=False)
             return f'{name.title()} was already running. Switched to existing window. Desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions.'
         else:
@@ -93,7 +93,7 @@ def click_tool(loc:tuple[int,int],button:Literal['left','right','middle']='left'
     
     # Move cursor to the target location
     cursor.move_to(loc)
-    pg.sleep(0.1)  # Small delay to ensure cursor movement completes
+    pg.sleep(0.1)  
     
     # Get the element under cursor and validate it's clickable
     control=desktop.get_element_under_cursor()

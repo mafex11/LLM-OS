@@ -63,7 +63,7 @@ class WindowsUseGUI:
         main_frame.rowconfigure(2, weight=1)
         
         # Title
-        title_label = ttk.Label(main_frame, text="🤖 Windows-Use Agent", 
+        title_label = ttk.Label(main_frame, text="LLM OS", 
                                font=('Arial', 16, 'bold'))
         title_label.grid(row=0, column=0, columnspan=3, pady=(0, 20))
         
