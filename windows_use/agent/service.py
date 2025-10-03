@@ -2,7 +2,6 @@ from windows_use.agent.tools.service import click_tool, type_tool, launch_tool, 
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from windows_use.agent.utils import extract_agent_data, image_message
 from langchain_core.language_models.chat_models import BaseChatModel
-# from windows_use.agent.ollama_client import OllamaChat
 from langchain_google_genai.chat_models import ChatGoogleGenerativeAI
 from windows_use.agent.registry.views import ToolResult
 from windows_use.agent.registry.service import Registry
@@ -65,7 +64,6 @@ class Agent:
         self.use_vision=use_vision
         self.enable_conversation=enable_conversation
         self.literal_mode=literal_mode
-        # self.llm = llm or OllamaChat(model="gemma3:latest")
         self.llm = llm or ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.7)
         self.watch_cursor = WatchCursor()
         self.desktop = Desktop()
@@ -106,6 +104,34 @@ class Agent:
             return 'browser'
         
         return None
+
+    def _find_control_type_for_coordinates(self, click_loc: tuple[int, int]) -> str:
+        """
+        Find the control_type for given coordinates from the current desktop state.
+        Returns the control_type or None if not found.
+        """
+        try:
+            if not self.desktop.desktop_state or not self.desktop.desktop_state.tree_state:
+                return None
+            
+            x, y = click_loc
+            tree_state = self.desktop.desktop_state.tree_state
+            
+            # Check interactive elements first
+            for element in tree_state.interactive_nodes:
+                bbox = element.bounding_box
+                if (bbox.left <= x <= bbox.right and bbox.top <= y <= bbox.bottom):
+                    return element.control_type
+            
+            # Check scrollable elements
+            for element in tree_state.scrollable_nodes:
+                bbox = element.bounding_box
+                if (bbox.left <= x <= bbox.right and bbox.top <= y <= bbox.bottom):
+                    return element.control_type
+            
+            return None
+        except Exception:
+            return None
 
     def get_conversation_summary(self) -> str:
         """Get a summary of the conversation history"""
@@ -240,6 +266,13 @@ class Agent:
                 self.desktop._last_state_time = current_time
                 self.show_status("Refreshing", "Desktop State", "Getting updated coordinates")
         
+        # OPTIMIZATION: For Click Tool and Type Tool, find control_type from desktop state
+        if name in ['Click Tool', 'Type Tool'] and 'loc' in params:
+            action_loc = params['loc']
+            control_type = self._find_control_type_for_coordinates(action_loc)
+            if control_type:
+                params['control_type'] = control_type
+        
         logger.info(colored(f"Action: {name}({', '.join(f'{k}={v}' for k, v in params.items())})",color='blue',attrs=['bold']))
         tool_result = self.registry.execute(tool_name=name, desktop=self.desktop, **params)
         observation=tool_result.content if tool_result.is_success else tool_result.error
@@ -278,28 +311,71 @@ class Agent:
         human_message=image_message(prompt=prompt,image=desktop_state.screenshot) if self.use_vision and desktop_state.screenshot else HumanMessage(content=prompt)
         return {**state,'agent_data':None,'messages':[ai_message, human_message],'previous_observation':observation}
 
+    def _should_use_conversational_processing(self, raw_answer: str, original_query: str) -> bool:
+        """
+        Determine if conversational processing is needed.
+        Skip for simple responses to improve performance.
+        """
+        # Skip conversational processing for simple responses
+        simple_patterns = [
+            'hi', 'hello', 'hey', 'how are you', 'what\'s up', 'good morning', 'good evening',
+            'thanks', 'thank you', 'bye', 'goodbye', 'see you'
+        ]
+        
+        # Check if query is a simple greeting/courtesy
+        query_lower = original_query.lower().strip()
+        if any(pattern in query_lower for pattern in simple_patterns):
+            return False
+        
+        # Check if answer is already conversational (contains natural language)
+        answer_lower = raw_answer.lower()
+        conversational_indicators = ['i\'ve', 'i\'m', 'you\'ve', 'you\'re', 'let me', 'i\'ll', 'i can']
+        if any(indicator in answer_lower for indicator in conversational_indicators):
+            return False
+        
+        # Check answer length - short answers don't need processing
+        if len(raw_answer) < 100:
+            return False
+        
+        # Check if answer contains technical data that might benefit from conversion
+        technical_indicators = ['status code:', 'coordinates:', 'file path:', 'process id:', 'error code:']
+        if any(indicator in answer_lower for indicator in technical_indicators):
+            return True
+        
+        # Default to no processing for better performance
+        return False
+
     def answer(self,state:AgentState):
         agent_data=state.get('agent_data')
         name = agent_data.action.name
         params = agent_data.action.params
         
-        # Show final answer status
-        self.show_status("Finalizing", name, "Preparing final response")
+        # OPTIMIZATION: Minimal status update
+        self.show_status("Finalizing", name, "Preparing response")
         
         tool_result = self.registry.execute(tool_name=name, desktop=None, **params)
         
-        # NEW: If this is a Done Tool, process the response conversationally
+        # OPTIMIZATION: Smart conversational processing only when needed
         if name == 'Done Tool':
             original_query = state.get('input', '')
-            conversational_response = self._make_conversational(tool_result.content, original_query)
-            tool_result.content = conversational_response
+            
+            # Only process if response would benefit from conversational conversion
+            if self._should_use_conversational_processing(tool_result.content, original_query):
+                try:
+                    conversational_response = self._make_conversational(tool_result.content, original_query)
+                    tool_result.content = conversational_response
+                except Exception as e:
+                    logger.warning(f"Conversational processing failed: {e}. Using original response.")
+                    # Keep original response if processing fails
         
         ai_message = AIMessage(content=Prompt.answer_prompt(agent_data=agent_data, tool_result=tool_result))
         
-        # Show completion
-        self.show_status("Done", "Task Complete", "All actions completed")
+        # OPTIMIZATION: Single completion status
+        self.show_status("Done", "Task Complete", "Response ready")
         
-        logger.info(colored(f"Final Answer: {tool_result.content}",color='cyan',attrs=['bold']))
+        # OPTIMIZATION: Remove duplicate logging - let the main loop handle output
+        # logger.info(colored(f"Final Answer: {tool_result.content}",color='cyan',attrs=['bold']))
+        
         return {**state,'agent_data':None,'messages':[ai_message],'previous_observation':None,'output':tool_result.content}
 
     def _make_conversational(self, raw_answer: str, original_query: str) -> str:

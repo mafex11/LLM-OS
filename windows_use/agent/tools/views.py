@@ -65,16 +65,3 @@ class Scrape(SharedBaseModel):
 
 class Human(SharedBaseModel):
     question:str=Field(...,description="The question to ask the user for clarification or permission.",examples=["The command failed. Would you like me to search for a solution on the web?"])
-
-class VoiceInput(SharedBaseModel):
-    duration:int=Field(...,description="Duration in seconds to listen for voice input.",examples=[5,10,15])
-    wake_word:str=Field(...,description="Wake word to activate voice input (e.g., 'hey windows use').",examples=["hey windows use","computer","assistant"])
-    mode:Literal['push_to_talk','continuous','wake_word']=Field(...,description="Voice input mode: push_to_talk (press key to talk), continuous (always listening), wake_word (listen for specific word).",examples=['wake_word'])
-
-class VoiceOutput(SharedBaseModel):
-    text:str=Field(...,description="Text to convert to speech.",examples=["Hello! I'm ready to help you with Windows automation."])
-    voice:Literal['default','male','female']=Field(description="Voice type for speech output.",default='default',examples=['default'])
-    rate:int=Field(description="Speech rate (words per minute).",default=200,examples=[150,200,250])
-
-class VoiceMode(SharedBaseModel):
-    mode:Literal['on','off','toggle']=Field(...,description="Enable, disable, or toggle voice interaction mode.",examples=['on'])

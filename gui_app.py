@@ -232,7 +232,7 @@ class WindowsUseGUI:
                     use_vision=False, 
                     enable_conversation=True, 
                     literal_mode=True, 
-                    max_steps=15
+                    max_steps=30
                 )
                 
                 # Store running programs in agent

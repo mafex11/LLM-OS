@@ -1,4 +1,4 @@
-from windows_use.agent.tools.views import Click, Type, Launch, Scroll, Drag, Move, Shortcut, Key, Wait, Scrape,Done, Clipboard, Shell, Switch, Resize, Human, VoiceInput, VoiceOutput, VoiceMode
+from windows_use.agent.tools.views import Click, Type, Launch, Scroll, Drag, Move, Shortcut, Key, Wait, Scrape,Done, Clipboard, Shell, Switch, Resize, Human
 from windows_use.desktop.service import Desktop
 from humancursor import SystemCursor
 from markdownify import markdownify
@@ -11,12 +11,123 @@ import requests
 
 cursor=SystemCursor()
 pg.FAILSAFE=False
-pg.PAUSE=0.1
+pg.PAUSE=0.01  # Reduced from 0.1 for better performance
+
+def get_optimal_click_delay(control_type: str) -> float:
+    """
+    Return optimal post-click delay based on control type.
+    
+    Most modern Windows apps respond instantly (<100ms).
+    Only legacy/complex controls need longer delays.
+    """
+    # No delay needed for most controls
+    instant_controls = {
+        'ButtonControl', 'CheckBoxControl', 'RadioButtonControl',
+        'TabItemControl', 'ListItemControl', 'MenuItemControl'
+    }
+    
+    # Minimal delay for input controls (keyboard focus)
+    fast_controls = {
+        'EditControl', 'ComboBoxControl', 'HyperlinkControl'
+    }
+    
+    # Longer delay for heavy operations
+    slow_controls = {
+        'MenuControl',  # Menu needs to render
+        'ApplicationControl'  # App launch/switch
+    }
+    
+    if control_type in instant_controls:
+        return 0.05  # 50ms - just for stability
+    elif control_type in fast_controls:
+        return 0.15  # 150ms - allow focus to settle
+    elif control_type in slow_controls:
+        return 0.3   # 300ms - allow rendering
+    else:
+        return 0.1   # 100ms - conservative default
+
+def get_optimal_typing_speed(text: str, control_type: str = None) -> float:
+    """
+    Return optimal typing interval based on text length and control type.
+    
+    Shorter intervals for automation, longer for human-like behavior when needed.
+    """
+    text_length = len(text)
+    
+    # For very short text (1-5 chars), use minimal interval
+    if text_length <= 5:
+        return 0.01  # 10ms - nearly instant
+    
+    # For medium text (6-20 chars), use fast interval  
+    elif text_length <= 20:
+        return 0.02  # 20ms - fast but stable
+    
+    # For long text (21+ chars), use moderate interval
+    elif text_length <= 50:
+        return 0.03  # 30ms - balance of speed and reliability
+    
+    # For very long text (51+ chars), use slower interval for stability
+    else:
+        return 0.05  # 50ms - slower but more reliable for long text
+
+def get_type_optimization_for_control(control_type: str) -> dict:
+    """
+    Return optimization settings for different control types.
+    """
+    optimizations = {
+        'EditControl': {
+            'typing_speed': 'fast',      # Regular text fields
+            'clear_method': 'select_all', # Ctrl+A then type
+            'enter_behavior': 'none'     # Don't press enter unless requested
+        },
+        'ComboBoxControl': {
+            'typing_speed': 'medium',    # Dropdowns may need time to respond
+            'clear_method': 'select_all',
+            'enter_behavior': 'none'
+        },
+        'PasswordControl': {
+            'typing_speed': 'slow',      # Password fields need more time
+            'clear_method': 'select_all',
+            'enter_behavior': 'auto'     # Auto-press enter for login forms
+        },
+        'SearchControl': {
+            'typing_speed': 'fast',
+            'clear_method': 'select_all', 
+            'enter_behavior': 'auto'     # Auto-press enter for search
+        }
+    }
+    
+    return optimizations.get(control_type, {
+        'typing_speed': 'medium',
+        'clear_method': 'select_all',
+        'enter_behavior': 'none'
+    })
 
 @tool('Done Tool',args_schema=Done)
 def done_tool(answer:str,desktop:Desktop=None):
     '''To indicate that the task is completed'''
     return answer
+
+def get_optimal_launch_delay(app_name: str) -> float:
+    """
+    Return optimal delay for app launch operations.
+    Faster polling for better responsiveness.
+    """
+    # Most apps load quickly, use shorter intervals
+    return 0.15  # 150ms - much faster than 1000ms
+
+def should_refresh_desktop_state(app_name: str, was_switch: bool) -> bool:
+    """
+    Determine if desktop state refresh is needed after launch.
+    Skip refresh for simple switches to improve speed.
+    """
+    # Always refresh for new launches (need updated coordinates)
+    if not was_switch:
+        return True
+    
+    # For switches, only refresh if it's a complex app that might change UI
+    complex_apps = {'chrome', 'firefox', 'edge', 'visual studio', 'photoshop', 'illustrator'}
+    return app_name.lower() in complex_apps
 
 @tool('Launch Tool',args_schema=Launch)
 def launch_tool(name: str,desktop:Desktop=None) -> str:
@@ -26,24 +137,35 @@ def launch_tool(name: str,desktop:Desktop=None) -> str:
         return f'Failed to launch {name.title()}. {response}'
     else:
         # Check if this was a switch to existing app or a new launch
-        if "already running" in response.lower():
+        was_switch = "already running" in response.lower()
+        
+        if was_switch:
             # App was already running and we switched to it
-            pg.sleep(0.1)  # Brief wait for switch to complete
-            desktop.get_state(use_vision=False)
-            return f'{name.title()} was already running. Switched to existing window. Desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions.'
+            pg.sleep(0.05)  # Reduced from 0.1s to 50ms
+            
+            # OPTIMIZATION: Conditional desktop refresh
+            if should_refresh_desktop_state(app_name, was_switch):
+                desktop.get_state(use_vision=False)
+                return f'{name.title()} was already running. Switched to existing window. Desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions.'
+            else:
+                return f'{name.title()} was already running. Switched to existing window. Ready for interaction.'
         else:
-            # New app was launched, wait for it to load
-            consecutive_waits=3
-            for _ in range(consecutive_waits):
-                if not desktop.is_app_running(name):
-                    pg.sleep(1)
-                else:
-                    # Wait a bit more for the app to fully load and render
-                    pg.sleep(1)
-                    # Refresh desktop state to get updated coordinates
+            # New app was launched, wait for it to load with optimized polling
+            max_wait_time = 3.0  # Maximum 3 seconds total
+            poll_interval = get_optimal_launch_delay(app_name)  # 150ms instead of 1000ms
+            max_polls = int(max_wait_time / poll_interval)  # ~20 polls instead of 3
+            
+            for attempt in range(max_polls):
+                if desktop.is_app_running(name):
+                    # OPTIMIZATION: Early exit when app is detected
+                    # Brief wait for app to stabilize, then refresh state
+                    pg.sleep(0.2)  # Reduced from 1s to 200ms
                     desktop.get_state(use_vision=False)
                     return f'{name.title()} launched and desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions.'
-            return f'Launching {name.title()} wait for it to come load.'
+                
+                pg.sleep(poll_interval)  # 150ms instead of 1000ms
+            
+            return f'Launching {name.title()}. App may still be loading - please wait a moment.'
 
 @tool('Shell Tool',args_schema=Shell)
 def shell_tool(command: str,desktop:Desktop=None) -> str:
@@ -82,7 +204,7 @@ def resize_tool(name: str,loc:tuple[int,int]=None,size:tuple[int,int]=None,deskt
     return response
 
 @tool('Click Tool',args_schema=Click)
-def click_tool(loc:tuple[int,int],button:Literal['left','right','middle']='left',clicks:int=1,desktop:Desktop=None)->str:
+def click_tool(loc:tuple[int,int],button:Literal['left','right','middle']='left',clicks:int=1,desktop:Desktop=None,control_type:str=None)->str:
     'Click on UI elements at specific coordinates. Supports left/right/middle mouse buttons and single/double/triple clicks.'
     x,y=loc
     
@@ -91,57 +213,74 @@ def click_tool(loc:tuple[int,int],button:Literal['left','right','middle']='left'
     if x < 0 or x >= screen_width or y < 0 or y >= screen_height:
         return f'Error: Coordinates ({x},{y}) are outside screen bounds ({screen_width}x{screen_height})'
     
-    # Move cursor to the target location
-    cursor.move_to(loc)
-    pg.sleep(0.1)  
+    # OPTIMIZATION: Direct click without cursor pre-positioning or redundant element detection
+    # Trust the coordinates from desktop.get_state() - they're already precise
+    pg.click(x=x, y=y, button=button, clicks=clicks)
     
-    # Get the element under cursor and validate it's clickable
-    control=desktop.get_element_under_cursor()
-    parent=control.GetParentControl()
+    # OPTIMIZATION: Adaptive delay based on control type instead of fixed 1.0s
+    delay = get_optimal_click_delay(control_type or 'Unknown')
+    pg.sleep(delay)
     
-    # For search bars and input fields, try to ensure we're clicking on the right element
-    if control.ControlTypeName in ['EditControl', 'ComboBoxControl']:
-        # Double-check we're on the right element by verifying coordinates are within bounds
-        box = control.BoundingRectangle
-        if not (box.left <= x <= box.right and box.top <= y <= box.bottom):
-            # If coordinates are outside the element bounds, try clicking the center
-            center_x, center_y = box.xcenter(), box.ycenter()
-            cursor.move_to((center_x, center_y))
-            pg.sleep(0.1)
-            control = desktop.get_element_under_cursor()
-            x, y = center_x, center_y
+    # Get element info for response (post-click is fine for reporting)
+    try:
+        control = desktop.get_element_under_cursor()
+        element_name = control.Name or "Unknown"
+        element_type = control.ControlTypeName
+    except:
+        element_name = "Unknown"
+        element_type = control_type or "Unknown"
     
-    # Perform the click
-    if parent.Name=="Desktop":
-        pg.click(x=x,y=y,button=button,clicks=clicks)
-    else:
-        pg.mouseDown()
-        pg.click(button=button,clicks=clicks)
-        pg.mouseUp()
-    
-    pg.sleep(1.0)
     num_clicks={1:'Single',2:'Double',3:'Triple'}
-    return f'{num_clicks.get(clicks)} {button} Clicked on {control.Name} Element with ControlType {control.ControlTypeName} at ({x},{y}).'
+    return f'{num_clicks.get(clicks, "Multiple")} {button} click on {element_name} ({element_type}) at ({x},{y}).'
 
 @tool('Type Tool',args_schema=Type)
-def type_tool(loc:tuple[int,int],text:str,clear:Literal['true','false']='false',caret_position:Literal['start','idle','end']='idle',press_enter:Literal['true','false']='false',desktop:Desktop=None):
+def type_tool(loc:tuple[int,int],text:str,clear:Literal['true','false']='false',caret_position:Literal['start','idle','end']='idle',press_enter:Literal['true','false']='false',desktop:Desktop=None,control_type:str=None):
     'Type text into input fields, text areas, or focused elements. Set clear=True to replace existing text, False to append. Click on target element coordinates first and start typing.'
     x,y=loc
-    cursor.click_on(loc)
-    control=desktop.get_element_under_cursor()
+    
+    # Validate coordinates are within screen bounds
+    screen_width, screen_height = pg.size()
+    if x < 0 or x >= screen_width or y < 0 or y >= screen_height:
+        return f'Error: Coordinates ({x},{y}) are outside screen bounds ({screen_width}x{screen_height})'
+    
+    # OPTIMIZATION: Direct click instead of HumanCursor for speed
+    pg.click(x=x, y=y)
+    pg.sleep(0.05)  # Brief delay for focus to settle
+    
+    # OPTIMIZATION: Batch key operations with minimal delays
+    if clear == 'true':
+        pg.hotkey('ctrl', 'a')  # Select all
+        pg.sleep(0.02)          # Minimal delay
+        pg.press('backspace')   # Clear
+        pg.sleep(0.02)          # Minimal delay
+    
+    # Position caret efficiently
     if caret_position == 'start':
         pg.press('home')
+        pg.sleep(0.01)
     elif caret_position == 'end':
         pg.press('end')
-    else:
-        pass
-    if clear=='true':
-        pg.hotkey('ctrl','a')
-        pg.press('backspace')
-    pg.typewrite(text,interval=0.1)
-    if press_enter=='true':
+        pg.sleep(0.01)
+    
+    # OPTIMIZATION: Adaptive typing speed based on text length and control type
+    interval = get_optimal_typing_speed(text, control_type)
+    pg.typewrite(text, interval=interval)
+    
+    # Press enter if requested
+    if press_enter == 'true':
+        pg.sleep(0.02)  # Brief pause before enter
         pg.press('enter')
-    return f'Typed {text} on {control.Name} Element with ControlType {control.ControlTypeName} at ({x},{y}).'
+    
+    # Get element info for response (post-typing is fine for reporting)
+    try:
+        control = desktop.get_element_under_cursor()
+        element_name = control.Name or "Unknown"
+        element_type = control.ControlTypeName
+    except:
+        element_name = "Unknown"
+        element_type = control_type or "Unknown"
+    
+    return f'Typed "{text}" in {element_name} ({element_type}) at ({x},{y}).'
 
 @tool('Scroll Tool',args_schema=Scroll)
 def scroll_tool(loc:tuple[int,int]=None,type:Literal['horizontal','vertical']='vertical',direction:Literal['up','down','left','right']='down',wheel_times:int=1,desktop:Desktop=None)->str:
@@ -223,102 +362,3 @@ def scrape_tool(url:str,desktop:Desktop=None)->str:
 def human_tool(question:str,desktop:Desktop=None)->str:
     'Ask the user a question for clarification, permission, or additional information. Use this when you need user input before proceeding with an action.'
     return f"USER QUESTION: {question}\n\nPlease respond with your answer, and I'll continue based on your response."
-
-@tool('Voice Input Tool',args_schema=VoiceInput)
-def voice_input_tool(duration:int,wake_word:str,mode:Literal['push_to_talk','continuous','wake_word'],desktop:Desktop=None)->str:
-    'Listen for voice input for specified duration and convert to text. Supports wake word activation and different listening modes.'
-    try:
-        from windows_use.agent.voice.service import VoiceService
-        
-        # Create voice service instance
-        voice_service = VoiceService(wake_word=wake_word, voice_mode=mode, model="base")
-        
-        if not voice_service.is_available():
-            return "Voice service not available. Please check audio devices and dependencies."
-        
-        # Start listening
-        transcription_result = None
-        
-        def on_transcription(text: str):
-            nonlocal transcription_result
-            transcription_result = text
-        
-        def on_wake_word():
-            print(f"Wake word '{wake_word}' detected! Listening for command...")
-        
-        success = voice_service.start_listening(
-            duration=duration,
-            on_transcription=on_transcription,
-            on_wake_word=on_wake_word if mode == 'wake_word' else None
-        )
-        
-        if not success:
-            return "Failed to start voice listening. Please check microphone permissions."
-        
-        # Wait for transcription or timeout
-        import time
-        start_time = time.time()
-        while time.time() - start_time < duration and transcription_result is None:
-            time.sleep(0.1)
-        
-        voice_service.stop_listening()
-        
-        if transcription_result:
-            return f"Voice input received: '{transcription_result}'"
-        else:
-            return f"No voice input detected within {duration} seconds."
-            
-    except ImportError:
-        return "Voice functionality not available. Please install RealtimeSTT and audio dependencies."
-    except Exception as e:
-        return f"Voice input error: {str(e)}"
-
-@tool('Voice Output Tool',args_schema=VoiceOutput)
-def voice_output_tool(text:str,voice:Literal['default','male','female']='default',rate:int=200,desktop:Desktop=None)->str:
-    'Convert text to speech and play audio output. Useful for providing voice feedback to users.'
-    try:
-        from windows_use.agent.voice.service import VoiceService
-        
-        # Create voice service instance
-        voice_service = VoiceService()
-        
-        if not voice_service.is_available():
-            return "Voice output not available. Please check audio devices and TTS engine."
-        
-        # Speak the text
-        success = voice_service.speak(text, voice=voice, rate=rate)
-        
-        if success:
-            return f"Spoke: '{text}' (Voice: {voice}, Rate: {rate} WPM)"
-        else:
-            return f"Failed to speak: '{text}'"
-            
-    except ImportError:
-        return "Voice functionality not available. Please install TTS dependencies."
-    except Exception as e:
-        return f"Voice output error: {str(e)}"
-
-@tool('Voice Mode Tool',args_schema=VoiceMode)
-def voice_mode_tool(mode:Literal['on','off','toggle'],desktop:Desktop=None)->str:
-    'Enable, disable, or toggle voice interaction mode. Controls whether voice input/output is active.'
-    try:
-        from windows_use.agent.voice.service import VoiceService
-        
-        # Create voice service instance
-        voice_service = VoiceService()
-        
-        if mode == 'on':
-            voice_service.is_voice_enabled = True
-            return "Voice mode enabled. Voice input and output are now active."
-        elif mode == 'off':
-            voice_service.is_voice_enabled = False
-            return "Voice mode disabled. Voice input and output are now inactive."
-        else:  # toggle
-            new_state = voice_service.toggle_voice()
-            status = "enabled" if new_state else "disabled"
-            return f"Voice mode toggled. Voice functionality is now {status}."
-            
-    except ImportError:
-        return "Voice functionality not available. Please install voice dependencies."
-    except Exception as e:
-        return f"Voice mode error: {str(e)}"

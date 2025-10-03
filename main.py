@@ -1,5 +1,4 @@
 from langchain_google_genai.chat_models import ChatGoogleGenerativeAI
-# from langchain_groq import ChatGroq
 from windows_use.agent import Agent
 from dotenv import load_dotenv
 from rich.markdown import Markdown
@@ -7,12 +6,10 @@ import os
 import subprocess
 import json
 import time
-# from windows_use.agent.ollama_client import OllamaChat
 
 load_dotenv()
 
 # Disable readline to prevent pyreadline3 access violation issues on Windows
-import os
 os.environ['PYTHONIOENCODING'] = 'utf-8'
 
 def safe_input(prompt="\nYou: "):
@@ -170,7 +167,6 @@ def main():
     
     print("\nCommands:")
     print("  - Type your query to interact with the agent")
-    print("  - Type 'voice' to enable voice input mode")
     print("  - Type 'clear' to clear conversation history")
     # print("  - Type 'loader on/off' to enable/disable visual loader")
     # print("  - Type 'speed on/off' to enable/disable speed optimizations")
@@ -214,15 +210,8 @@ def main():
                 print("• Scrolling and navigating")
                 print("• Taking screenshots")
                 print("• Running PowerShell commands")
-                print("• Voice commands and responses")
                 print("\nThe agent remembers our conversation, so you can ask follow-up questions!")
                 print("Try: 'Open notepad' then 'Type hello world'")
-                print("\nVoice Commands:")
-                print("• 'voice' - Enter voice input mode")
-                print("  - Wake word mode: Say 'hey windows use' to activate")
-                print("  - Push-to-talk: Press Enter to start/stop speaking")
-                print("  - Continuous: Always listening for commands")
-                print("  - Test voice output")
                 print("\nMemory Commands:")
                 print("• 'memories' - View all stored task solutions")
                 print("• 'memory stats' - View memory statistics")
@@ -268,212 +257,6 @@ def main():
             elif query.lower() == 'perf':
                 agent.performance_monitor.print_stats()
                 continue
-            elif query.lower() == 'voice':
-                print("\nVoice Input Mode")
-                print("-" * 30)
-                print("Choose voice input mode:")
-                print("1. Wake word mode (say 'hey windows use' to activate)")
-                print("2. Push-to-talk mode (press Enter to start/stop)")
-                print("3. Continuous mode (always listening)")
-                print("4. Test voice output")
-                print("5. Back to text mode")
-                
-                choice = safe_input("\nEnter choice (1-5): ")
-                
-                if choice == '1':
-                    print("\nWake word mode activated!")
-                    print("Say 'hey windows use' followed by your command")
-                    print("Example: 'hey windows use, open notepad'")
-                    print("Press Ctrl+C to stop voice mode")
-                    
-                    try:
-                        from windows_use.agent.voice.service import VoiceService
-                        voice_service = VoiceService(wake_word="hey windows use", voice_mode="wake_word", model="base")
-                        
-                        if not voice_service.is_available():
-                            print("Voice service not available. Please check audio devices.")
-                            continue
-                        
-                        # Start continuous wake word listening
-                        transcription_result = None
-                        
-                        def on_transcription(text: str):
-                            nonlocal transcription_result
-                            print(f"\nCommand: {text}")
-                            # Process the command through the agent
-                            response = agent.invoke(text)
-                            agent.console.print(Markdown(response.content or response.error))
-                            
-                            # Automatically convert response to speech
-                            if response.content:
-                                try:
-                                    voice_service.speak(response.content)
-                                except Exception as e:
-                                    print(f"TTS Error: {e}")
-                            
-                            print("\nListening for next command...")
-                        
-                        def on_wake_word():
-                            print("Wake word detected! Listening for command...")
-                        
-                        voice_service.start_listening(
-                            duration=300,  # 5 minutes
-                            on_transcription=on_transcription,
-                            on_wake_word=on_wake_word
-                        )
-                        
-                        # Keep listening until interrupted
-                        while True:
-                            time.sleep(1)
-                            
-                    except KeyboardInterrupt:
-                        print("\nVoice mode stopped.")
-                        if 'voice_service' in locals():
-                            voice_service.stop_listening()
-                    except ImportError:
-                        print("Voice functionality not available. Please install RealtimeSTT and audio dependencies.")
-                    except Exception as e:
-                        print(f"Voice error: {e}")
-                    continue
-                    
-                elif choice == '2':
-                    print("\nPush-to-talk mode activated!")
-                    print("Press Enter to start speaking, then Enter again to stop")
-                    print("Press Ctrl+C to exit voice mode")
-                    
-                    try:
-                        from windows_use.agent.voice.service import VoiceService
-                        voice_service = VoiceService(voice_mode="push_to_talk", model="base")
-                        
-                        if not voice_service.is_available():
-                            print("Voice service not available. Please check audio devices.")
-                            continue
-                        
-                        while True:
-                            safe_input("\nPress Enter to start speaking...")
-                            print("Listening... (Press Enter to stop)")
-                            
-                            transcription_result = None
-                            
-                            def on_transcription(text: str):
-                                nonlocal transcription_result
-                                transcription_result = text
-                            
-                            voice_service.start_listening(
-                                duration=30,  # 30 seconds max
-                                on_transcription=on_transcription
-                            )
-                            
-                            # Wait for Enter to stop or timeout
-                            import threading
-                            stop_listening = False
-                            
-                            def wait_for_enter():
-                                nonlocal stop_listening
-                                input()
-                                stop_listening = True
-                                voice_service.stop_listening()
-                            
-                            enter_thread = threading.Thread(target=wait_for_enter, daemon=True)
-                            enter_thread.start()
-                            
-                            # Wait for transcription or stop signal
-                            start_time = time.time()
-                            while not stop_listening and time.time() - start_time < 30:
-                                if transcription_result:
-                                    break
-                                time.sleep(0.1)
-                            
-                            voice_service.stop_listening()
-                            
-                            if transcription_result:
-                                print(f"\nCommand: {transcription_result}")
-                                response = agent.invoke(transcription_result)
-                                agent.console.print(Markdown(response.content or response.error))
-                                
-                                # Automatically convert response to speech
-                                if response.content:
-                                    try:
-                                        voice_service.speak(response.content)
-                                    except Exception as e:
-                                        print(f"TTS Error: {e}")
-                            else:
-                                print("No command detected.")
-                                
-                    except KeyboardInterrupt:
-                        print("\nVoice mode stopped.")
-                    except ImportError:
-                        print("Voice functionality not available. Please install RealtimeSTT and audio dependencies.")
-                    except Exception as e:
-                        print(f"Voice error: {e}")
-                    continue
-                    
-                elif choice == '3':
-                    print("\nContinuous mode activated!")
-                    print("Always listening for commands...")
-                    print("Press Ctrl+C to stop voice mode")
-                    
-                    try:
-                        from windows_use.agent.voice.service import VoiceService
-                        voice_service = VoiceService(voice_mode="continuous", model="base")
-                        
-                        if not voice_service.is_available():
-                            print("Voice service not available. Please check audio devices.")
-                            continue
-                        
-                        def on_transcription(text: str):
-                            print(f"\nCommand: {text}")
-                            response = agent.invoke(text)
-                            agent.console.print(Markdown(response.content or response.error))
-                            
-                            # Automatically convert response to speech
-                            if response.content:
-                                try:
-                                    voice_service.speak(response.content)
-                                except Exception as e:
-                                    print(f"TTS Error: {e}")
-                            
-                            print("\nListening for next command...")
-                        
-                        voice_service.start_listening(
-                            duration=300,  # 5 minutes
-                            on_transcription=on_transcription
-                        )
-                        
-                        # Keep listening until interrupted
-                        while True:
-                            time.sleep(1)
-                            
-                    except KeyboardInterrupt:
-                        print("\nVoice mode stopped.")
-                        if 'voice_service' in locals():
-                            voice_service.stop_listening()
-                    except ImportError:
-                        print("Voice functionality not available. Please install RealtimeSTT and audio dependencies.")
-                    except Exception as e:
-                        print(f"Voice error: {e}")
-                    continue
-                    
-                elif choice == '4':
-                    print("\nTesting voice output...")
-                    test_text = safe_input("Enter text to speak: ")
-                    if test_text:
-                        try:
-                            from windows_use.agent.voice.service import VoiceService
-                            voice_service = VoiceService()
-                            voice_service.speak(test_text)
-                        except ImportError:
-                            print("Voice functionality not available. Please install TTS dependencies.")
-                        except Exception as e:
-                            print(f"Voice error: {e}")
-                    continue
-                    
-                elif choice == '5':
-                    print("Returning to text mode...")
-                    continue
-                else:
-                    print("Invalid choice. Returning to main menu.")
-                    continue
             
         except KeyboardInterrupt:
             print("\n\nGoodbye!")
