@@ -1,373 +1,257 @@
 {
-  "41baf09bf8d3": {
-    "query_pattern": "in notion click on anime and manga list",
+  "7016082e1df3": {
+    "query_pattern": "can u download me an image of obama from google?",
     "solution_steps": [
       {
         "action": "Switch Tool",
         "params": {
-          "name": "Notion"
+          "name": "Chrome"
         },
-        "result": "Switched to Notion window."
-      },
-      {
-        "action": "Switch Tool",
-        "params": {
-          "name": "Notion"
-        },
-        "result": "Switched to Notion window."
-      },
-      {
-        "action": "Switch Tool",
-        "params": {
-          "name": "Notion"
-        },
-        "result": "Switched to Notion window."
-      },
-      {
-        "action": "Switch Tool",
-        "params": {
-          "name": "Notion"
-        },
-        "result": "Switched to Notion window."
-      },
-      {
-        "action": "Switch Tool",
-        "params": {
-          "name": "Notion"
-        },
-        "result": "Switched to Notion window."
-      },
-      {
-        "action": "Switch Tool",
-        "params": {
-          "name": "Notion"
-        },
-        "result": "Switched to Notion window."
-      },
-      {
-        "action": "Launch Tool",
-        "params": {
-          "name": "Notion"
-        },
-        "result": "Launching Notion wait for it to come load."
-      },
-      {
-        "action": "Switch Tool",
-        "params": {
-          "name": "Notion"
-        },
-        "result": "Switched to Notion window."
-      }
-    ],
-    "success_count": 1,
-    "last_used": "2025-10-03T22:30:13.373334",
-    "created_at": "2025-10-03T22:30:13.373343",
-    "tags": []
-  },
-  "eae3176a5fd9": {
-    "query_pattern": "open notepad, new tab and write about india in 200 characters",
-    "solution_steps": [
-      {
-        "action": "Launch Tool",
-        "params": {
-          "name": "notepad"
-        },
-        "result": "Notepad launched and desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions."
-      },
-      {
-        "action": "Switch Tool",
-        "params": {
-          "name": "e-commerce.postman_collection[1].json - Notepad"
-        },
-        "result": "Switched to E-Commerce.Postman_Collection[1].Json - Notepad window."
+        "result": "Switched to Chrome window."
       },
       {
         "action": "Click Tool",
         "params": {
           "loc": [
-            1284,
-            561
+            1006,
+            63
           ],
           "button": "left",
           "clicks": 1,
-          "control_type": "Button"
+          "control_type": "Edit"
         },
-        "result": "Single left click on Unknown (PaneControl) at (1284,561)."
+        "result": "Single left click on Unknown (PaneControl) at (1006,63)."
       },
       {
         "action": "Click Tool",
         "params": {
           "loc": [
-            704,
-            259
+            1025,
+            63
           ],
           "button": "left",
           "clicks": 1,
-          "control_type": "Menu Item"
+          "control_type": "Edit"
         },
-        "result": "Single left click on Close (ButtonControl) at (704,259)."
-      },
-      {
-        "action": "Click Tool",
-        "params": {
-          "loc": [
-            704,
-            259
-          ],
-          "button": "left",
-          "clicks": 1,
-          "control_type": "Menu Item"
-        },
-        "result": "Single left click on File (MenuItemControl) at (704,259)."
-      },
-      {
-        "action": "Wait Tool",
-        "params": {
-          "duration": 2
-        },
-        "result": "Waited for 2 seconds."
+        "result": "Single left click on Unknown (PaneControl) at (1025,63)."
       },
       {
         "action": "Shortcut Tool",
         "params": {
           "shortcut": [
             "ctrl",
-            "t"
+            "l"
           ]
         },
-        "result": "Pressed ctrl+t."
+        "result": "Pressed ctrl+l."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            1025,
+            63
+          ],
+          "text": "Obama image",
+          "clear": "true",
+          "caret_position": "idle",
+          "press_enter": "false",
+          "control_type": "Edit"
+        },
+        "result": "Typed \"Obama image\" in Unknown (PaneControl) at (1025,63)."
+      },
+      {
+        "action": "Key Tool",
+        "params": {
+          "key": "enter"
+        },
+        "result": "Pressed the key enter."
       },
       {
         "action": "Click Tool",
         "params": {
           "loc": [
-            1566,
-            228
+            334,
+            185
+          ],
+          "button": "left",
+          "clicks": 1
+        },
+        "result": "Single left click on Images (HyperlinkControl) at (334,185)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            86,
+            372
+          ],
+          "button": "right",
+          "clicks": 1,
+          "control_type": "Document"
+        },
+        "result": "Single right click on Unknown (MenuBarControl) at (86,372)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            230,
+            599
           ],
           "button": "left",
           "clicks": 1,
-          "control_type": "Button"
-        },
-        "result": "Single left click on Add New Tab (ButtonControl) at (1566,228)."
-      },
-      {
-        "action": "Type Tool",
-        "params": {
-          "loc": [
-            1487,
-            544
-          ],
-          "text": "India, a land of vibrant culture and rich history, is a tapestry woven with diverse traditions, languages, and landscapes. From the Himalayas to the Indian Ocean, its beauty captivates.",
-          "clear": "true",
-          "caret_position": "idle",
-          "press_enter": "false",
           "control_type": "Document"
         },
-        "result": "Typed \"India, a land of vibrant culture and rich history, is a tapestry woven with diverse traditions, languages, and landscapes. From the Himalayas to the Indian Ocean, its beauty captivates.\" in Text editor (DocumentControl) at (1487,544)."
-      }
-    ],
-    "success_count": 1,
-    "last_used": "2025-10-03T22:33:17.124628",
-    "created_at": "2025-10-03T22:33:17.124638",
-    "tags": [
-      "text-editor"
-    ]
-  },
-  "0a7a19e8939c": {
-    "query_pattern": "open calculator and calculate 2+2-3+7-6*2",
-    "solution_steps": [
-      {
-        "action": "Launch Tool",
-        "params": {
-          "name": "calculator"
-        },
-        "result": "Calculator launched and desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions."
+        "result": "Single left click on Barack Obama | National Geographic Kids (ButtonControl) at (230,599)."
       },
       {
-        "action": "Type Tool",
+        "action": "Click Tool",
         "params": {
           "loc": [
-            168,
-            401
+            86,
+            372
           ],
-          "text": "2+2-3+7-6*2",
-          "clear": "true",
-          "caret_position": "idle",
-          "press_enter": "false"
+          "button": "right",
+          "clicks": 1,
+          "control_type": "Document"
         },
-        "result": "Typed \"2+2-3+7-6*2\" in Desktop (ListControl) at (168,401)."
+        "result": "Single right click on Context (MenuControl) at (86,372)."
+      },
+      {
+        "action": "Key Tool",
+        "params": {
+          "key": "down"
+        },
+        "result": "Pressed the key down."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            86,
+            372
+          ],
+          "button": "right",
+          "clicks": 1
+        },
+        "result": "Single right click on Context (MenuControl) at (86,372)."
       },
       {
         "action": "Switch Tool",
         "params": {
-          "name": "Calculator"
+          "name": "Chrome"
         },
-        "result": "Switched to Calculator window."
+        "result": "Switched to Chrome window."
       },
       {
         "action": "Click Tool",
         "params": {
           "loc": [
-            2241,
-            936
+            87,
+            371
           ],
-          "button": "left",
+          "button": "right",
           "clicks": 1,
-          "control_type": "Button"
+          "control_type": "Document"
         },
-        "result": "Single left click on Two (ButtonControl) at (2241,936)."
+        "result": "Single right click on Context (MenuControl) at (87,371)."
       },
       {
-        "action": "Click Tool",
-        "params": {
-          "loc": [
-            2372,
-            939
-          ],
-          "button": "left",
-          "clicks": 1,
-          "control_type": "Button"
-        },
-        "result": "Single left click on Plus (ButtonControl) at (2372,939)."
-      },
-      {
-        "action": "Click Tool",
-        "params": {
-          "loc": [
-            2240,
-            938
-          ],
-          "button": "left",
-          "clicks": 1,
-          "control_type": "Button"
-        },
-        "result": "Single left click on Two (ButtonControl) at (2240,938)."
-      },
-      {
-        "action": "Click Tool",
-        "params": {
-          "loc": [
-            2357,
-            896
-          ],
-          "button": "left",
-          "clicks": 1,
-          "control_type": "Button"
-        },
-        "result": "Single left click on Minus (ButtonControl) at (2357,896)."
-      },
-      {
-        "action": "Click Tool",
-        "params": {
-          "loc": [
-            2294,
-            937
-          ],
-          "button": "left",
-          "clicks": 1,
-          "control_type": "Button"
-        },
-        "result": "Single left click on Three (ButtonControl) at (2294,937)."
-      },
-      {
-        "action": "Click Tool",
-        "params": {
-          "loc": [
-            2363,
-            933
-          ],
-          "button": "left",
-          "clicks": 1,
-          "control_type": "Button"
-        },
-        "result": "Single left click on Plus (ButtonControl) at (2363,933)."
-      },
-      {
-        "action": "Click Tool",
-        "params": {
-          "loc": [
-            2180,
-            855
-          ],
-          "button": "left",
-          "clicks": 1,
-          "control_type": "Button"
-        },
-        "result": "Single left click on Seven (ButtonControl) at (2180,855)."
-      },
-      {
-        "action": "Click Tool",
-        "params": {
-          "loc": [
-            2364,
-            892
-          ],
-          "button": "left",
-          "clicks": 1,
-          "control_type": "Button"
-        },
-        "result": "Single left click on Minus (ButtonControl) at (2364,892)."
-      },
-      {
-        "action": "Click Tool",
-        "params": {
-          "loc": [
-            2307,
-            892
-          ],
-          "button": "left",
-          "clicks": 1,
-          "control_type": "Button"
-        },
-        "result": "Single left click on Six (ButtonControl) at (2307,892)."
-      },
-      {
-        "action": "Click Tool",
-        "params": {
-          "loc": [
-            2355,
-            864
-          ],
-          "button": "left",
-          "clicks": 1,
-          "control_type": "Button"
-        },
-        "result": "Single left click on Multiply by (ButtonControl) at (2355,864)."
-      }
-    ],
-    "success_count": 1,
-    "last_used": "2025-10-03T22:45:38.136042",
-    "created_at": "2025-10-03T22:45:38.136054",
-    "tags": []
-  },
-  "79970164a77c": {
-    "query_pattern": "hello!! who was obama?",
-    "solution_steps": [
-      {
-        "action": "Launch Tool",
+        "action": "Switch Tool",
         "params": {
           "name": "Chrome"
         },
-        "result": "Chrome was already running. Switched to existing window. Desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions."
+        "result": "Switched to Chrome window."
+      },
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Chrome"
+        },
+        "result": "Switched to Chrome window."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            234,
+            372
+          ],
+          "button": "left",
+          "clicks": 1,
+          "control_type": "Combo Box"
+        },
+        "result": "Single left click on Save as type: (ComboBoxControl) at (234,372)."
       },
       {
         "action": "Type Tool",
         "params": {
           "loc": [
-            990,
-            63
+            531,
+            337
           ],
-          "text": "who was Obama",
+          "text": "ObamaImage",
           "clear": "true",
-          "press_enter": "true",
-          "control_type": "Edit"
+          "caret_position": "idle",
+          "press_enter": "false",
+          "control_type": "Combo Box"
         },
-        "result": "Typed \"who was Obama\" in Unknown (PaneControl) at (990,63)."
+        "result": "Typed \"ObamaImage\" in File name: (EditControl) at (531,337)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            782,
+            439
+          ],
+          "button": "left",
+          "clicks": 1,
+          "control_type": "Button"
+        },
+        "result": "Single left click on Barack Obama | Biography, Parents ... (ButtonControl) at (782,439)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            782,
+            439
+          ],
+          "button": "left",
+          "clicks": 1,
+          "control_type": "Document"
+        },
+        "result": "Single left click on Barack Obama | Biography, Parents ... (ImageControl) at (782,439)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            782,
+            439
+          ],
+          "button": "left",
+          "clicks": 1,
+          "control_type": "Document"
+        },
+        "result": "Single left click on Barack Obama | Biography, Parents ... (ImageControl) at (782,439)."
+      },
+      {
+        "action": "Shortcut Tool",
+        "params": {
+          "shortcut": [
+            "alt",
+            "s"
+          ]
+        },
+        "result": "Pressed alt+s."
       }
     ],
     "success_count": 1,
-    "last_used": "2025-10-04T21:34:24.625556",
-    "created_at": "2025-10-04T21:34:24.625570",
+    "last_used": "2025-10-05T01:08:13.490939",
+    "created_at": "2025-10-05T01:08:13.490945",
     "tags": []
   }
 }

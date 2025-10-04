@@ -35,7 +35,9 @@ class Desktop:
         else:
             tree_state=tree.get_state()
             
-        active_app,apps=(apps[0],apps[1:]) if len(apps)>0 else (None,[])
+        # Find the actual foreground app instead of assuming the first one
+        active_app = self._get_foreground_app(apps)
+        apps = [app for app in apps if app != active_app]
         if use_vision:
             # Capture full-screen screenshot for accurate coordinate mapping
             full_screenshot=self.get_screenshot(scale=1.0)
@@ -175,6 +177,52 @@ class Desktop:
         is_name = "Overlay" in element.Name.strip()
         return no_children or is_name
         
+    def _get_foreground_app(self, apps: list[App]) -> App | None:
+        """Get the actual foreground application using Windows API"""
+        try:
+            import ctypes
+            from ctypes import wintypes
+            
+            # Get the foreground window handle
+            hwnd = ctypes.windll.user32.GetForegroundWindow()
+            if not hwnd:
+                return apps[0] if apps else None
+            
+            # Get the process ID of the foreground window
+            process_id = ctypes.wintypes.DWORD()
+            ctypes.windll.user32.GetWindowThreadProcessId(hwnd, ctypes.byref(process_id))
+            
+            # Get the window title for debugging
+            length = ctypes.windll.user32.GetWindowTextLengthW(hwnd)
+            if length > 0:
+                buffer = ctypes.create_unicode_buffer(length + 1)
+                ctypes.windll.user32.GetWindowTextW(hwnd, buffer, length + 1)
+                foreground_title = buffer.value
+            else:
+                foreground_title = "Unknown"
+            
+            # Find the app that matches this process ID
+            for app in apps:
+                try:
+                    # Get process ID from the app's window handle
+                    app_process_id = ctypes.wintypes.DWORD()
+                    ctypes.windll.user32.GetWindowThreadProcessId(app.handle, ctypes.byref(app_process_id))
+                    
+                    if app_process_id.value == process_id.value:
+                        print(f"DEBUG: Found foreground app: {app.name} (Title: {foreground_title})")
+                        return app
+                except:
+                    continue
+            
+            # If no match found, log and return the first app as fallback
+            print(f"DEBUG: No matching app found for foreground window '{foreground_title}'. Using first app: {apps[0].name if apps else 'None'}")
+            return apps[0] if apps else None
+            
+        except Exception as e:
+            # Fallback to first app if there's any error
+            print(f"DEBUG: Error getting foreground app: {e}. Using first app: {apps[0].name if apps else 'None'}")
+            return apps[0] if apps else None
+
     def get_apps(self) -> list[App]:
         import time
         current_time = time.time()

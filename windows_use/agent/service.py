@@ -105,6 +105,28 @@ class Agent:
         
         return None
 
+    def _is_chrome_focused(self) -> bool:
+        """Check if Chrome is currently focused"""
+        try:
+            if not hasattr(self.desktop, 'desktop_state') or not self.desktop.desktop_state:
+                return False
+            
+            active_app = self.desktop.desktop_state.active_app
+            if not active_app:
+                return False
+            
+            # Check if the active app name contains Chrome-related keywords
+            chrome_keywords = ['chrome', 'google chrome', 'browser']
+            active_name = active_app.name.lower()
+            
+            is_chrome = any(keyword in active_name for keyword in chrome_keywords)
+            print(f"DEBUG: Chrome focused check - Active app: '{active_app.name}', Is Chrome: {is_chrome}")
+            return is_chrome
+            
+        except Exception as e:
+            print(f"DEBUG: Error checking Chrome focus: {e}")
+            return False
+
     def _find_control_type_for_coordinates(self, click_loc: tuple[int, int]) -> str:
         """
         Find the control_type for given coordinates from the current desktop state.
@@ -265,6 +287,14 @@ class Agent:
                 self.desktop.get_state(use_vision=self.use_vision, target_app=target_app)
                 self.desktop._last_state_time = current_time
                 self.show_status("Refreshing", "Desktop State", "Getting updated coordinates")
+                
+                # DEBUG: Log the current foreground app
+                if hasattr(self.desktop, 'desktop_state') and self.desktop.desktop_state:
+                    active_app = self.desktop.desktop_state.active_app
+                    if active_app:
+                        print(f"DEBUG: Current foreground app: {active_app.name}")
+                    else:
+                        print("DEBUG: No active app detected")
         
         # OPTIMIZATION: For Click Tool and Type Tool, find control_type from desktop state
         if name in ['Click Tool', 'Type Tool'] and 'loc' in params:

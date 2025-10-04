@@ -41,8 +41,18 @@ def extract_agent_data(message: BaseMessage) -> AgentData:
             # Convert string to dictionary safely using ast.literal_eval
             action['params'] = ast.literal_eval(action_input_str)
         except (ValueError, SyntaxError):
-            # If there's an issue with conversion, store it as raw string
-            action['params'] = json.loads(action_input_str)
+            try:
+                # If there's an issue with conversion, try JSON parsing
+                action['params'] = json.loads(action_input_str)
+            except (ValueError, SyntaxError):
+                # If both fail, log the error and provide a default
+                print(f"Warning: Could not parse action_input: {action_input_str}")
+                action['params'] = {}
+    else:
+        # If no action_input found, log the error and provide empty params
+        print(f"Warning: No action_input found for action: {action.get('name', 'Unknown')}")
+        print(f"Full text: {text}")
+        action['params'] = {}
     result['action'] = action
     return  AgentData.model_validate(result)
 

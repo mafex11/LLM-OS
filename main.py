@@ -9,8 +9,24 @@ import time
 
 load_dotenv()
 
-# Disable readline to prevent pyreadline3 access violation issues on Windows
-os.environ['PYTHONIOENCODING'] = 'utf-8'
+# Fix Windows console encoding issues - CRITICAL for special characters
+import sys
+if sys.platform == 'win32':
+    # Force UTF-8 encoding for Windows console
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+    # Set console code page to UTF-8
+    try:
+        import ctypes
+        kernel32 = ctypes.windll.kernel32
+        kernel32.SetConsoleCP(65001)  # Input code page
+        kernel32.SetConsoleOutputCP(65001)  # Output code page
+    except:
+        pass
+    # Force stdout/stderr to use UTF-8
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 def safe_input(prompt="\nYou: "):
     """Safe input function that avoids pyreadline3 issues on Windows."""
@@ -149,7 +165,7 @@ def main():
     
     # Initialize agent with running programs context - using faster settings
     llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.3)  # Reduced temperature for faster, more focused responses
-    agent = Agent(llm=llm, browser='chrome', use_vision=False, enable_conversation=True, literal_mode=True, max_steps=15)  # Reduced max_steps from 20 to 15
+    agent = Agent(llm=llm, browser='chrome', use_vision=False, enable_conversation=True, literal_mode=True, max_steps=30)  # Increased max_steps from 15 to 30 for complex tasks
     
     # Store running programs in agent for context
     agent.running_programs = running_programs
@@ -290,8 +306,18 @@ def main():
                 else:
                     print("No response provided. Continuing...")
             else:
-                # Normal response
-                agent.console.print(Markdown(response.content or response.error))
+                # Normal response - handle encoding safely
+                try:
+                    content = response.content or response.error or "No response"
+                    # Ensure content is properly encoded
+                    if isinstance(content, bytes):
+                        content = content.decode('utf-8', errors='replace')
+                    agent.console.print(Markdown(content))
+                except UnicodeEncodeError as ue:
+                    # Fallback: remove problematic characters
+                    safe_content = content.encode('ascii', errors='ignore').decode('ascii')
+                    print(f"\n{safe_content}")
+                    print(f"\n(Note: Some special characters were removed due to console encoding limitations)")
             
             # Ensure we always return to the input prompt
             print()  # Add spacing before next input
