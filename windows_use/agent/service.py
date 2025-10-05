@@ -1,4 +1,5 @@
 from windows_use.agent.tools.service import click_tool, type_tool, launch_tool, shell_tool, clipboard_tool, done_tool, shortcut_tool, scroll_tool, drag_tool, move_tool, key_tool, wait_tool, scrape_tool, switch_tool, resize_tool, human_tool
+from windows_use.agent.tts_service import TTSService, speak_text, is_tts_available
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from windows_use.agent.utils import extract_agent_data, image_message
 from langchain_core.language_models.chat_models import BaseChatModel
@@ -58,7 +59,7 @@ class Agent:
     Returns:
         Agent
     '''
-    def __init__(self,instructions:list[str]=[],additional_tools:list[BaseTool]=[],browser:Literal['edge','chrome','firefox']='edge', llm: BaseChatModel=None,consecutive_failures:int=3,max_steps:int=20,use_vision:bool=False,enable_conversation:bool=True,literal_mode:bool=True):
+    def __init__(self,instructions:list[str]=[],additional_tools:list[BaseTool]=[],browser:Literal['edge','chrome','firefox']='edge', llm: BaseChatModel=None,consecutive_failures:int=3,max_steps:int=20,use_vision:bool=False,enable_conversation:bool=True,literal_mode:bool=True,enable_tts:bool=True,tts_voice_id:str="21m00Tcm4TlvDq8ikWAM"):
         self.name='Windows Use'
         self.description='An agent that can interact with GUI elements on Windows' 
         self.registry = Registry([
@@ -73,6 +74,8 @@ class Agent:
         self.use_vision=use_vision
         self.enable_conversation=enable_conversation
         self.literal_mode=literal_mode
+        self.enable_tts=enable_tts
+        self.tts_voice_id=tts_voice_id
         self.llm = llm or ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.7)
         self.watch_cursor = WatchCursor()
         self.desktop = Desktop()
@@ -86,6 +89,8 @@ class Agent:
         self.current_task_steps = []  # Track steps for current task
         # Performance monitoring
         self.performance_monitor = PerformanceMonitor()
+        # TTS service
+        self.tts_service = TTSService(voice_id=tts_voice_id, enable_tts=enable_tts) if enable_tts else None
 
     def clear_conversation(self):
         """Clear the conversation history"""
@@ -441,6 +446,10 @@ class Agent:
         # OPTIMIZATION: Remove duplicate logging - let the main loop handle output
         # logger.info(colored(f"Final Answer: {tool_result.content}",color='cyan',attrs=['bold']))
         
+        # Speak the response if TTS is enabled
+        if self.tts_service and tool_result.content and name == 'Done Tool':
+            self._speak_response(tool_result.content)
+        
         return {**state,'agent_data':None,'messages':[ai_message],'previous_observation':None,'output':tool_result.content}
 
     def _make_conversational(self, raw_answer: str, original_query: str) -> str:
@@ -482,6 +491,83 @@ Convert the raw answer above into a natural, conversational response:"""
             logger.error(f"Failed to make response conversational: {e}")
             logger.warning("Falling back to original response")
             return raw_answer  # Fallback to original
+
+    def _speak_response(self, text: str):
+        """
+        Speak the agent's response using TTS
+        
+        Args:
+            text: Text to speak
+        """
+        if not self.tts_service or not text or not text.strip():
+            return
+            
+        try:
+            # Clean up the text for better speech (remove markdown, special characters, etc.)
+            clean_text = self._clean_text_for_speech(text)
+            
+            if clean_text:
+                logger.info(f"Speaking response: {clean_text[:50]}...")
+                # Speak asynchronously to not block the main thread
+                self.tts_service.speak_async(clean_text)
+                
+        except Exception as e:
+            logger.error(f"Failed to speak response: {e}")
+
+    def _clean_text_for_speech(self, text: str) -> str:
+        """
+        Clean text for better speech output
+        
+        Args:
+            text: Raw text to clean
+            
+        Returns:
+            Cleaned text suitable for speech
+        """
+        if not text:
+            return ""
+            
+        # Remove markdown formatting
+        import re
+        # Remove markdown bold/italic
+        text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
+        text = re.sub(r'\*(.*?)\*', r'\1', text)
+        # Remove code blocks
+        text = re.sub(r'```.*?```', '[code block]', text, flags=re.DOTALL)
+        # Remove inline code
+        text = re.sub(r'`(.*?)`', r'\1', text)
+        # Remove links
+        text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text)
+        # Remove headers
+        text = re.sub(r'^#+\s*', '', text, flags=re.MULTILINE)
+        
+        # Remove excessive whitespace
+        text = re.sub(r'\s+', ' ', text)
+        text = text.strip()
+        
+        # Limit length for better speech (avoid very long responses)
+        if len(text) > 500:
+            # Find a good breaking point
+            sentences = text.split('. ')
+            if len(sentences) > 1:
+                # Take first few sentences
+                text = '. '.join(sentences[:3])
+                if not text.endswith('.'):
+                    text += '.'
+            else:
+                # If no sentence breaks, just truncate
+                text = text[:500] + "..."
+        
+        return text
+
+    def stop_speaking(self):
+        """Stop current speech if any"""
+        if self.tts_service:
+            self.tts_service.stop_current_speech()
+
+    def is_speaking(self) -> bool:
+        """Check if agent is currently speaking"""
+        return self.tts_service and self.tts_service.is_busy()
 
     def main_controller(self,state:AgentState):
         if state.get('steps')<state.get('max_steps'):
@@ -639,4 +725,9 @@ Convert the raw answer above into a natural, conversational response:"""
             self.console.print()
         
         response=self.invoke(query)
-        self.console.print(Markdown(response.content or response.error))   
+        self.console.print(Markdown(response.content or response.error))
+    
+    def cleanup(self):
+        """Clean up agent resources including TTS service"""
+        if self.tts_service:
+            self.tts_service.cleanup()   

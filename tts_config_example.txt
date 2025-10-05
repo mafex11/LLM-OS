@@ -1,0 +1,24 @@
+# ElevenLabs TTS Configuration Example
+# Copy this to your .env file or set as environment variables
+
+# ElevenLabs API Configuration
+# Get your API key from: https://elevenlabs.io/app/settings/api-keys
+ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
+
+# TTS Configuration
+ENABLE_TTS=true
+TTS_VOICE_ID=21m00Tcm4TlvDq8ikWAM
+
+# Available Voice IDs (you can change TTS_VOICE_ID to any of these):
+# 21m00Tcm4TlvDq8ikWAM - Rachel (Default)
+# AZnzlk1XvdvUeBnXmlld - Domi
+# EXAVITQu4vr4xnSDxMaL - Bella
+# ErXwobaYiN019PkySvjV - Antoni
+# MF3mGyEYCl7XYWbV9V6O - Elli
+# TxGEqnHWrfWFTfGW9XjX - Josh
+# VR6AewLTigWG4xSOukaG - Arnold
+# pNInz6obpgDQGcFmaJgB - Adam
+# yoZ06aMxZJJ28mfd3POQ - Sam
+
+# Google AI Configuration (if using Gemini)
+GOOGLE_API_KEY=your_google_api_key_here

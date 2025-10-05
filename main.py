@@ -186,7 +186,21 @@ def main():
     
     # Initialize agent with running programs context - using faster settings
     llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.3)  # Reduced temperature for faster, more focused responses
-    agent = Agent(llm=llm, browser='chrome', use_vision=False, enable_conversation=True, literal_mode=True, max_steps=30)  # Increased max_steps from 15 to 30 for complex tasks
+    
+    # TTS configuration
+    enable_tts = os.getenv("ENABLE_TTS", "true").lower() == "true"
+    tts_voice_id = os.getenv("TTS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")  # Default ElevenLabs voice
+    
+    agent = Agent(
+        llm=llm, 
+        browser='chrome', 
+        use_vision=False, 
+        enable_conversation=True, 
+        literal_mode=True, 
+        max_steps=30,
+        enable_tts=enable_tts,
+        tts_voice_id=tts_voice_id
+    )
     
     # Store running programs in agent for context
     agent.running_programs = running_programs
@@ -202,12 +216,22 @@ def main():
         print(f"Pre-warming failed: {e}")
         print("System will still work, but first response may be slower.")
     
+    # Show TTS status
+    if enable_tts:
+        from windows_use.agent.tts_service import is_tts_available
+        tts_available = is_tts_available()
+        print(f"TTS Status: {'Enabled' if tts_available else 'Disabled (API key not configured)'}")
+    else:
+        print("TTS Status: Disabled")
+    
     print("\nCommands:")
     print("  - Type your query to interact with the agent")
     print("  - Type 'clear' to clear conversation history")
     # print("  - Type 'loader on/off' to enable/disable visual loader")
     # print("  - Type 'speed on/off' to enable/disable speed optimizations")
     # print("  - Type 'perf' to show performance statistics")
+    print("  - Type 'tts on/off' to enable/disable text-to-speech")
+    print("  - Type 'stop speaking' to stop current speech")
     print("  - Type 'quit', 'exit', or 'q' to exit")
     print("  - Type 'help' to show this help message")
     print("  - Type 'programs' to refresh running programs list")
@@ -223,6 +247,11 @@ def main():
             # Handle special commands
             if query.lower() in ['quit', 'exit', 'q']:
                 print("Goodbye!")
+                # Clean up resources
+                try:
+                    agent.cleanup()
+                except Exception:
+                    pass
                 # Stop overlay when exiting
                 if OVERLAY_AVAILABLE:
                     try:
@@ -259,6 +288,10 @@ def main():
                 print("• 'memories' - View all stored task solutions")
                 print("• 'memory stats' - View memory statistics")
                 print("• 'clear memories' - Clear all stored memories")
+                print("\nTTS Commands:")
+                print("• 'tts on' - Enable text-to-speech")
+                print("• 'tts off' - Disable text-to-speech")
+                print("• 'stop speaking' - Stop current speech")
                 print("\nSystem Commands:")
                 print("• 'programs' - Refresh running programs list")
                 continue
@@ -300,9 +333,36 @@ def main():
             elif query.lower() == 'perf':
                 agent.performance_monitor.print_stats()
                 continue
+            elif query.lower() == 'tts on':
+                if agent.tts_service:
+                    agent.tts_service.enabled = True
+                    print("TTS enabled!")
+                else:
+                    print("TTS service not available. Check your ElevenLabs API key.")
+                continue
+            elif query.lower() == 'tts off':
+                if agent.tts_service:
+                    agent.tts_service.enabled = False
+                    agent.stop_speaking()
+                    print("TTS disabled!")
+                else:
+                    print("TTS service not available.")
+                continue
+            elif query.lower() in ['stop speaking', 'stop']:
+                if agent.is_speaking():
+                    agent.stop_speaking()
+                    print("Stopped speaking.")
+                else:
+                    print("Agent is not currently speaking.")
+                continue
             
         except KeyboardInterrupt:
             print("\n\nGoodbye!")
+            # Clean up resources
+            try:
+                agent.cleanup()
+            except Exception:
+                pass
             # Stop overlay when interrupted
             if OVERLAY_AVAILABLE:
                 try:
