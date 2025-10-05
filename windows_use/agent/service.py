@@ -31,6 +31,15 @@ formatter = logging.Formatter('%(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
+# Import overlay functionality
+try:
+    from overlay_ui import update_overlay_status
+    OVERLAY_AVAILABLE = True
+except ImportError:
+    OVERLAY_AVAILABLE = False
+    def update_overlay_status(**kwargs):
+        pass
+
 class Agent:
     '''
     Windows Use
@@ -211,6 +220,14 @@ class Agent:
         else:
             self.console.print(f"[bold blue]{status}[/bold blue]")
             
+        # Update overlay if available
+        if OVERLAY_AVAILABLE:
+            update_overlay_status(
+                phase=status,
+                action=action_name or "",
+                details=details or ""
+            )
+            
 
     @timed("reason")
     def reason(self,state:AgentState):
@@ -257,6 +274,17 @@ class Agent:
         logger.info(colored(f"Memory: {agent_data.memory}",color='light_green',attrs=['bold']))
         logger.info(colored(f"Plan: {agent_data.plan}",color='light_blue',attrs=['bold']))
         logger.info(colored(f"Thought: {agent_data.thought}",color='light_magenta',attrs=['bold']))
+        
+        # Update overlay with agent data
+        if OVERLAY_AVAILABLE:
+            update_overlay_status(
+                iteration=steps,
+                max_steps=state.get('max_steps', 30),
+                evaluate=agent_data.evaluate,
+                memory=agent_data.memory,
+                plan=agent_data.plan,
+                thought=agent_data.thought
+            )
         last_message = state.get('messages').pop()
         if isinstance(last_message, HumanMessage):
             message=HumanMessage(content=Prompt.previous_observation_prompt(steps=steps,max_steps=max_steps,observation=state.get('previous_observation')))
@@ -306,6 +334,13 @@ class Agent:
         logger.info(colored(f"Action: {name}({', '.join(f'{k}={v}' for k, v in params.items())})",color='blue',attrs=['bold']))
         tool_result = self.registry.execute(tool_name=name, desktop=self.desktop, **params)
         observation=tool_result.content if tool_result.is_success else tool_result.error
+        
+        # Update overlay with action result
+        if OVERLAY_AVAILABLE:
+            update_overlay_status(
+                action=name,
+                tool_result=observation
+            )
         
         # Track step for memory (only for successful actions that aren't Done Tool)
         if tool_result.is_success and name != 'Done Tool':

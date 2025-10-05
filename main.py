@@ -7,6 +7,17 @@ import subprocess
 import json
 import time
 
+# Import overlay functionality
+try:
+    from overlay_ui import start_overlay, stop_overlay
+    OVERLAY_AVAILABLE = True
+except ImportError:
+    OVERLAY_AVAILABLE = False
+    def start_overlay():
+        pass
+    def stop_overlay():
+        pass
+
 load_dotenv()
 
 # Fix Windows console encoding issues - CRITICAL for special characters
@@ -158,6 +169,16 @@ def main():
     print("Windows-Use Agent with Conversation Support")
     print("=" * 50)
     
+    # Start overlay UI if available
+    if OVERLAY_AVAILABLE:
+        try:
+            print("Starting overlay UI...")
+            start_overlay()
+            print("Overlay UI started successfully!")
+        except Exception as e:
+            print(f"Failed to start overlay UI: {e}")
+            print("Continuing without overlay...")
+    
     # Check for running programs at startup
     print("Checking for running programs...")
     running_programs = get_running_programs()
@@ -202,6 +223,12 @@ def main():
             # Handle special commands
             if query.lower() in ['quit', 'exit', 'q']:
                 print("Goodbye!")
+                # Stop overlay when exiting
+                if OVERLAY_AVAILABLE:
+                    try:
+                        stop_overlay()
+                    except Exception:
+                        pass
                 break
             elif query.lower() == 'clear':
                 agent.clear_conversation()
@@ -276,6 +303,12 @@ def main():
             
         except KeyboardInterrupt:
             print("\n\nGoodbye!")
+            # Stop overlay when interrupted
+            if OVERLAY_AVAILABLE:
+                try:
+                    stop_overlay()
+                except Exception:
+                    pass
             break
         except Exception as input_error:
             print(f"\nInput system error: {input_error}")
@@ -332,6 +365,12 @@ def main():
             
         except KeyboardInterrupt:
             print("\n\nGoodbye!")
+            # Stop overlay when interrupted
+            if OVERLAY_AVAILABLE:
+                try:
+                    stop_overlay()
+                except Exception:
+                    pass
             break
         except Exception as e:
             print(f"\nError: {e}")

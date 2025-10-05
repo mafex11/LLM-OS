@@ -253,5 +253,119 @@
     "last_used": "2025-10-05T01:08:13.490939",
     "created_at": "2025-10-05T01:08:13.490945",
     "tags": []
+  },
+  "07c8ae44d527": {
+    "query_pattern": "idk, i guess tell me what time is it right now",
+    "solution_steps": [
+      {
+        "action": "Shell Tool",
+        "params": {
+          "command": "Get-Date"
+        },
+        "result": "Status Code: 0\nResponse: \r\nSunday, October 5, 2025 9:05:23 PM\r\n\r\n\r\n"
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-10-05T21:05:27.357785",
+    "created_at": "2025-10-05T21:05:27.357796",
+    "tags": []
+  },
+  "813f0f5a1a44": {
+    "query_pattern": "open my downloads folder",
+    "solution_steps": [
+      {
+        "action": "Shell Tool",
+        "params": {
+          "command": "Start-Process \"C:\\Users\\$env:USERNAME\\Downloads\""
+        },
+        "result": "Status Code: 0\nResponse: "
+      },
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "This PC - File Explorer"
+        },
+        "result": "Switched to This Pc - File Explorer window."
+      },
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Downloads - File Explorer"
+        },
+        "result": "Switched to Downloads - File Explorer window."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-10-05T21:20:26.423532",
+    "created_at": "2025-10-05T21:20:26.423546",
+    "tags": []
+  },
+  "f58619313642": {
+    "query_pattern": "now look for a file named pfp, its an image, open it",
+    "solution_steps": [
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            1400,
+            741
+          ],
+          "button": "left",
+          "clicks": 2,
+          "control_type": "List Item"
+        },
+        "result": "Double left click on Name (EditControl) at (1400,741)."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            2044,
+            599
+          ],
+          "text": "pfp",
+          "clear": "true",
+          "caret_position": "idle",
+          "press_enter": "false"
+        },
+        "result": "Typed \"pfp\" in  Search Downloads (EditControl) at (2044,599)."
+      },
+      {
+        "action": "Wait Tool",
+        "params": {
+          "duration": 2
+        },
+        "result": "Waited for 2 seconds."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            1431,
+            757
+          ],
+          "button": "left",
+          "clicks": 2,
+          "control_type": "List Item"
+        },
+        "result": "Double left click on Date modified (EditControl) at (1431,757)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            1279,
+            757
+          ],
+          "button": "left",
+          "clicks": 2
+        },
+        "result": "Double left click on Unknown (CustomControl) at (1279,757)."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-10-05T21:21:29.072916",
+    "created_at": "2025-10-05T21:21:29.072926",
+    "tags": []
   }
 }
