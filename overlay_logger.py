@@ -134,3 +134,4 @@ def remove_overlay_logging(handler):
         root_logger.removeHandler(handler)
     except Exception:
         pass
+

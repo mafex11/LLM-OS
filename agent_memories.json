@@ -367,5 +367,328 @@
     "last_used": "2025-10-05T21:21:29.072916",
     "created_at": "2025-10-05T21:21:29.072926",
     "tags": []
+  },
+  "19adb9719d10": {
+    "query_pattern": "pen chrome, theres a tab of gmail for sudhanshuk1140 email. openit and compose an email of having a leave on oct 5 2025. make it short 50words max. and send that email to heaffec@gmail.com",
+    "solution_steps": [
+      {
+        "action": "Switch Tool",
+        "params": {
+          "name": "Google Chrome"
+        },
+        "result": "Switched to Google Chrome window."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            130,
+            20
+          ],
+          "control_type": "List Item"
+        },
+        "result": "Single left click on Unknown (PaneControl) at (130,20)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            64,
+            177
+          ],
+          "control_type": "List Item"
+        },
+        "result": "Single left click on Compose (ButtonControl) at (64,177)."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            2226,
+            937
+          ],
+          "text": "heaffec@gmail.com",
+          "clear": "true",
+          "control_type": "Document"
+        },
+        "result": "Typed \"heaffec@gmail.com\" in To recipients (ComboBoxControl) at (2226,937)."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            2226,
+            973
+          ],
+          "text": "Leave Request for October 5, 2025",
+          "clear": "true",
+          "control_type": "Document"
+        },
+        "result": "Typed \"Leave Request for October 5, 2025\" in Subject (EditControl) at (2226,973)."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            2226,
+            1162
+          ],
+          "text": "Dear Sir/Madam,\n\nI am writing to request a leave of absence on October 5, 2025, due to a personal matter. I will be back to work on October 6, 2025. I have completed all my urgent tasks and made arrangements for my colleagues to cover my responsibilities during my absence.\n\nThank you for your consideration.\n\nSincerely,\nSudhanshu Pandit",
+          "clear": "true",
+          "control_type": "Document"
+        },
+        "result": "Typed \"Dear Sir/Madam,\n\nI am writing to request a leave of absence on October 5, 2025, due to a personal matter. I will be back to work on October 6, 2025. I have completed all my urgent tasks and made arrangements for my colleagues to cover my responsibilities during my absence.\n\nThank you for your consideration.\n\nSincerely,\nSudhanshu Pandit\" in Message Body (EditControl) at (2226,1162)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            1997,
+            1409
+          ],
+          "control_type": "Document"
+        },
+        "result": "Single left click on Send ‪(Ctrl-Enter)‬ (ButtonControl) at (1997,1409)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            2076,
+            941
+          ],
+          "control_type": "Document"
+        },
+        "result": "Single left click on Unknown (GroupControl) at (2076,941)."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            2226,
+            937
+          ],
+          "text": "heaffec@gmail.com",
+          "clear": "true",
+          "control_type": "Document"
+        },
+        "result": "Typed \"heaffec@gmail.com\" in To recipients (ComboBoxControl) at (2226,937)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            2226,
+            1162
+          ],
+          "control_type": "Document"
+        },
+        "result": "Single left click on Message Body (EditControl) at (2226,1162)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            1999,
+            1409
+          ],
+          "control_type": "Document"
+        },
+        "result": "Single left click on Send ‪(Ctrl-Enter)‬ (ButtonControl) at (1999,1409)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            2076,
+            941
+          ],
+          "control_type": "Document"
+        },
+        "result": "Single left click on Unknown (GroupControl) at (2076,941)."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            2226,
+            937
+          ],
+          "text": "heaffec@gmail.com",
+          "clear": "true",
+          "control_type": "Document"
+        },
+        "result": "Typed \"heaffec@gmail.com\" in To recipients (ComboBoxControl) at (2226,937)."
+      },
+      {
+        "action": "Key Tool",
+        "params": {
+          "key": "tab"
+        },
+        "result": "Pressed the key tab."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            2076,
+            941
+          ],
+          "control_type": "Document"
+        },
+        "result": "Single left click on To recipients (ComboBoxControl) at (2076,941)."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            2226,
+            937
+          ],
+          "text": "heaffec@gmail.com",
+          "clear": "true",
+          "control_type": "Document"
+        },
+        "result": "Typed \"heaffec@gmail.com\" in To recipients (ComboBoxControl) at (2226,937)."
+      },
+      {
+        "action": "Key Tool",
+        "params": {
+          "key": "enter"
+        },
+        "result": "Pressed the key enter."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            2076,
+            941
+          ],
+          "control_type": "Document"
+        },
+        "result": "Single left click on To recipients (ComboBoxControl) at (2076,941)."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            2226,
+            937
+          ],
+          "text": "heaffec@gmail.com",
+          "clear": "true",
+          "control_type": "Document"
+        },
+        "result": "Typed \"heaffec@gmail.com\" in To recipients (ComboBoxControl) at (2226,937)."
+      },
+      {
+        "action": "Key Tool",
+        "params": {
+          "key": "enter"
+        },
+        "result": "Pressed the key enter."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            2076,
+            941
+          ],
+          "control_type": "Document"
+        },
+        "result": "Single left click on To recipients (ComboBoxControl) at (2076,941)."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            2226,
+            937
+          ],
+          "text": "heaffec@gmail.com",
+          "clear": "true",
+          "control_type": "Document"
+        },
+        "result": "Typed \"heaffec@gmail.com\" in To recipients (ComboBoxControl) at (2226,937)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            2002,
+            1408
+          ],
+          "control_type": "Document"
+        },
+        "result": "Single left click on Unknown (GroupControl) at (2002,1408)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            2076,
+            941
+          ],
+          "control_type": "Document"
+        },
+        "result": "Single left click on Unknown (GroupControl) at (2076,941)."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            2226,
+            937
+          ],
+          "text": "heaffec@gmail.com",
+          "clear": "true",
+          "control_type": "Document"
+        },
+        "result": "Typed \"heaffec@gmail.com\" in To recipients (ComboBoxControl) at (2226,937)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            2013,
+            1414
+          ],
+          "control_type": "Document"
+        },
+        "result": "Single left click on Unknown (GroupControl) at (2013,1414)."
+      },
+      {
+        "action": "Click Tool",
+        "params": {
+          "loc": [
+            2076,
+            941
+          ],
+          "control_type": "Document"
+        },
+        "result": "Single left click on Unknown (GroupControl) at (2076,941)."
+      },
+      {
+        "action": "Type Tool",
+        "params": {
+          "loc": [
+            2226,
+            937
+          ],
+          "text": "heaffec@gmail.com",
+          "clear": "true",
+          "control_type": "Document"
+        },
+        "result": "Typed \"heaffec@gmail.com\" in To recipients (ComboBoxControl) at (2226,937)."
+      }
+    ],
+    "success_count": 1,
+    "last_used": "2025-10-06T21:33:32.130738",
+    "created_at": "2025-10-06T21:19:03.989660",
+    "tags": [
+      "browser"
+    ]
   }
 }
