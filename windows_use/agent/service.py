@@ -7,7 +7,7 @@ from langchain_google_genai.chat_models import ChatGoogleGenerativeAI
 from windows_use.agent.registry.views import ToolResult
 from windows_use.agent.registry.service import Registry
 from windows_use.agent.prompt.service import Prompt
-from windows_use.agent.memory import MemoryManager
+# from windows_use.agent.memory import MemoryManager  # Disabled: agent memory system
 from windows_use.agent.performance import PerformanceMonitor, timed
 from live_inspect.watch_cursor import WatchCursor
 from langgraph.graph import START,END,StateGraph
@@ -84,8 +84,8 @@ class Agent:
         # Conversation history
         self.conversation_history = []
         self.system_message = None
-        # Memory management
-        self.memory_manager = MemoryManager()
+        # Memory management (disabled)
+        # self.memory_manager = MemoryManager()
         self.current_task_steps = []  # Track steps for current task
         # Performance monitoring
         self.performance_monitor = PerformanceMonitor()
@@ -189,32 +189,36 @@ class Agent:
         return summary
 
     def check_memory(self, query: str) -> str:
-        """Check if we have a memory for this query"""
-        solution_steps = self.memory_manager.get_memory_solution(query)
-        if solution_steps:
-            self.console.print(f"[bold green]Found memory for similar task![/bold green]")
-            self.console.print(f"[dim]Previous solution had {len(solution_steps)} steps[/dim]")
-            return f"Found previous solution with {len(solution_steps)} steps. Applying known solution..."
+        """Check if we have a memory for this query (disabled)"""
+        # solution_steps = self.memory_manager.get_memory_solution(query)
+        # if solution_steps:
+        #     self.console.print(f"[bold green]Found memory for similar task![/bold green]")
+        #     self.console.print(f"[dim]Previous solution had {len(solution_steps)} steps[/dim]")
+        #     return f"Found previous solution with {len(solution_steps)} steps. Applying known solution..."
         return ""
 
     def save_successful_task(self, query: str, steps: list, tags: list = None):
-        """Save a successful task solution to memory"""
-        if steps:
-            key = self.memory_manager.add_memory(query, steps, tags)
-            self.console.print(f"[bold green]Saved solution to memory (ID: {key})[/bold green]")
+        """Save a successful task solution to memory (disabled)"""
+        # if steps:
+        #     key = self.memory_manager.add_memory(query, steps, tags)
+        #     self.console.print(f"[bold green]Saved solution to memory (ID: {key})[/bold green]")
+        return
 
     def get_memory_stats(self) -> dict:
-        """Get memory statistics"""
-        return self.memory_manager.get_memory_stats()
+        """Get memory statistics (disabled)"""
+        # return self.memory_manager.get_memory_stats()
+        return {}
 
     def list_memories(self) -> list:
-        """List all stored memories"""
-        return self.memory_manager.list_memories()
+        """List all stored memories (disabled)"""
+        # return self.memory_manager.list_memories()
+        return []
 
     def clear_memories(self):
-        """Clear all memories"""
-        self.memory_manager.clear_memories()
-        self.console.print("[bold yellow]All memories cleared[/bold yellow]")
+        """Clear all memories (disabled)"""
+        # self.memory_manager.clear_memories()
+        # self.console.print("[bold yellow]All memories cleared[/bold yellow]")
+        return
 
     def show_status(self, status: str, action_name: str = None, details: str = None):
         """Display real-time status updates"""
@@ -276,7 +280,7 @@ class Agent:
         logger.info(f"Iteration: {steps}")
         agent_data = extract_agent_data(message=message)
         logger.info(colored(f"Evaluate: {agent_data.evaluate}",color='yellow',attrs=['bold']))
-        logger.info(colored(f"Memory: {agent_data.memory}",color='light_green',attrs=['bold']))
+        # logger.info(colored(f"Memory: {agent_data.memory}",color='light_green',attrs=['bold']))  # disabled
         logger.info(colored(f"Plan: {agent_data.plan}",color='light_blue',attrs=['bold']))
         logger.info(colored(f"Thought: {agent_data.thought}",color='light_magenta',attrs=['bold']))
         
@@ -286,7 +290,7 @@ class Agent:
                 iteration=steps,
                 max_steps=state.get('max_steps', 30),
                 evaluate=agent_data.evaluate,
-                memory=agent_data.memory,
+                # memory=agent_data.memory,  # disabled
                 plan=agent_data.plan,
                 thought=agent_data.thought
             )
@@ -347,14 +351,14 @@ class Agent:
                 tool_result=observation
             )
         
-        # Track step for memory (only for successful actions that aren't Done Tool)
-        if tool_result.is_success and name != 'Done Tool':
-            step_info = {
-                'action': name,
-                'params': params,
-                'result': observation
-            }
-            self.current_task_steps.append(step_info)
+        # Track step for memory (disabled)
+        # if tool_result.is_success and name != 'Done Tool':
+        #     step_info = {
+        #         'action': name,
+        #         'params': params,
+        #         'result': observation
+        #     }
+        #     self.current_task_steps.append(step_info)
         
         # Show completion status
         if tool_result.is_success:
@@ -599,11 +603,11 @@ Convert the raw answer above into a natural, conversational response:"""
         self.show_status("Starting", "Task Analysis", f"Processing: '{query[:50]}{'...' if len(query) > 50 else ''}'")
         
         
-        # Reset current task steps for memory tracking
+        # Reset current task steps for memory tracking (disabled)
         self.current_task_steps = []
         
-        # Check memory for similar tasks
-        memory_hit = self.check_memory(query)
+        # Check memory for similar tasks (disabled)
+        # memory_hit = self.check_memory(query)
         
         steps=1
         
@@ -694,21 +698,21 @@ Convert the raw answer above into a natural, conversational response:"""
                 final_ai_message = AIMessage(content=response['output'])
                 self.conversation_history.append(final_ai_message)
         
-        # Save successful task to memory if it completed successfully
-        if response.get('output') and self.current_task_steps:
-            # Extract tags from the query (simple keyword extraction)
-            query_lower = query.lower()
-            tags = []
-            if 'brightness' in query_lower or 'monitor' in query_lower:
-                tags.append('monitor')
-            if 'twinkle' in query_lower or 'tray' in query_lower:
-                tags.append('twinkle-tray')
-            if 'chrome' in query_lower or 'browser' in query_lower:
-                tags.append('browser')
-            if 'notepad' in query_lower or 'text' in query_lower:
-                tags.append('text-editor')
-            
-            self.save_successful_task(query, self.current_task_steps, tags)
+        # Save successful task to memory (disabled)
+        # if response.get('output') and self.current_task_steps:
+        #     # Extract tags from the query (simple keyword extraction)
+        #     query_lower = query.lower()
+        #     tags = []
+        #     if 'brightness' in query_lower or 'monitor' in query_lower:
+        #         tags.append('monitor')
+        #     if 'twinkle' in query_lower or 'tray' in query_lower:
+        #         tags.append('twinkle-tray')
+        #     if 'chrome' in query_lower or 'browser' in query_lower:
+        #         tags.append('browser')
+        #     if 'notepad' in query_lower or 'text' in query_lower:
+        #         tags.append('text-editor')
+        #     
+        #     self.save_successful_task(query, self.current_task_steps, tags)
         
         
         return AgentResult(content=response['output'], error=response['error'])

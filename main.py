@@ -6,6 +6,7 @@ import os
 import subprocess
 import json
 import time
+import threading
 
 # Import overlay functionality
 # try:
@@ -26,6 +27,14 @@ def stop_overlay():
     pass
 
 load_dotenv()
+
+# Import STT service
+try:
+    from windows_use.agent.stt_service import get_stt_service, is_stt_available
+    STT_AVAILABLE = True
+except ImportError:
+    STT_AVAILABLE = False
+    print("Warning: STT service not available. Install required dependencies.")
 
 # Fix Windows console encoding issues - CRITICAL for special characters
 import sys
@@ -102,6 +111,109 @@ def safe_input(prompt="\nYou: "):
 def show_ready_indicator():
     """Show a visual indicator that the system is ready for input."""
     print("Ready for your next command...")
+
+def voice_input(prompt="Listening... (speak now, timeout in 10 seconds): "):
+    """Get voice input using STT service"""
+    if not STT_AVAILABLE:
+        print("STT service not available. Please type your command.")
+        return ""
+    
+    stt_service = get_stt_service()
+    if not stt_service.enabled:
+        print("STT service not enabled. Please check your Deepgram API key.")
+        return ""
+    
+    print(prompt)
+    transcript = stt_service.start_listening(timeout=10.0)
+    
+    if transcript:
+        print(f"Voice input: {transcript}")
+        return transcript
+    else:
+        print("No speech detected or transcription failed.")
+        return ""
+
+def continuous_voice_mode(agent):
+    """Run in continuous voice conversation mode"""
+    print("\n" + "="*50)
+    print("ENTERING CONTINUOUS VOICE MODE")
+    print("="*50)
+    print("Commands:")
+    print("  - Speak your query naturally")
+    print("  - Say 'exit voice mode' to return to text mode")
+    print("  - Say 'quit' or 'exit' to exit the application")
+    print("="*50)
+    
+    while True:
+        try:
+            # Get voice input
+            voice_query = voice_input("Listening... (speak your command, say 'exit voice mode' to return to text): ")
+            
+            if not voice_query:
+                print("No input detected. Try again.")
+                continue
+                
+            # Check for mode exit commands
+            if any(phrase in voice_query.lower() for phrase in ['exit voice mode', 'exit voice', 'back to text', 'text mode']):
+                print("Exiting voice mode, returning to text input...")
+                break
+                
+            # Check for application exit commands
+            if any(phrase in voice_query.lower() for phrase in ['quit', 'exit application', 'close application']):
+                print("Exiting application...")
+                try:
+                    agent.cleanup()
+                except Exception:
+                    pass
+                return "quit"
+            
+            # Process the voice command
+            print(f"Processing voice command: {voice_query}")
+            try:
+                print()  # Add spacing
+                response = agent.invoke(voice_query)
+                
+                # Check if the agent is asking a question
+                if response.content and "USER QUESTION:" in response.content:
+                    print(f"\nAgent: {response.content}")
+                    # Get voice response and continue the conversation
+                    print("Listening for your response...")
+                    user_response = voice_input("Your response: ")
+                    if user_response:
+                        # Continue the conversation with the user's response
+                        print()  # Add spacing
+                        agent.print_response(user_response)
+                    else:
+                        print("No response provided. Continuing...")
+                else:
+                    # Normal response - handle encoding safely
+                    try:
+                        content = response.content or response.error or "No response"
+                        # Ensure content is properly encoded
+                        if isinstance(content, bytes):
+                            content = content.decode('utf-8', errors='replace')
+                        agent.console.print(Markdown(content))
+                    except UnicodeEncodeError as ue:
+                        # Fallback: remove problematic characters
+                        safe_content = content.encode('ascii', errors='ignore').decode('ascii')
+                        print(f"\n{safe_content}")
+                        print(f"\n(Note: Some special characters were removed due to console encoding limitations)")
+                
+                # Show ready indicator for next voice input
+                print("\nReady for your next voice command...")
+                
+            except Exception as e:
+                print(f"\nError processing voice command: {e}")
+                print("Please try again or say 'exit voice mode' to return to text input.")
+                
+        except KeyboardInterrupt:
+            print("\n\nExiting voice mode...")
+            break
+        except Exception as e:
+            print(f"\nError in voice mode: {e}")
+            print("Please try again or say 'exit voice mode' to return to text input.")
+    
+    return "continue"
 
 def get_running_programs():
     """Get list of currently running programs using PowerShell"""
@@ -234,8 +346,17 @@ def main():
     else:
         print("TTS Status: Disabled")
     
+    # Show STT status
+    if STT_AVAILABLE:
+        stt_available = is_stt_available()
+        print(f"STT Status: {'Enabled' if stt_available else 'Disabled (API key not configured)'}")
+    else:
+        print("STT Status: Disabled (dependencies not available)")
+    
     print("\nCommands:")
     print("  - Type your query to interact with the agent")
+    print("  - Type 'voice' to enter voice input mode")
+    print("  - Type 'voice mode' to enter continuous voice conversation mode")
     print("  - Type 'clear' to clear conversation history")
     # print("  - Type 'loader on/off' to enable/disable visual loader")
     # print("  - Type 'speed on/off' to enable/disable speed optimizations")
@@ -298,6 +419,9 @@ def main():
                 print("• 'memories' - View all stored task solutions")
                 print("• 'memory stats' - View memory statistics")
                 print("• 'clear memories' - Clear all stored memories")
+                print("\nVoice Commands:")
+                print("• 'voice' - Enter voice input mode (single voice command)")
+                print("• 'voice mode' - Enter continuous voice conversation mode")
                 print("\nTTS Commands:")
                 print("• 'tts on' - Enable text-to-speech")
                 print("• 'tts off' - Disable text-to-speech")
@@ -364,6 +488,87 @@ def main():
                     print("Stopped speaking.")
                 else:
                     print("Agent is not currently speaking.")
+                continue
+            elif query.lower() == 'voice':
+                if not STT_AVAILABLE:
+                    print("STT service not available. Please install required dependencies.")
+                    continue
+                
+                stt_service = get_stt_service()
+                if not stt_service.enabled:
+                    print("STT service not enabled. Please check your Deepgram API key.")
+                    continue
+                
+                print("Entering voice input mode...")
+                voice_query = voice_input()
+                
+                if voice_query:
+                    print(f"Processing voice command: {voice_query}")
+                    # Process the voice command as a regular query
+                    try:
+                        print()  # Add spacing
+                        response = agent.invoke(voice_query)
+                        
+                        # Check if the agent is asking a question
+                        if response.content and "USER QUESTION:" in response.content:
+                            print(f"\nAgent: {response.content}")
+                            # Get user response and continue the conversation
+                            user_response = safe_input("\nYour answer: ")
+                            if user_response:
+                                # Continue the conversation with the user's response
+                                print()  # Add spacing
+                                agent.print_response(user_response)
+                            else:
+                                print("No response provided. Continuing...")
+                        else:
+                            # Normal response - handle encoding safely
+                            try:
+                                content = response.content or response.error or "No response"
+                                # Ensure content is properly encoded
+                                if isinstance(content, bytes):
+                                    content = content.decode('utf-8', errors='replace')
+                                agent.console.print(Markdown(content))
+                            except UnicodeEncodeError as ue:
+                                # Fallback: remove problematic characters
+                                safe_content = content.encode('ascii', errors='ignore').decode('ascii')
+                                print(f"\n{safe_content}")
+                                print(f"\n(Note: Some special characters were removed due to console encoding limitations)")
+                        
+                        # Ensure we always return to the input prompt
+                        print()  # Add spacing before next input
+                        
+                        # Show ready indicator
+                        show_ready_indicator()
+                        
+                        # Force flush to ensure output is displayed
+                        import sys
+                        sys.stdout.flush()
+                        sys.stderr.flush()
+                        
+                    except Exception as e:
+                        print(f"\nError processing voice command: {e}")
+                        print("Please try again or type 'quit' to exit.")
+                continue
+            elif query.lower() == 'voice mode':
+                if not STT_AVAILABLE:
+                    print("STT service not available. Please install required dependencies.")
+                    continue
+                
+                stt_service = get_stt_service()
+                if not stt_service.enabled:
+                    print("STT service not enabled. Please check your Deepgram API key.")
+                    continue
+                
+                # Enter continuous voice mode
+                result = continuous_voice_mode(agent)
+                if result == "quit":
+                    print("Goodbye!")
+                    try:
+                        agent.cleanup()
+                    except Exception:
+                        pass
+                    break
+                # If result is "continue", we continue with the main loop (back to text mode)
                 continue
             
         except KeyboardInterrupt:
