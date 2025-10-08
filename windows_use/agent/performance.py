@@ -94,8 +94,6 @@ def timed(operation_name: str = None):
             finally:
                 if monitor:
                     duration = monitor.end_timer(op_name)
-                    if duration > 1.0:  # Log slow operations
-                        print(f"Slow operation: {op_name} took {duration:.3f}s")
         
         return wrapper
     return decorator

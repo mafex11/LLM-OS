@@ -1,6 +1,7 @@
 from langchain_google_genai.chat_models import ChatGoogleGenerativeAI
 from windows_use.agent import Agent
 from windows_use.agent.stt_service import STTService, is_stt_available
+from windows_use.agent.logger import agent_logger
 from dotenv import load_dotenv
 from rich.markdown import Markdown
 import os
@@ -204,6 +205,9 @@ def run_voice_mode(agent):
         
         print(f"\n🎤 You said: {transcript}")
         
+        # Log STT input
+        agent_logger.log_stt(transcript)
+        
         # Check for mode switch command
         if 'switch to text' in transcript.lower() or 'text mode' in transcript.lower():
             switch_to_text = True
@@ -262,19 +266,19 @@ def run_voice_mode(agent):
             response = agent.invoke(query)
             
             # Handle response
-            if response.content and "USER QUESTION:" in response.content:
-                print(f"\nAgent: {response.content}")
+            if response.content and "QUESTION_FOR_USER:" in response.content:
+                # Extract and display the question
+                question = response.content.split("QUESTION_FOR_USER:")[1].strip()
+                print(f"\n{question}")
+                
+                # Speak the question if TTS is enabled
+                if agent.tts_service and agent.tts_service.enabled:
+                    agent.tts_service.speak_async(question)
+                
                 print("\n🎤 Listening for your answer...")
             else:
-                try:
-                    content = response.content or response.error or "No response"
-                    if isinstance(content, bytes):
-                        content = content.decode('utf-8', errors='replace')
-                    agent.console.print(Markdown(content))
-                except UnicodeEncodeError:
-                    safe_content = content.encode('ascii', errors='ignore').decode('ascii')
-                    print(f"\n{safe_content}")
-                    print(f"\n(Note: Some special characters were removed)")
+                # Response is already printed by the agent service
+                pass
             
             print()
             sys.stdout.flush()
@@ -306,6 +310,9 @@ def run_voice_mode(agent):
     return True
 
 def main():
+    # Log session start
+    agent_logger.log_session_start()
+    
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Windows-Use Agent with Voice Control')
     parser.add_argument('--voice', action='store_true', help='Start in voice control mode')
@@ -427,6 +434,8 @@ def main():
                 #         stop_overlay()
                 #     except Exception:
                 #         pass
+                # Log session end
+                agent_logger.log_session_end()
                 break
             elif query.lower() == 'clear':
                 agent.clear_conversation()
@@ -555,6 +564,8 @@ def main():
             #         stop_overlay()
             #     except Exception:
             #         pass
+            # Log session end
+            agent_logger.log_session_end()
             break
         except Exception as input_error:
             print(f"\nInput system error: {input_error}")
@@ -574,29 +585,43 @@ def main():
             response = agent.invoke(query)
             
             # Check if the agent is asking a question
-            if response.content and "USER QUESTION:" in response.content:
-                print(f"\nAgent: {response.content}")
+            if response.content and "QUESTION_FOR_USER:" in response.content:
+                # Extract and display the question
+                question = response.content.split("QUESTION_FOR_USER:")[1].strip()
+                print(f"\n{question}")
+                
+                # Speak the question if TTS is enabled
+                if agent.tts_service and agent.tts_service.enabled:
+                    agent.tts_service.speak_async(question)
+                
                 # Get user response and continue the conversation
-                user_response = safe_input("\nYour answer: ")
+                user_response = safe_input("\nYou: ")
                 if user_response:
                     # Continue the conversation with the user's response
                     print()  # Add spacing
-                    agent.print_response(user_response)
+                    response = agent.invoke(user_response)
+                    
+                    # Check if the response is another question
+                    if response.content and "QUESTION_FOR_USER:" in response.content:
+                        # Extract and display the question
+                        question = response.content.split("QUESTION_FOR_USER:")[1].strip()
+                        print(f"\n{question}")
+                        
+                        # Speak the question if TTS is enabled
+                        if agent.tts_service and agent.tts_service.enabled:
+                            agent.tts_service.speak_async(question)
+                        
+                        # Get another response
+                        user_response = safe_input("\nYou: ")
+                        if user_response:
+                            print()
+                            agent.invoke(user_response)
+                    # Response is already printed by the agent service
                 else:
                     print("No response provided. Continuing...")
             else:
-                # Normal response - handle encoding safely
-                try:
-                    content = response.content or response.error or "No response"
-                    # Ensure content is properly encoded
-                    if isinstance(content, bytes):
-                        content = content.decode('utf-8', errors='replace')
-                    agent.console.print(Markdown(content))
-                except UnicodeEncodeError as ue:
-                    # Fallback: remove problematic characters
-                    safe_content = content.encode('ascii', errors='ignore').decode('ascii')
-                    print(f"\n{safe_content}")
-                    print(f"\n(Note: Some special characters were removed due to console encoding limitations)")
+                # Response is already printed by the agent service, no need to print again
+                pass
             
             # Ensure we always return to the input prompt
             print()  # Add spacing before next input

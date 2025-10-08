@@ -1,6 +1,7 @@
 from langchain_google_genai.chat_models import ChatGoogleGenerativeAI
 from windows_use.agent import Agent
 from windows_use.agent.stt_service import STTService
+from windows_use.agent.logger import agent_logger
 from dotenv import load_dotenv
 from rich.markdown import Markdown
 import os
@@ -84,6 +85,9 @@ def display_running_programs(programs):
     print("-" * 40)
 
 def main():
+    # Log session start
+    agent_logger.log_session_start()
+    
     print("Windows-Use Agent with Deepgram STT")
     print("=" * 50)
     
@@ -162,6 +166,9 @@ def main():
         
         print(f"\n🎤 You said: {transcript}")
         
+        # Log STT input
+        agent_logger.log_stt(transcript)
+        
         # Mark that we're processing
         waiting_for_query = False
         
@@ -184,6 +191,8 @@ def main():
                 agent.cleanup()
             except Exception:
                 pass
+            # Log session end
+            agent_logger.log_session_end()
             sys.exit(0)
         
         elif query == 'clear conversation':
@@ -212,20 +221,20 @@ def main():
             response = agent.invoke(query)
             
             # Handle response
-            if response.content and "USER QUESTION:" in response.content:
-                print(f"\nAgent: {response.content}")
+            if response.content and "QUESTION_FOR_USER:" in response.content:
+                # Extract and display the question
+                question = response.content.split("QUESTION_FOR_USER:")[1].strip()
+                print(f"\n{question}")
+                
+                # Speak the question if TTS is enabled
+                if agent.tts_service and agent.tts_service.enabled:
+                    agent.tts_service.speak_async(question)
+                
                 # For questions, we'll wait for voice response
                 print("\n🎤 Listening for your answer...")
             else:
-                try:
-                    content = response.content or response.error or "No response"
-                    if isinstance(content, bytes):
-                        content = content.decode('utf-8', errors='replace')
-                    agent.console.print(Markdown(content))
-                except UnicodeEncodeError:
-                    safe_content = content.encode('ascii', errors='ignore').decode('ascii')
-                    print(f"\n{safe_content}")
-                    print(f"\n(Note: Some special characters were removed)")
+                # Response is already printed by the agent service
+                pass
             
             print()
             sys.stdout.flush()
@@ -257,6 +266,8 @@ def main():
             agent.cleanup()
         except Exception:
             pass
+        # Log session end
+        agent_logger.log_session_end()
 
 if __name__ == "__main__":
     main()

@@ -9,6 +9,7 @@ from windows_use.agent.registry.service import Registry
 from windows_use.agent.prompt.service import Prompt
 # from windows_use.agent.memory import MemoryManager  # Disabled: agent memory system
 from windows_use.agent.performance import PerformanceMonitor, timed
+from windows_use.agent.logger import agent_logger
 from live_inspect.watch_cursor import WatchCursor
 from langgraph.graph import START,END,StateGraph
 from windows_use.agent.views import AgentResult
@@ -96,6 +97,7 @@ class Agent:
         """Clear the conversation history"""
         self.conversation_history = []
         self.system_message = None
+        agent_logger.log_conversation_cleared()
         
     
     def _should_use_precise_detection(self, query: str, action_name: str = None) -> str:
@@ -134,11 +136,9 @@ class Agent:
             active_name = active_app.name.lower()
             
             is_chrome = any(keyword in active_name for keyword in chrome_keywords)
-            print(f"DEBUG: Chrome focused check - Active app: '{active_app.name}', Is Chrome: {is_chrome}")
             return is_chrome
             
         except Exception as e:
-            print(f"DEBUG: Error checking Chrome focus: {e}")
             return False
 
     def _find_control_type_for_coordinates(self, click_loc: tuple[int, int]) -> str:
@@ -221,21 +221,8 @@ class Agent:
         return
 
     def show_status(self, status: str, action_name: str = None, details: str = None):
-        """Display real-time status updates"""
-        if action_name:
-            self.console.print(f"[bold blue]{status}[/bold blue] - [cyan]{action_name}[/cyan]")
-            if details:
-                self.console.print(f"   [dim]{details}[/dim]")
-        else:
-            self.console.print(f"[bold blue]{status}[/bold blue]")
-            
-        # Update overlay if available
-        if OVERLAY_AVAILABLE:
-            update_overlay_status(
-                phase=status,
-                action=action_name or "",
-                details=details or ""
-            )
+        """Display real-time status updates - DISABLED for cleaner output"""
+        pass
             
 
     @timed("reason")
@@ -277,12 +264,16 @@ class Agent:
                         messages[-1] = HumanMessage(content=fresh_prompt)
         
         message=self.llm.invoke(messages)
-        logger.info(f"Iteration: {steps}")
         agent_data = extract_agent_data(message=message)
-        logger.info(colored(f"Evaluate: {agent_data.evaluate}",color='yellow',attrs=['bold']))
-        # logger.info(colored(f"Memory: {agent_data.memory}",color='light_green',attrs=['bold']))  # disabled
-        logger.info(colored(f"Plan: {agent_data.plan}",color='light_blue',attrs=['bold']))
-        logger.info(colored(f"Thought: {agent_data.thought}",color='light_magenta',attrs=['bold']))
+        
+        # Log to file
+        agent_logger.log_iteration(steps, max_steps)
+        agent_logger.log_evaluate(agent_data.evaluate)
+        agent_logger.log_plan(agent_data.plan)
+        agent_logger.log_thought(agent_data.thought)
+        
+        # Log to console
+        logger.info(colored(f"{agent_data.thought}",color='light_magenta'))
         
         # Update overlay with agent data
         if OVERLAY_AVAILABLE:
@@ -324,14 +315,6 @@ class Agent:
                 self.desktop.get_state(use_vision=self.use_vision, target_app=target_app)
                 self.desktop._last_state_time = current_time
                 self.show_status("Refreshing", "Desktop State", "Getting updated coordinates")
-                
-                # DEBUG: Log the current foreground app
-                if hasattr(self.desktop, 'desktop_state') and self.desktop.desktop_state:
-                    active_app = self.desktop.desktop_state.active_app
-                    if active_app:
-                        print(f"DEBUG: Current foreground app: {active_app.name}")
-                    else:
-                        print("DEBUG: No active app detected")
         
         # OPTIMIZATION: For Click Tool and Type Tool, find control_type from desktop state
         if name in ['Click Tool', 'Type Tool'] and 'loc' in params:
@@ -340,9 +323,18 @@ class Agent:
             if control_type:
                 params['control_type'] = control_type
         
-        logger.info(colored(f"Action: {name}({', '.join(f'{k}={v}' for k, v in params.items())})",color='blue',attrs=['bold']))
+        # Log action to file
+        agent_logger.log_action(name, params)
+        
+        # Show tool usage (skip for Human Tool as it's handled separately)
+        if name != 'Human Tool':
+            logger.info(colored(f"Using {name}...",color='blue'))
+        
         tool_result = self.registry.execute(tool_name=name, desktop=self.desktop, **params)
         observation=tool_result.content if tool_result.is_success else tool_result.error
+        
+        # Log tool result to file
+        agent_logger.log_tool_result(name, tool_result.is_success, observation)
         
         # Update overlay with action result
         if OVERLAY_AVAILABLE:
@@ -372,7 +364,12 @@ class Agent:
             self.desktop.get_state(use_vision=self.use_vision)
             self.desktop._last_state_time = time.time()
         
-        logger.info(colored(f"Observation: {shorten(observation,500,placeholder='...')}",color='green',attrs=['bold']))
+        # Log observation to file
+        agent_logger.log_observation(observation)
+        
+        # Show observation (skip for Human Tool as it's a question)
+        if name != 'Human Tool':
+            logger.info(colored(f"{shorten(observation,500,placeholder='...')}",color='green'))
         # Only get fresh desktop state if we don't have recent state
         current_time = time.time()
         if (not hasattr(self.desktop, '_last_state_time') or 
@@ -444,14 +441,15 @@ class Agent:
         
         ai_message = AIMessage(content=Prompt.answer_prompt(agent_data=agent_data, tool_result=tool_result))
         
-        # OPTIMIZATION: Single completion status
-        self.show_status("Done", "Task Complete", "Response ready")
+        # Log final answer to file
+        agent_logger.log_final_answer(tool_result.content)
         
-        # OPTIMIZATION: Remove duplicate logging - let the main loop handle output
-        # logger.info(colored(f"Final Answer: {tool_result.content}",color='cyan',attrs=['bold']))
+        # Show final answer (skip if it's a question for user)
+        if not (tool_result.content and "QUESTION_FOR_USER:" in tool_result.content):
+            logger.info(colored(f"\n{tool_result.content}",color='cyan'))
         
-        # Speak the response if TTS is enabled
-        if self.tts_service and tool_result.content and name == 'Done Tool':
+        # Speak the response if TTS is enabled (Done Tool only, not questions)
+        if self.tts_service and tool_result.content and name == 'Done Tool' and "QUESTION_FOR_USER:" not in tool_result.content:
             self._speak_response(tool_result.content)
         
         return {**state,'agent_data':None,'messages':[ai_message],'previous_observation':None,'output':tool_result.content}
@@ -483,12 +481,6 @@ Convert the raw answer above into a natural, conversational response:"""
         try:
             response = self.llm.invoke([HumanMessage(content=conversational_prompt)])
             conversational_result = response.content.strip()
-            
-            # Log the conversion for debugging
-            logger.info(colored(f"Conversational processing:", color='yellow'))
-            logger.info(colored(f"   Raw: {raw_answer[:100]}{'...' if len(raw_answer) > 100 else ''}", color='yellow'))
-            logger.info(colored(f"   Conversational: {conversational_result[:100]}{'...' if len(conversational_result) > 100 else ''}", color='yellow'))
-            
             return conversational_result
             
         except Exception as e:
@@ -511,7 +503,8 @@ Convert the raw answer above into a natural, conversational response:"""
             clean_text = self._clean_text_for_speech(text)
             
             if clean_text:
-                logger.info(f"Speaking response: {clean_text[:50]}...")
+                # Log TTS output
+                agent_logger.log_tts(clean_text)
                 # Speak asynchronously to not block the main thread
                 self.tts_service.speak_async(clean_text)
                 
@@ -721,6 +714,9 @@ Convert the raw answer above into a natural, conversational response:"""
 
     @timed("invoke")
     def invoke(self,query: str)->AgentResult:
+        # Log user query to file
+        agent_logger.log_user_query(query)
+        
         # Show initial status
         self.show_status("Starting", "Task Analysis", f"Processing: '{query[:50]}{'...' if len(query) > 50 else ''}'")
         

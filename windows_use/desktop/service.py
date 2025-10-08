@@ -209,18 +209,15 @@ class Desktop:
                     ctypes.windll.user32.GetWindowThreadProcessId(app.handle, ctypes.byref(app_process_id))
                     
                     if app_process_id.value == process_id.value:
-                        print(f"DEBUG: Found foreground app: {app.name} (Title: {foreground_title})")
                         return app
                 except:
                     continue
             
-            # If no match found, log and return the first app as fallback
-            print(f"DEBUG: No matching app found for foreground window '{foreground_title}'. Using first app: {apps[0].name if apps else 'None'}")
+            # If no match found, return the first app as fallback
             return apps[0] if apps else None
             
         except Exception as e:
             # Fallback to first app if there's any error
-            print(f"DEBUG: Error getting foreground app: {e}. Using first app: {apps[0].name if apps else 'None'}")
             return apps[0] if apps else None
 
     def get_apps(self) -> list[App]:

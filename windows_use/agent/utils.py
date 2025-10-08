@@ -47,13 +47,10 @@ def extract_agent_data(message: BaseMessage) -> AgentData:
                 # If there's an issue with conversion, try JSON parsing
                 action['params'] = json.loads(action_input_str)
             except (ValueError, SyntaxError):
-                # If both fail, log the error and provide a default
-                print(f"Warning: Could not parse action_input: {action_input_str}")
+                # If both fail, provide a default
                 action['params'] = {}
     else:
-        # If no action_input found, log the error and provide empty params
-        print(f"Warning: No action_input found for action: {action.get('name', 'Unknown')}")
-        print(f"Full text: {text}")
+        # If no action_input found, provide empty params (this is normal for some tools)
         action['params'] = {}
     result['action'] = action
     return  AgentData.model_validate(result)

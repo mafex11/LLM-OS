@@ -32,7 +32,8 @@ class STTService:
     """
     
     def __init__(self, api_key: Optional[str] = None, enable_stt: bool = True, 
-                 on_transcription: Optional[Callable[[str], None]] = None):
+                 on_transcription: Optional[Callable[[str], None]] = None,
+                 latency_mode: str = "ultra"):
         """
         Initialize STT service
         
@@ -40,6 +41,7 @@ class STTService:
             api_key: Deepgram API key (if None, will try to get from env)
             enable_stt: Whether STT is enabled
             on_transcription: Callback function when transcription is received
+            latency_mode: 'ultra' (100-200ms, default), 'fast' (300-500ms), or 'balanced' (800-1500ms)
         """
         self.enabled = enable_stt and DEEPGRAM_AVAILABLE
         self.is_listening = False
@@ -49,6 +51,24 @@ class STTService:
         self.listening_thread = None
         self.deepgram_connection = None
         self.microphone = None
+        self.latency_mode = latency_mode.lower()
+        
+        # Configure latency settings based on mode
+        if self.latency_mode == "ultra":
+            self.silence_threshold = 0.2  # 200ms
+            self.utterance_end_ms = "300"  # 300ms
+            self.endpointing = 100  # 100ms
+            self.poll_interval = 0.02  # 20ms
+        elif self.latency_mode == "fast":
+            self.silence_threshold = 0.5  # 500ms
+            self.utterance_end_ms = "500"  # 500ms
+            self.endpointing = 150  # 150ms
+            self.poll_interval = 0.05  # 50ms
+        else:  # balanced
+            self.silence_threshold = 1.5  # 1.5s
+            self.utterance_end_ms = "1000"  # 1s
+            self.endpointing = 300  # 300ms
+            self.poll_interval = 0.1  # 100ms
         
         if not self.enabled:
             logger.warning("STT is disabled or Deepgram not available")
@@ -67,7 +87,7 @@ class STTService:
                 options={"keepalive": "true"}
             )
             self.deepgram = DeepgramClient(api_key_to_use, config)
-            logger.info("Deepgram STT Service initialized successfully")
+            logger.info(f"Deepgram STT Service initialized successfully (latency_mode={self.latency_mode}, silence_threshold={self.silence_threshold}s)")
         except Exception as e:
             logger.error(f"Failed to initialize Deepgram client: {e}")
             self.enabled = False
@@ -114,7 +134,6 @@ class STTService:
             # Buffer to accumulate partial transcripts
             self.current_transcript = ""
             self.last_speech_time = time.time()
-            self.silence_threshold = 1.5  # seconds of silence before finalizing
             
             # Capture service instance for event handlers
             service = self
@@ -176,7 +195,7 @@ class STTService:
             self.deepgram_connection.on(LiveTranscriptionEvents.Error, on_error)
             self.deepgram_connection.on(LiveTranscriptionEvents.Close, on_close)
             
-            # Configure Deepgram options
+            # Configure Deepgram options based on latency mode
             options = LiveOptions(
                 model="nova-2",
                 language="en-US",
@@ -185,9 +204,9 @@ class STTService:
                 channels=1,
                 sample_rate=16000,
                 interim_results=True,
-                utterance_end_ms="1000",
+                utterance_end_ms=self.utterance_end_ms,
                 vad_events=True,
-                endpointing=300,
+                endpointing=self.endpointing,
             )
             
             # Start the connection
@@ -210,7 +229,7 @@ class STTService:
                 if self.current_transcript and time.time() - self.last_speech_time > self.silence_threshold:
                     self._finalize_transcript()
                 
-                time.sleep(0.1)
+                time.sleep(self.poll_interval)
             
             # Cleanup
             if self.microphone:
@@ -228,7 +247,9 @@ class STTService:
     
     def _check_and_finalize_transcript(self):
         """Check if enough silence has passed to finalize the transcript"""
-        if self.current_transcript and time.time() - self.last_speech_time > self.silence_threshold:
+        # Use a slightly lower threshold for immediate finalization on final results
+        immediate_threshold = self.silence_threshold * 0.8
+        if self.current_transcript and time.time() - self.last_speech_time > immediate_threshold:
             self._finalize_transcript()
     
     def _finalize_transcript(self):

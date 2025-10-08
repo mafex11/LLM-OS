@@ -146,9 +146,9 @@ def launch_tool(name: str,desktop:Desktop=None) -> str:
             # OPTIMIZATION: Conditional desktop refresh
             if should_refresh_desktop_state(app_name, was_switch):
                 desktop.get_state(use_vision=False)
-                return f'{name.title()} was already running. Switched to existing window. Desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions.'
+                return f'{name.title()} was already running. Switched to it and refreshed coordinates.'
             else:
-                return f'{name.title()} was already running. Switched to existing window. Ready for interaction.'
+                return f'{name.title()} was already open. Switched to it.'
         else:
             # New app was launched, wait for it to load with optimized polling
             max_wait_time = 3.0  # Maximum 3 seconds total
@@ -161,11 +161,11 @@ def launch_tool(name: str,desktop:Desktop=None) -> str:
                     # Brief wait for app to stabilize, then refresh state
                     pg.sleep(0.2)  # Reduced from 1s to 200ms
                     desktop.get_state(use_vision=False)
-                    return f'{name.title()} launched and desktop state refreshed. IMPORTANT: Use fresh coordinates from the updated desktop state for all subsequent actions.'
+                    return f'Launched {name.title()} and refreshed coordinates.'
                 
                 pg.sleep(poll_interval)  # 150ms instead of 1000ms
             
-            return f'Launching {name.title()}. App may still be loading - please wait a moment.'
+            return f'Launching {name.title()}, waiting for it to load.'
 
 @tool('Shell Tool',args_schema=Shell)
 def shell_tool(command: str,desktop:Desktop=None) -> str:
@@ -179,12 +179,12 @@ def clipboard_tool(mode: Literal['copy', 'paste'], text: str = None,desktop:Desk
     if mode == 'copy':
         if text:
             pc.copy(text)  # Copy text to system clipboard
-            return f'Copied "{text}" to clipboard'
+            return f'Copied "{text}" to clipboard.'
         else:
             raise ValueError("No text provided to copy")
     elif mode == 'paste':
         clipboard_content = pc.paste()  # Get text from system clipboard
-        return f'Clipboard Content: "{clipboard_content}"'
+        return f'Got from clipboard: "{clipboard_content}"'
     else:
         raise ValueError('Invalid mode. Use "copy" or "paste".')
     
@@ -193,9 +193,9 @@ def switch_tool(name: str,desktop:Desktop=None) -> str:
     'Switch to a specific application window (e.g., "notepad", "calculator", "chrome", etc.) and bring to foreground.'
     _,status=desktop.switch_app(name)
     if status!=0:
-        return f'Failed to switch to {name.title()} window.'
+        return f'Failed to switch to {name.title()}.'
     else:
-        return f'Switched to {name.title()} window.'
+        return f'Switched to {name.title()}.'
     
 @tool("Resize Tool",args_schema=Resize)
 def resize_tool(name: str,loc:tuple[int,int]=None,size:tuple[int,int]=None,desktop:Desktop=None) -> str:
@@ -230,8 +230,8 @@ def click_tool(loc:tuple[int,int],button:Literal['left','right','middle']='left'
         element_name = "Unknown"
         element_type = control_type or "Unknown"
     
-    num_clicks={1:'Single',2:'Double',3:'Triple'}
-    return f'{num_clicks.get(clicks, "Multiple")} {button} click on {element_name} ({element_type}) at ({x},{y}).'
+    click_desc = "Double-clicked" if clicks == 2 else "Triple-clicked" if clicks == 3 else "Clicked"
+    return f'{click_desc} on {element_name}.'
 
 @tool('Type Tool',args_schema=Type)
 def type_tool(loc:tuple[int,int],text:str,clear:Literal['true','false']='false',caret_position:Literal['start','idle','end']='idle',press_enter:Literal['true','false']='false',desktop:Desktop=None,control_type:str=None):
@@ -280,7 +280,7 @@ def type_tool(loc:tuple[int,int],text:str,clear:Literal['true','false']='false',
         element_name = "Unknown"
         element_type = control_type or "Unknown"
     
-    return f'Typed "{text}" in {element_name} ({element_type}) at ({x},{y}).'
+    return f'Typed "{text}".'
 
 @tool('Scroll Tool',args_schema=Scroll)
 def scroll_tool(loc:tuple[int,int]=None,type:Literal['horizontal','vertical']='vertical',direction:Literal['up','down','left','right']='down',wheel_times:int=1,desktop:Desktop=None)->str:
@@ -314,41 +314,38 @@ def scroll_tool(loc:tuple[int,int]=None,type:Literal['horizontal','vertical']='v
                     return 'Invalid direction. Use "left" or "right".'
         case _:
             return 'Invalid type. Use "horizontal" or "vertical".'
-    return f'Scrolled {type} {direction} by {wheel_times} wheel times.'
+    return f'Scrolled {direction}.'
 
 @tool('Drag Tool',args_schema=Drag)
 def drag_tool(from_loc:tuple[int,int],to_loc:tuple[int,int],desktop:Desktop=None)->str:
     'Drag and drop operation from source coordinates to destination coordinates. Useful for moving files, resizing windows, or drag-and-drop interactions.'
     control=desktop.get_element_under_cursor()
-    x1,y1=from_loc
-    x2,y2=to_loc
     cursor.drag_and_drop(from_loc,to_loc)
-    return f'Dragged the {control.Name} element with ControlType {control.ControlTypeName} from ({x1},{y1}) to ({x2},{y2}).'
+    return f'Dragged {control.Name}.'
 
 @tool('Move Tool',args_schema=Move)
 def move_tool(to_loc:tuple[int,int],desktop:Desktop=None)->str:
     'Move mouse cursor to specific coordinates without clicking. Useful for hovering over elements or positioning cursor before other actions.'
-    x,y=to_loc
     cursor.move_to(to_loc)
-    return f'Moved the mouse pointer to ({x},{y}).'
+    return f'Moved mouse to position.'
 
 @tool('Shortcut Tool',args_schema=Shortcut)
 def shortcut_tool(shortcut:list[str],desktop:Desktop=None):
     'Execute keyboard shortcuts using key combinations. Pass keys as list (e.g., ["ctrl", "c"] for copy, ["alt", "tab"] for app switching, ["win", "r"] for Run dialog).'
     pg.hotkey(*shortcut)
-    return f'Pressed {'+'.join(shortcut)}.'
+    return f'Pressed {"+".join(shortcut)}.'
 
 @tool('Key Tool',args_schema=Key)
 def key_tool(key:str='',desktop:Desktop=None)->str:
     'Press individual keyboard keys. Supports special keys like "enter", "escape", "tab", "space", "backspace", "delete", arrow keys ("up", "down", "left", "right"), function keys ("f1"-"f12").'
     pg.press(key)
-    return f'Pressed the key {key}.'
+    return f'Pressed {key}.'
 
 @tool('Wait Tool',args_schema=Wait)
 def wait_tool(duration:int,desktop:Desktop=None)->str:
     'Pause execution for specified duration in seconds. Useful for waiting for applications to load, animations to complete, or adding delays between actions.'
     pg.sleep(duration)
-    return f'Waited for {duration} seconds.'
+    return f'Waited {duration} seconds.'
 
 @tool('Scrape Tool',args_schema=Scrape)
 def scrape_tool(url:str,desktop:Desktop=None)->str:
@@ -361,7 +358,7 @@ def scrape_tool(url:str,desktop:Desktop=None)->str:
 @tool('Human Tool',args_schema=Human)
 def human_tool(question:str,desktop:Desktop=None)->str:
     'Ask the user a question for clarification, permission, or additional information. Use this when you need user input before proceeding with an action.'
-    return f"USER QUESTION: {question}\n\nPlease respond with your answer, and I'll continue based on your response."
+    return f"QUESTION_FOR_USER:{question}"
 
 @tool('System Tool',args_schema=System)
 def system_tool(info_type:Literal['all','cpu','memory','disk','processes','summary']='all',desktop:Desktop=None)->str:
