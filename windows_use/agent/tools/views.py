@@ -65,3 +65,6 @@ class Scrape(SharedBaseModel):
 
 class Human(SharedBaseModel):
     question:str=Field(...,description="The question to ask the user for clarification or permission.",examples=["The command failed. Would you like me to search for a solution on the web?"])
+
+class System(SharedBaseModel):
+    info_type:Literal['all','cpu','memory','disk','processes','summary']=Field(description="The type of system information to retrieve. 'all' for complete analysis, 'summary' for quick overview, or specific categories.",default='all',examples=['all','cpu','memory'])

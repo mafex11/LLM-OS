@@ -1,4 +1,4 @@
-from windows_use.agent.tools.views import Click, Type, Launch, Scroll, Drag, Move, Shortcut, Key, Wait, Scrape,Done, Clipboard, Shell, Switch, Resize, Human
+from windows_use.agent.tools.views import Click, Type, Launch, Scroll, Drag, Move, Shortcut, Key, Wait, Scrape,Done, Clipboard, Shell, Switch, Resize, Human, System
 from windows_use.desktop.service import Desktop
 from humancursor import SystemCursor
 from markdownify import markdownify
@@ -362,3 +362,169 @@ def scrape_tool(url:str,desktop:Desktop=None)->str:
 def human_tool(question:str,desktop:Desktop=None)->str:
     'Ask the user a question for clarification, permission, or additional information. Use this when you need user input before proceeding with an action.'
     return f"USER QUESTION: {question}\n\nPlease respond with your answer, and I'll continue based on your response."
+
+@tool('System Tool',args_schema=System)
+def system_tool(info_type:Literal['all','cpu','memory','disk','processes','summary']='all',desktop:Desktop=None)->str:
+    '''Get comprehensive system information including CPU usage, memory stats, disk space, and top processes consuming resources. 
+    Use 'all' for complete analysis, 'summary' for quick overview, or specify 'cpu', 'memory', 'disk', or 'processes' for specific info.'''
+    import psutil
+    import platform
+    from datetime import datetime
+    
+    def bytes_to_gb(bytes_value):
+        """Convert bytes to GB with 2 decimal places"""
+        return round(bytes_value / (1024**3), 2)
+    
+    def get_cpu_info():
+        """Get CPU information and usage"""
+        cpu_percent = psutil.cpu_percent(interval=1, percpu=False)
+        cpu_per_core = psutil.cpu_percent(interval=1, percpu=True)
+        cpu_freq = psutil.cpu_freq()
+        cpu_count = psutil.cpu_count(logical=False)
+        cpu_threads = psutil.cpu_count(logical=True)
+        
+        info = f"CPU Information:\n"
+        info += f"  Processor: {platform.processor()}\n"
+        info += f"  Physical Cores: {cpu_count}\n"
+        info += f"  Logical Cores (Threads): {cpu_threads}\n"
+        info += f"  Overall Usage: {cpu_percent}%\n"
+        
+        if cpu_freq:
+            info += f"  Current Frequency: {cpu_freq.current:.2f} MHz\n"
+            info += f"  Max Frequency: {cpu_freq.max:.2f} MHz\n"
+        
+        info += f"  Per-Core Usage: {', '.join([f'Core {i}: {usage}%' for i, usage in enumerate(cpu_per_core)])}\n"
+        
+        return info
+    
+    def get_memory_info():
+        """Get memory (RAM) information"""
+        mem = psutil.virtual_memory()
+        swap = psutil.swap_memory()
+        
+        info = f"Memory (RAM) Information:\n"
+        info += f"  Total RAM: {bytes_to_gb(mem.total)} GB\n"
+        info += f"  Available: {bytes_to_gb(mem.available)} GB\n"
+        info += f"  Used: {bytes_to_gb(mem.used)} GB\n"
+        info += f"  Usage: {mem.percent}%\n"
+        info += f"  \n"
+        info += f"  Swap/Page File:\n"
+        info += f"    Total: {bytes_to_gb(swap.total)} GB\n"
+        info += f"    Used: {bytes_to_gb(swap.used)} GB\n"
+        info += f"    Usage: {swap.percent}%\n"
+        
+        return info
+    
+    def get_disk_info():
+        """Get disk/storage information"""
+        partitions = psutil.disk_partitions()
+        
+        info = f"Disk/Storage Information:\n"
+        for partition in partitions:
+            try:
+                usage = psutil.disk_usage(partition.mountpoint)
+                info += f"  Drive {partition.device}:\n"
+                info += f"    File System: {partition.fstype}\n"
+                info += f"    Total: {bytes_to_gb(usage.total)} GB\n"
+                info += f"    Used: {bytes_to_gb(usage.used)} GB\n"
+                info += f"    Free: {bytes_to_gb(usage.free)} GB\n"
+                info += f"    Usage: {usage.percent}%\n"
+            except PermissionError:
+                continue
+        
+        return info
+    
+    def get_top_processes():
+        """Get top processes by CPU and memory usage"""
+        processes = []
+        for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent', 'memory_info']):
+            try:
+                processes.append(proc.info)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+        
+        # Sort by CPU usage
+        top_cpu = sorted(processes, key=lambda x: x.get('cpu_percent', 0) or 0, reverse=True)[:5]
+        
+        # Sort by memory usage
+        top_mem = sorted(processes, key=lambda x: x.get('memory_percent', 0) or 0, reverse=True)[:5]
+        
+        info = f"Top Processes:\n\n"
+        info += f"  Top 5 by CPU Usage:\n"
+        for i, proc in enumerate(top_cpu, 1):
+            cpu = proc.get('cpu_percent', 0) or 0
+            mem = proc.get('memory_percent', 0) or 0
+            mem_mb = bytes_to_gb(proc.get('memory_info', {}).rss if proc.get('memory_info') else 0) * 1024
+            info += f"    {i}. {proc['name']} (PID: {proc['pid']})\n"
+            info += f"       CPU: {cpu}% | Memory: {mem:.1f}% ({mem_mb:.0f} MB)\n"
+        
+        info += f"\n  Top 5 by Memory Usage:\n"
+        for i, proc in enumerate(top_mem, 1):
+            cpu = proc.get('cpu_percent', 0) or 0
+            mem = proc.get('memory_percent', 0) or 0
+            mem_mb = bytes_to_gb(proc.get('memory_info', {}).rss if proc.get('memory_info') else 0) * 1024
+            info += f"    {i}. {proc['name']} (PID: {proc['pid']})\n"
+            info += f"       Memory: {mem:.1f}% ({mem_mb:.0f} MB) | CPU: {cpu}%\n"
+        
+        return info
+    
+    def get_system_summary():
+        """Get quick system summary"""
+        cpu_percent = psutil.cpu_percent(interval=1)
+        mem = psutil.virtual_memory()
+        
+        # Get main disk
+        disk = psutil.disk_usage('C:\\')
+        
+        # Get top process
+        top_proc = None
+        max_cpu = 0
+        for proc in psutil.process_iter(['name', 'cpu_percent']):
+            try:
+                cpu = proc.info.get('cpu_percent', 0) or 0
+                if cpu > max_cpu:
+                    max_cpu = cpu
+                    top_proc = proc.info['name']
+            except:
+                pass
+        
+        info = f"System Summary:\n"
+        info += f"  OS: {platform.system()} {platform.release()} ({platform.version()})\n"
+        info += f"  Computer: {platform.node()}\n"
+        info += f"  CPU Usage: {cpu_percent}%\n"
+        info += f"  Memory Usage: {mem.percent}% ({bytes_to_gb(mem.used)} GB / {bytes_to_gb(mem.total)} GB)\n"
+        info += f"  Disk C: Usage: {disk.percent}% ({bytes_to_gb(disk.used)} GB / {bytes_to_gb(disk.total)} GB)\n"
+        if top_proc:
+            info += f"  Top Process: {top_proc} ({max_cpu}% CPU)\n"
+        
+        return info
+    
+    # Build response based on info_type
+    try:
+        result = f"System Analysis Report\n"
+        result += f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+        result += f"{'='*60}\n\n"
+        
+        if info_type == 'all':
+            result += get_system_summary() + "\n\n"
+            result += get_cpu_info() + "\n"
+            result += get_memory_info() + "\n"
+            result += get_disk_info() + "\n"
+            result += get_top_processes()
+        elif info_type == 'summary':
+            result += get_system_summary()
+        elif info_type == 'cpu':
+            result += get_cpu_info()
+        elif info_type == 'memory':
+            result += get_memory_info()
+        elif info_type == 'disk':
+            result += get_disk_info()
+        elif info_type == 'processes':
+            result += get_top_processes()
+        else:
+            result += get_system_summary()
+        
+        return result
+        
+    except Exception as e:
+        return f"Error retrieving system information: {e}"

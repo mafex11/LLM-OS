@@ -1,4 +1,4 @@
-from windows_use.agent.tools.service import click_tool, type_tool, launch_tool, shell_tool, clipboard_tool, done_tool, shortcut_tool, scroll_tool, drag_tool, move_tool, key_tool, wait_tool, scrape_tool, switch_tool, resize_tool, human_tool
+from windows_use.agent.tools.service import click_tool, type_tool, launch_tool, shell_tool, clipboard_tool, done_tool, shortcut_tool, scroll_tool, drag_tool, move_tool, key_tool, wait_tool, scrape_tool, switch_tool, resize_tool, human_tool, system_tool
 from windows_use.agent.tts_service import TTSService, speak_text, is_tts_available
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from windows_use.agent.utils import extract_agent_data, image_message
@@ -65,7 +65,7 @@ class Agent:
         self.registry = Registry([
             click_tool,type_tool, launch_tool, shell_tool, clipboard_tool,
             done_tool, shortcut_tool, scroll_tool, drag_tool, move_tool,
-            key_tool, wait_tool, scrape_tool, switch_tool, resize_tool, human_tool
+            key_tool, wait_tool, scrape_tool, switch_tool, resize_tool, human_tool, system_tool
         ] + additional_tools)
         self.instructions=instructions
         self.browser=browser
@@ -545,6 +545,9 @@ Convert the raw answer above into a natural, conversational response:"""
         # Remove headers
         text = re.sub(r'^#+\s*', '', text, flags=re.MULTILINE)
         
+        # Normalize text for natural speech
+        text = self._normalize_for_speech(text)
+        
         # Remove excessive whitespace
         text = re.sub(r'\s+', ' ', text)
         text = text.strip()
@@ -563,6 +566,125 @@ Convert the raw answer above into a natural, conversational response:"""
                 text = text[:500] + "..."
         
         return text
+    
+    def _normalize_for_speech(self, text: str) -> str:
+        """
+        Normalize text for natural speech - convert symbols, numbers, etc.
+        
+        Args:
+            text: Text to normalize
+            
+        Returns:
+            Normalized text
+        """
+        import re
+        
+        # Remove or replace punctuation that sounds bad when read aloud
+        text = text.replace(',', '')  # Remove commas - natural pauses happen anyway
+        text = text.replace(';', ',')  # Replace semicolons with pause
+        text = text.replace(':', ' -')  # Replace colons with dash
+        
+        # Convert file sizes to spoken form
+        text = re.sub(r'(\d+(?:\.\d+)?)\s*(GB|MB|KB|TB)', lambda m: self._number_to_words(float(m.group(1))) + ' ' + self._size_unit_to_words(m.group(2)), text, flags=re.IGNORECASE)
+        
+        # Convert percentages
+        text = re.sub(r'(\d+(?:\.\d+)?)\s*%', lambda m: self._number_to_words(float(m.group(1))) + ' percent', text)
+        
+        # Convert standalone numbers with decimals to words
+        text = re.sub(r'\b(\d+)\.(\d+)\b', lambda m: self._number_to_words(float(m.group(0))), text)
+        
+        # Convert large integers to words (only if they're not part of IDs or codes)
+        text = re.sub(r'\b(\d{1,3})\b(?!\d)', lambda m: self._number_to_words(int(m.group(1))), text)
+        
+        # Handle common abbreviations
+        abbreviations = {
+            'URL': 'U R L',
+            'URLs': 'U R Ls',
+            'API': 'A P I',
+            'UI': 'U I',
+            'ID': 'I D',
+            'CPU': 'C P U',
+            'GPU': 'G P U',
+            'RAM': 'R A M',
+            'SSD': 'S S D',
+            'HDD': 'H D D',
+            'USB': 'U S B',
+            'PDF': 'P D F',
+            'HTML': 'H T M L',
+            'CSS': 'C S S',
+            'JS': 'javascript',
+        }
+        
+        for abbr, spoken in abbreviations.items():
+            text = re.sub(r'\b' + abbr + r'\b', spoken, text, flags=re.IGNORECASE)
+        
+        return text
+    
+    def _number_to_words(self, number: float) -> str:
+        """
+        Convert a number to words for speech
+        
+        Args:
+            number: Number to convert
+            
+        Returns:
+            Number in words
+        """
+        # Handle decimals
+        if isinstance(number, float) and number != int(number):
+            integer_part = int(number)
+            decimal_part = str(number).split('.')[1]
+            
+            # For small decimals like 21.6
+            if len(decimal_part) <= 2:
+                return f"{self._int_to_words(integer_part)} point {self._int_to_words(int(decimal_part))}"
+            else:
+                # For longer decimals, just say the digits
+                decimal_words = ' '.join([self._digit_to_word(d) for d in decimal_part])
+                return f"{self._int_to_words(integer_part)} point {decimal_words}"
+        
+        return self._int_to_words(int(number))
+    
+    def _int_to_words(self, n: int) -> str:
+        """Convert integer to words"""
+        if n == 0:
+            return "zero"
+        
+        ones = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
+        teens = ["ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"]
+        tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+        
+        if n < 10:
+            return ones[n]
+        elif n < 20:
+            return teens[n - 10]
+        elif n < 100:
+            return tens[n // 10] + (" " + ones[n % 10] if n % 10 != 0 else "")
+        elif n < 1000:
+            return ones[n // 100] + " hundred" + (" " + self._int_to_words(n % 100) if n % 100 != 0 else "")
+        elif n < 1000000:
+            return self._int_to_words(n // 1000) + " thousand" + (" " + self._int_to_words(n % 1000) if n % 1000 != 0 else "")
+        else:
+            return str(n)  # For very large numbers, just return as string
+    
+    def _digit_to_word(self, digit: str) -> str:
+        """Convert a single digit to word"""
+        digits = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
+        return digits[int(digit)] if digit.isdigit() else digit
+    
+    def _size_unit_to_words(self, unit: str) -> str:
+        """Convert size units to spoken words"""
+        units = {
+            'GB': 'gigabytes',
+            'MB': 'megabytes',
+            'KB': 'kilobytes',
+            'TB': 'terabytes',
+            'gb': 'gigabytes',
+            'mb': 'megabytes',
+            'kb': 'kilobytes',
+            'tb': 'terabytes',
+        }
+        return units.get(unit, unit)
 
     def stop_speaking(self):
         """Stop current speech if any"""
