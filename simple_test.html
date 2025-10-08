@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows-Use Agent Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8">Windows-Use Agent Test Interface</h1>
+        
+        <div class="max-w-4xl mx-auto">
+            <!-- Status Card -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">System Status</h2>
+                <div id="status" class="text-gray-600">Checking...</div>
+                <button onclick="checkStatus()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                    Refresh Status
+                </button>
+            </div>
+
+            <!-- Query Interface -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Send Query</h2>
+                <div class="flex gap-4">
+                    <input 
+                        type="text" 
+                        id="queryInput" 
+                        placeholder="Enter your command..." 
+                        class="flex-1 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onkeypress="handleKeyPress(event)"
+                    >
+                    <button onclick="sendQuery()" class="px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                        Send
+                    </button>
+                </div>
+            </div>
+
+            <!-- Response Area -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">Response</h2>
+                <div id="response" class="bg-gray-50 p-4 rounded min-h-32 text-gray-700">
+                    No response yet. Try sending a query above.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        
+        async function checkStatus() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = 'Checking...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                if (response.ok) {
+                    const data = await response.json();
+                    statusDiv.innerHTML = `
+                        <div class="text-green-600">✅ API Server is running</div>
+                        <div class="text-sm text-gray-500 mt-2">Status: ${data.status}</div>
+                        <div class="text-sm text-gray-500">Agent Ready: ${data.agent_ready ? 'Yes' : 'No'}</div>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `<div class="text-red-600">❌ API Server error: ${response.status}</div>`;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="text-red-600">❌ Cannot connect to API server. Make sure it's running on port 8000.</div>`;
+            }
+        }
+        
+        async function sendQuery() {
+            const input = document.getElementById('queryInput');
+            const responseDiv = document.getElementById('response');
+            const query = input.value.trim();
+            
+            if (!query) {
+                responseDiv.innerHTML = '<div class="text-red-600">Please enter a query.</div>';
+                return;
+            }
+            
+            responseDiv.innerHTML = 'Processing...';
+            input.value = '';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/query`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query, use_vision: false })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        responseDiv.innerHTML = `<div class="text-green-600">✅ Success</div><div class="mt-2 whitespace-pre-wrap">${data.response}</div>`;
+                    } else {
+                        responseDiv.innerHTML = `<div class="text-red-600">❌ Error: ${data.error}</div>`;
+                    }
+                } else {
+                    responseDiv.innerHTML = `<div class="text-red-600">❌ Server error: ${response.status}</div>`;
+                }
+            } catch (error) {
+                responseDiv.innerHTML = `<div class="text-red-600">❌ Network error: ${error.message}</div>`;
+            }
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendQuery();
+            }
+        }
+        
+        // Check status on page load
+        window.onload = checkStatus;
+    </script>
+</body>
+</html>

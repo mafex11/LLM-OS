@@ -224,3 +224,5 @@ wsproto==1.2.0
 xxhash==3.5.0
 yarl==1.20.1
 zstandard==0.24.0
+fastapi==0.115.6
+uvicorn[standard]==0.34.0

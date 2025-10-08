@@ -221,8 +221,13 @@ class Agent:
         return
 
     def show_status(self, status: str, action_name: str = None, details: str = None):
-        """Display real-time status updates - DISABLED for cleaner output"""
-        pass
+        """Display real-time status updates"""
+        if action_name and details:
+            logger.info(colored(f"[{status}] {action_name}: {details}", color='yellow'))
+        elif action_name:
+            logger.info(colored(f"[{status}] {action_name}", color='yellow'))
+        else:
+            logger.info(colored(f"[{status}]", color='yellow'))
             
 
     @timed("reason")
