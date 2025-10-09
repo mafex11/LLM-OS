@@ -33,7 +33,7 @@ class STTService:
     
     def __init__(self, api_key: Optional[str] = None, enable_stt: bool = True, 
                  on_transcription: Optional[Callable[[str], None]] = None,
-                 latency_mode: str = "ultra"):
+                 latency_mode: str = "fast"):
         """
         Initialize STT service
         
@@ -41,7 +41,7 @@ class STTService:
             api_key: Deepgram API key (if None, will try to get from env)
             enable_stt: Whether STT is enabled
             on_transcription: Callback function when transcription is received
-            latency_mode: 'ultra' (100-200ms, default), 'fast' (300-500ms), or 'balanced' (800-1500ms)
+            latency_mode: 'ultra' (100-200ms), 'fast' (300-500ms), or 'balanced' (800-1500ms, default)
         """
         self.enabled = enable_stt and DEEPGRAM_AVAILABLE
         self.is_listening = False
@@ -61,9 +61,9 @@ class STTService:
             self.poll_interval = 0.02  # 20ms
         elif self.latency_mode == "fast":
             self.silence_threshold = 0.5  # 500ms
-            self.utterance_end_ms = "500"  # 500ms
-            self.endpointing = 150  # 150ms
-            self.poll_interval = 0.05  # 50ms
+            self.utterance_end_ms = "1000"  # 1000ms
+            self.endpointing = 100  # 150ms
+            self.poll_interval = 0.05 # 50ms
         else:  # balanced
             self.silence_threshold = 1.5  # 1.5s
             self.utterance_end_ms = "1000"  # 1s
