@@ -1,0 +1,56 @@
+{
+  "name": "windows-use-desktop",
+  "version": "1.0.0",
+  "description": "AI-powered Windows automation desktop application",
+  "main": "electron/main.js",
+  "author": "Windows-Use Team",
+  "license": "MIT",
+  "scripts": {
+    "electron:dev": "set NODE_ENV=development && electron .",
+    "electron:build": "electron-builder",
+    "build:backend": "python build_backend.py",
+    "build:frontend": "cd ../frontend && npm run build",
+    "build:all": "npm run build:backend && npm run build:frontend && npm run electron:build",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "build": {
+    "appId": "com.windowsuse.desktop",
+    "productName": "Windows-Use AI",
+    "files": [
+      "electron/**/*",
+      "backend/**/*",
+      "frontend-build/**/*",
+      "resources/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "resources/icon.ico",
+      "sign": null
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "license": "resources/LICENSE.txt",
+      "installerIcon": "resources/icon.ico",
+      "uninstallerIcon": "resources/icon.ico"
+    },
+    "directories": {
+      "output": "dist",
+      "buildResources": "resources"
+    }
+  },
+  "dependencies": {
+    "electron-store": "^8.1.0",
+    "find-process": "^1.4.7"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  }
+}
+

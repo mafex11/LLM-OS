@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms and Conditions - Windows-Use AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 700px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .content h2 {
+            color: #667eea;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .content h2:first-child {
+            margin-top: 0;
+        }
+
+        .content p, .content ul {
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .content ul {
+            padding-left: 20px;
+        }
+
+        .content li {
+            margin-bottom: 8px;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .warning strong {
+            color: #856404;
+        }
+
+        .footer {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-container label {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-decline {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-decline:hover:not(:disabled) {
+            background: #5a6268;
+        }
+
+        .btn-accept {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-accept:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🪟 Windows-Use AI</h1>
+            <p>Terms and Conditions</p>
+        </div>
+
+        <div class="content">
+            <h2>1. Overview</h2>
+            <p>Windows-Use AI is a powerful automation agent that interacts directly with your Windows operating system at the GUI layer. By using this software, you acknowledge and agree to the following terms.</p>
+
+            <div class="warning">
+                <strong>⚠️ Important Warning:</strong> This agent interacts directly with your Windows OS at the GUI layer to perform actions. While designed to act intelligently and safely, it can make mistakes that might cause undesired system behavior or unintended changes.
+            </div>
+
+            <h2>2. Acceptable Use</h2>
+            <ul>
+                <li>This software is provided for automation and productivity enhancement purposes</li>
+                <li>You're responsible for all actions performed by the agent on your system</li>
+                <li>Don't use this software for illegal, harmful, or unauthorized activities</li>
+                <li>Review and understand tasks before allowing the agent to execute them</li>
+            </ul>
+
+            <h2>3. System Safety</h2>
+            <ul>
+                <li>The agent can perform system-level actions including file operations, application control, and system settings changes</li>
+                <li>Run the agent in a sandbox environment when possible</li>
+                <li>Keep backups of important data before using automation features</li>
+                <li>Monitor the agent's actions, especially during initial use</li>
+            </ul>
+
+            <h2>4. API Keys and Data</h2>
+            <ul>
+                <li>This application requires API keys for AI services (Google Gemini, etc.)</li>
+                <li>Your API keys are stored locally and never transmitted to third parties</li>
+                <li>You're responsible for the costs associated with API usage</li>
+                <li>Conversation logs are stored locally for improving agent performance</li>
+            </ul>
+
+            <h2>5. Disclaimer of Warranties</h2>
+            <p>This software is provided "AS IS" without warranties of any kind, either express or implied. The developers make no guarantees about the software's performance, reliability, or suitability for any particular purpose.</p>
+
+            <h2>6. Limitation of Liability</h2>
+            <p>The developers shall not be liable for any damages, including data loss, system damage, or other losses resulting from the use or inability to use this software.</p>
+
+            <h2>7. Updates and Changes</h2>
+            <p>The software may receive updates that modify functionality or these terms. Continued use after updates constitutes acceptance of any changes.</p>
+
+            <h2>8. License</h2>
+            <p>This software is licensed under the MIT License. See the included LICENSE file for full details.</p>
+
+            <h2>9. Contact</h2>
+            <p>For questions or concerns, visit our GitHub repository or join our Discord community.</p>
+        </div>
+
+        <div class="footer">
+            <div class="checkbox-container">
+                <input type="checkbox" id="agree-checkbox">
+                <label for="agree-checkbox">I have read and agree to the terms</label>
+            </div>
+            <div class="buttons">
+                <button class="btn-decline" id="decline-btn">Decline</button>
+                <button class="btn-accept" id="accept-btn" disabled>Accept & Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const checkbox = document.getElementById('agree-checkbox');
+        const acceptBtn = document.getElementById('accept-btn');
+        const declineBtn = document.getElementById('decline-btn');
+
+        checkbox.addEventListener('change', () => {
+            acceptBtn.disabled = !checkbox.checked;
+        });
+
+        acceptBtn.addEventListener('click', () => {
+            if (checkbox.checked) {
+                window.electronAPI.acceptTerms();
+            }
+        });
+
+        declineBtn.addEventListener('click', () => {
+            window.electronAPI.declineTerms();
+        });
+    </script>
+</body>
+</html>
+

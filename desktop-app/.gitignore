@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+backend/
+frontend-build/
+*.spec
+*.exe
+*.log
+.DS_Store
+

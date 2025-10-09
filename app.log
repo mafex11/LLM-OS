@@ -1302,3 +1302,46 @@ I have opened the calculator for you.[0m
 2025-10-09 15:47:51 | DEBUG | TTS: I have opened the calculator for you.
 2025-10-09 15:47:51 | INFO | Generating speech for: I have opened the calculator for you....
 2025-10-09 15:47:52 | INFO | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1760005071828.mp3
+2025-10-09 16:11:45 | INFO | ================================================================================
+2025-10-09 16:11:45 | INFO | SESSION ENDED
+2025-10-09 16:11:45 | INFO | ================================================================================
+
+2025-10-09 16:47:08 | INFO | ================================================================================
+2025-10-09 16:47:08 | INFO | NEW SESSION STARTED
+2025-10-09 16:47:08 | INFO | ================================================================================
+2025-10-09 16:47:09 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-09 16:47:12 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-09 16:47:31 | INFO | USER QUERY: hello
+2025-10-09 16:47:31 | INFO | [Starting] Task Analysis: Processing: 'hello'
+2025-10-09 16:47:32 | INFO | [Thinking] Planning Next Action: Step 1/30
+2025-10-09 16:47:35 | INFO | --- ITERATION 1/30 ---
+2025-10-09 16:47:35 | INFO | EVALUATE: The agent is at the first step and ready to start the task.
+2025-10-09 16:47:35 | INFO | PLAN: The user has provided the input "hello". Since this is a pure knowledge query, I will respond directly using the Done Tool.
+2025-10-09 16:47:35 | INFO | THOUGHT: The user is just saying hello, so I will respond in a friendly manner.
+2025-10-09 16:47:35 | INFO | The user is just saying hello, so I will respond in a friendly manner.
+2025-10-09 16:47:35 | INFO | [Reasoning] Agent Thought: The user is just saying hello, so I will respond in a friendly manner.
+2025-10-09 16:47:35 | INFO | [Finalizing] Done Tool: Preparing response
+2025-10-09 16:47:35 | INFO | FINAL ANSWER: Hello there! How can I help you today?
+2025-10-09 16:47:35 | INFO | 
+Hello there! How can I help you today?
+2025-10-09 16:47:35 | DEBUG | TTS: Hello there! How can I help you today?
+2025-10-09 16:47:35 | INFO | Generating speech for: Hello there! How can I help you today?...
+2025-10-09 16:47:36 | INFO | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1760008655304.mp3
+2025-10-09 17:50:33 | INFO | ================================================================================
+2025-10-09 17:50:33 | INFO | NEW SESSION STARTED
+2025-10-09 17:50:33 | INFO | ================================================================================
+2025-10-09 17:50:33 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-09 17:50:35 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-09 17:51:25 | INFO | ================================================================================
+2025-10-09 17:51:25 | INFO | NEW SESSION STARTED
+2025-10-09 17:51:25 | INFO | ================================================================================
+2025-10-09 17:51:27 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-09 17:51:28 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-09 17:51:28 | INFO | Deepgram STT Service initialized successfully (latency_mode=ultra, silence_threshold=0.2s)
+2025-10-09 17:52:52 | INFO | Deepgram STT Service initialized successfully (latency_mode=ultra, silence_threshold=0.2s)
+2025-10-09 17:52:52 | INFO | Started listening for speech...
+2025-10-09 17:52:53 | ERROR | Failed to start Deepgram connection
+2025-10-09 17:53:00 | INFO | ================================================================================
+2025-10-09 17:53:00 | INFO | SESSION ENDED
+2025-10-09 17:53:00 | INFO | ================================================================================
+
