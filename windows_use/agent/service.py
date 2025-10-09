@@ -280,6 +280,9 @@ class Agent:
         # Log to console
         logger.info(colored(f"{agent_data.thought}",color='light_magenta'))
         
+        # Send thought to streaming clients
+        self.show_status("Reasoning", "Agent Thought", agent_data.thought)
+        
         # Update overlay with agent data
         if OVERLAY_AVAILABLE:
             update_overlay_status(
@@ -805,8 +808,7 @@ Convert the raw answer above into a natural, conversational response:"""
                 ctypes.windll.ole32.CoInitializeEx(0, 2)
             except Exception:
                 pass
-            with self.desktop.auto_minimize():
-                response=self.graph.invoke(state,config={'recursion_limit':self.max_steps*10})         
+            response=self.graph.invoke(state,config={'recursion_limit':self.max_steps*10})         
         except Exception as error:
             response={
                 'output':None,

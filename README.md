@@ -65,11 +65,42 @@ print(agent_result.content)
 
 ## 🤖 Run Agent
 
-You can use the following to run from a script:
+### Option 1: Web UI (New!)
+
+Experience a modern ChatGPT-like interface:
+
+1. **Start the API server:**
+   ```bash
+   start_api_server.bat
+   ```
+
+2. **Start the frontend** (in a new terminal):
+   ```bash
+   start_frontend.bat
+   ```
+
+3. **Open your browser:**
+   ```
+   http://localhost:3000
+   ```
+
+See [FRONTEND_SETUP.md](FRONTEND_SETUP.md) for detailed instructions.
+
+### Option 2: Command Line
+
+Run from the command line:
 
 ```bash
 python main.py
 Enter your query: <YOUR TASK>
+```
+
+### Option 3: GUI Application
+
+Run the graphical interface:
+
+```bash
+python gui_app.py
 ```
 
 ---

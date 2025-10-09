@@ -58,91 +58,66 @@ class StreamingAgent(Agent):
     
     async def invoke_streaming(self, query: str) -> AsyncGenerator[Dict[str, Any], None]:
         """
-        Process a query with streaming updates
+        Process a query with streaming updates - uses the parent invoke() method
         """
         try:
-            # Emit start thinking
-            await self.emit_update("thinking", {
-                "message": "Starting to process your request...",
-                "step": "initialization"
-            })
+            # Send initial thinking update
+            start_update = {
+                "type": "thinking",
+                "timestamp": datetime.now().isoformat(),
+                "data": {
+                    "message": "Processing your request...",
+                    "step": "initialization"
+                }
+            }
+            yield start_update
             
-            # Create initial state
-            state = AgentState({
-                'input': query,
-                'steps': 0,
-                'max_steps': self.max_steps,
-                'messages': [],
-                'previous_observation': None,
-                'agent_data': None,
-                'output': None
-            })
+            # Use the parent's invoke method in a thread pool executor
+            # This is the same method used by main.py CLI - it works!
+            loop = asyncio.get_running_loop()
             
-            # Process through the agent workflow
-            current_state = state
-            step_count = 0
+            # Run the synchronous invoke in a thread
+            result = await loop.run_in_executor(None, self.invoke, query)
             
-            while step_count < self.max_steps:
-                step_count += 1
-                current_state['steps'] = step_count
-                
-                # Emit reasoning step
-                await self.emit_update("thinking", {
-                    "message": f"Planning step {step_count}...",
-                    "step": "reasoning"
-                })
-                
-                # Reason about next action
-                current_state = self.reason(current_state)
-                
-                if current_state.get('agent_data') is None:
-                    # No more actions needed
-                    break
-                
-                # Emit tool usage
-                agent_data = current_state['agent_data']
-                tool_name = agent_data.action.name
-                tool_params = agent_data.action.params
-                
-                await self.emit_update("tool_usage", {
-                    "tool_name": tool_name,
-                    "tool_params": tool_params,
-                    "step": step_count
-                })
-                
-                # Execute the tool
-                await self.emit_update("thinking", {
-                    "message": f"Executing {tool_name}...",
-                    "step": "execution"
-                })
-                
-                current_state = self.answer(current_state)
-                
-                # Check if we're done
-                if current_state.get('output'):
-                    break
-            
-            # Emit final response
-            final_output = current_state.get('output', '')
-            if final_output:
-                await self.emit_update("response", {
-                    "content": final_output,
-                    "success": True
-                })
+            # Extract the response content
+            if hasattr(result, 'content'):
+                final_output = result.content
             else:
-                await self.emit_update("response", {
-                    "content": "I've completed the requested task.",
+                final_output = str(result)
+            # Send the final response
+            response_update = {
+                "type": "response",
+                "timestamp": datetime.now().isoformat(),
+                "data": {
+                    "message": final_output if final_output else "Task completed.",
                     "success": True
-                })
+                }
+            }
+            yield response_update
                 
         except Exception as e:
-            logger.error(f"Error in streaming invoke: {e}")
-            await self.emit_update("error", {
-                "message": str(e),
-                "error_type": type(e).__name__
-            })
+            import traceback
+            error_traceback = traceback.format_exc()
+            logger.error(f"Error in streaming invoke: {e}\n{error_traceback}")
+            
+            error_update = {
+                "type": "error",
+                "timestamp": datetime.now().isoformat(),
+                "data": {
+                    "message": str(e),
+                    "error_type": type(e).__name__
+                }
+            }
+            await self.emit_update("error", error_update["data"])
+            yield error_update
         
-        # Emit completion
-        await self.emit_update("complete", {
-            "message": "Processing complete"
-        })
+        # Emit and yield completion
+        complete_update = {
+            "type": "complete",
+            "timestamp": datetime.now().isoformat(),
+            "data": {
+                "message": "Processing complete"
+            }
+        }
+        await self.emit_update("complete", complete_update["data"])
+        yield complete_update
