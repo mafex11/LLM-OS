@@ -95,7 +95,7 @@ function startBackend() {
       ? path.join(__dirname, '../../api_server.py')
       : path.join(process.resourcesPath, 'backend', 'api_server.exe');
 
-    const pythonCmd = isDev ? 'python' : backendPath;
+    const pythonCmd = isDev ? path.join(__dirname, '../../venv/Scripts/python.exe') : backendPath;
     const args = isDev ? [backendPath] : [];
 
     console.log(`Starting backend: ${pythonCmd}`, args);

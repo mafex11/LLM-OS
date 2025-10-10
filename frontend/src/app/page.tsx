@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { ArrowRight01Icon, Settings01Icon, Mic01Icon } from "hugeicons-react"
+import { ArrowRight01Icon, Settings01Icon, VoiceIcon } from "hugeicons-react"
 import { DottedGlowBackground } from "@/components/ui/dotted-glow-background"
 import Link from "next/link"
 import { useState } from "react"
@@ -51,25 +51,14 @@ export default function LandingPage() {
   } as const
 
   return (
-    <div className="min-h-screen w-full bg-black relative">
-      {/* Dotted Glow Background - Centered */}
-      <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-        <div className="relative h-screen w-screen border border-white/10 rounded-lg">
-          <DottedGlowBackground
-            gap={20}
-            radius={2}
-            color="rgba(100, 100, 100, 0.5)"
-            darkColor="rgba(200, 200, 200, 0.5)"
-            glowColor="rgba(200, 120, 255, 1)"
-            darkGlowColor="rgba(200, 120, 255, 1)"
-            opacity={0.5}
-            backgroundOpacity={0}
-            speedMin={0.3}
-            speedMax={0.8}
-            speedScale={1}
-          />
-            </div>
-      </div>
+    <div className="min-h-screen w-full relative">
+      {/* Crimson Depth Background */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          background: "radial-gradient(125% 125% at 50% 100%, #000000 40%, #2b0707 100%)",
+        }}
+      />
       {/* Content */}
       <section className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-20">
         <motion.div className="mx-auto max-w-6xl text-center" variants={container} initial="hidden" animate="show">
@@ -77,8 +66,36 @@ export default function LandingPage() {
           {/* Logo */}
           <motion.div variants={item} className="mb-8 flex justify-center">
             <div className="flex items-center gap-3">
-              <Image src="/logo.svg" alt="Netra Logo" width={40} height={40} className="flex-shrink-0" />
-              <span className="text-xl font-semibold text-foreground">Netra</span>
+              <Image src="/logo.svg" alt="Netra Logo" width={70} height={70} className="flex-shrink-0 rounded-full" />
+               <span className="text-8xl font-semibold text-foreground relative">
+                 {["N", "e", "t", "r", "a"].map((letter, index) => (
+                   <motion.span
+                     key={index}
+                     className="inline-block"
+                     animate={{
+                       textShadow: [
+                         "0 0 0px rgba(255, 255, 255, 0)",
+                         "0 0 20px rgba(255, 255, 255, 0.8)",
+                         "0 0 0px rgba(255, 255, 255, 0)"
+                       ],
+                       filter: [
+                         "brightness(1)",
+                         "brightness(1.5)",
+                         "brightness(1)"
+                       ]
+                     }}
+                     transition={{
+                       duration: 0.8,
+                       delay: index * 0.2,
+                       repeat: Infinity,
+                       repeatDelay: 2,
+                       ease: "easeInOut"
+                     }}
+                   >
+                     {letter}
+                   </motion.span>
+                 ))}
+               </span>
                     </div>
           </motion.div>
 
@@ -94,7 +111,7 @@ export default function LandingPage() {
           {/* Supporting Text */}
           <motion.p
             variants={item}
-            className="mx-auto mb-12 max-w-4xl text-pretty text-md leading-relaxed text-muted-foreground md:text-md"
+            className="hidden sm:block mx-auto mb-12 max-w-4xl text-pretty text-md leading-relaxed text-white/40 md:text-md"
           >
             Meet your intelligent voice assistant. Have natural conversations, get factual answers, and control
             everything hands-free. No keyboard. No mouse. Just speak.
@@ -104,13 +121,13 @@ export default function LandingPage() {
           <motion.div variants={item} className="mb-8 flex justify-center">
             <div className="relative w-full max-w-3xl flex gap-2">
               <button className="relative inline-flex h-12 w-12 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
-                <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
+                <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#991B1B_0%,#450A0A_50%,#991B1B_100%)]" />
                 <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 text-white backdrop-blur-3xl">
-                  <Mic01Icon size={18} />
+                  <VoiceIcon size={24} />
                 </span>
               </button>
               <div className="relative flex-1 inline-flex overflow-hidden rounded-full p-[1px]">
-                <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
+                <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#991B1B_0%,#450A0A_50%,#991B1B_100%)]" />
                 <input
                   type="text"
                   placeholder="Enter what you want to do..."
@@ -124,7 +141,7 @@ export default function LandingPage() {
                 onClick={handleStartNow}
                 className="relative inline-flex h-12 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50"
               >
-                <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
+                <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#991B1B_0%,#450A0A_50%,#991B1B_100%)]" />
                 <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl">
                   Start Now
                 </span>
@@ -141,7 +158,7 @@ export default function LandingPage() {
             </Button>
             </Link>
             <Link href="/settings">
-              <Button size="default" variant="outline" className="gap-2">
+              <Button size="default" variant="destructive" className="gap-2">
                 <Settings01Icon size={16} />
                 Configure API Keys
                 </Button>
@@ -149,20 +166,20 @@ export default function LandingPage() {
           </motion.div>
 
           {/* Example Commands */}
-          <motion.div variants={item}>
-            <p className="mb-4 text-sm font-normal text-muted-foreground">Try:</p>
+          <motion.div variants={item} className="hidden sm:block">
+            <p className="mb-4 text-xl font-normal text-white underline-offset-4 underline">Try these</p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               {exampleCommands.map((command, index) => (
-                <motion.span
+                <motion.button
                   key={index}
                   variants={subtleItem}
                   initial="hidden"
                   animate="show"
                   transition={{ delay: 0.05 * index }}
-                  className="rounded-full border border-border bg-secondary px-4 py-2 text-sm text-secondary-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                  className="flex-1 min-w-0 justify-center gap-2 hover:bg-black/20 backdrop-blur-sm border border-white/20 hover:border-white/30 rounded-lg px-4 py-3 text-sm text-center transition-colors"
                 >
                   {command}
-                </motion.span>
+                </motion.button>
               ))}
             </div>
           </motion.div>

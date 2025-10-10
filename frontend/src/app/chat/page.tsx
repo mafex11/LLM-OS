@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -76,7 +76,7 @@ interface SystemStatus {
   performance_stats: any
 }
 
-export default function Home() {
+function ChatContent() {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([])
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -99,19 +99,23 @@ export default function Home() {
   const workflowRef = useRef<WorkflowStep[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const currentSession = chatSessions.find(s => s.id === currentSessionId)
   const messages = currentSession?.messages || []
 
-  // Load chat sessions from localStorage on mount
+  // Always create a new chat when page opens and focus input
   useEffect(() => {
-    const loadChatSessions = () => {
+    const createNewChatAndFocus = () => {
       try {
+        // Load existing sessions for sidebar
         const saved = localStorage.getItem('chatSessions')
+        let existingSessions: ChatSession[] = []
+        
         if (saved) {
           const parsed = JSON.parse(saved)
           // Convert date strings back to Date objects
-          const sessions = parsed.map((session: any) => ({
+          existingSessions = parsed.map((session: any) => ({
             ...session,
             createdAt: new Date(session.createdAt),
             messages: session.messages.map((msg: any) => ({
@@ -123,21 +127,29 @@ export default function Home() {
               }))
             }))
           }))
-          setChatSessions(sessions)
-          setCurrentSessionId(sessions[0]?.id || "")
-        } else {
-          // Create initial session if none exists
-          const initialSession: ChatSession = {
-            id: Date.now().toString(),
-            title: "New Chat",
-            messages: [],
-            createdAt: new Date()
-          }
-          setChatSessions([initialSession])
-          setCurrentSessionId(initialSession.id)
         }
+
+        // Always create a new chat session (but don't add to history yet)
+        const newSession: ChatSession = {
+          id: Date.now().toString(),
+          title: "New Chat",
+          messages: [],
+          createdAt: new Date()
+        }
+        
+        // Set the new session as current but don't add to existing sessions yet
+        setChatSessions([newSession])
+        setCurrentSessionId(newSession.id)
+        
+        // Focus the input field after a short delay to ensure it's rendered
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.focus()
+          }
+        }, 100)
+        
       } catch (error) {
-        console.error('Failed to load chat sessions:', error)
+        console.error('Failed to create new chat:', error)
         // Create initial session on error
         const initialSession: ChatSession = {
           id: Date.now().toString(),
@@ -147,11 +159,17 @@ export default function Home() {
         }
         setChatSessions([initialSession])
         setCurrentSessionId(initialSession.id)
+        
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.focus()
+          }
+        }, 100)
       }
-      setIsInitialized(true)
     }
 
-    loadChatSessions()
+    createNewChatAndFocus()
+    setIsInitialized(true)
   }, [])
 
   // Save chat sessions to localStorage whenever they change
@@ -366,6 +384,32 @@ export default function Home() {
       role: "user",
       content: taskContent,
       timestamp: new Date(),
+    }
+
+    // If this is the first message in the current session, load existing sessions to add to history
+    if (messages.length === 0) {
+      try {
+        const saved = localStorage.getItem('chatSessions')
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          const existingSessions = parsed.map((session: any) => ({
+            ...session,
+            createdAt: new Date(session.createdAt),
+            messages: session.messages.map((msg: any) => ({
+              ...msg,
+              timestamp: new Date(msg.timestamp),
+              workflowSteps: msg.workflowSteps?.map((step: any) => ({
+                ...step,
+                timestamp: new Date(step.timestamp)
+              }))
+            }))
+          }))
+          // Add existing sessions to the current new session
+          setChatSessions(prev => [prev[0], ...existingSessions])
+        }
+      } catch (error) {
+        console.error('Failed to load existing sessions:', error)
+      }
     }
 
     const newMessages = [...messages, userMessage]
@@ -908,6 +952,7 @@ export default function Home() {
                       transition={{ duration: 0.3 }}
                     >
                       <Input
+                        ref={inputRef}
                         placeholder="What can I do for you?"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
@@ -1073,6 +1118,18 @@ export default function Home() {
       </Dialog>
       </div>
     </div>
+  )
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-black">
+        <div className="text-white">Loading...</div>
+      </div>
+    }>
+      <ChatContent />
+    </Suspense>
   )
 }
 

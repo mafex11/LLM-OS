@@ -603,6 +603,9 @@ async def stop_speaking():
 # Voice conversation storage
 voice_conversation = []
 
+# Global flag to prevent duplicate voice processing
+_voice_processing_lock = False
+
 @app.get("/api/voice/conversation")
 async def get_voice_conversation():
     """Get the latest voice conversation"""
@@ -650,27 +653,109 @@ async def start_voice_mode(request: VoiceModeRequest):
         # Set up transcription callback to handle voice input
         def on_transcription(transcript: str):
             """Handle voice transcription and send to chat"""
+            global _voice_processing_lock
+            
+            # BULLETPROOF DUPLICATE PREVENTION
+            if _voice_processing_lock:
+                print(f"DUPLICATE PREVENTED: {transcript}")
+                return
+            
+            _voice_processing_lock = True
             print(f"Voice input: {transcript}")
             
-            # Store user message
-            voice_conversation.append({
-                "role": "user",
-                "content": transcript,
-                "timestamp": time.time()
-            })
-            
-            # Process the transcript through the agent (simplified approach)
             try:
-                response = agent.invoke(transcript)
+                # Store user message
+                voice_conversation.append({
+                    "role": "user",
+                    "content": transcript,
+                    "timestamp": time.time()
+                })
+                
+                # Process the transcript through the agent with workflow step capture
+                # Create a new agent instance for voice processing (isolated from global agent)
+                from langchain_google_genai.chat_models import ChatGoogleGenerativeAI
+                llm = ChatGoogleGenerativeAI(
+                    model="gemini-2.0-flash", 
+                    temperature=0.3,
+                    google_api_key=os.getenv("GOOGLE_API_KEY")
+                )
+                
+                voice_agent = Agent(
+                    llm=llm,
+                    browser='chrome',
+                    use_vision=False,
+                    enable_conversation=True,
+                    literal_mode=True,
+                    max_steps=30,
+                    enable_tts=False  # We'll handle TTS separately
+                )
+                
+                # Copy running programs from the main agent
+                voice_agent.running_programs = agent.running_programs
+                
+                # Capture workflow steps by temporarily overriding show_status method
+                workflow_steps = []
+                original_show_status = voice_agent.show_status
+                
+                def capture_show_status(status: str, action_name: str = None, details: str = None):
+                    """Capture workflow steps while maintaining console output"""
+                    # Call original method for console output
+                    original_show_status(status, action_name, details)
+                    
+                    # Determine update type based on status (same logic as text mode)
+                    if status == "Thinking":
+                        update_type = "thinking"
+                        message = f"{action_name}" + (f": {details}" if details else "")
+                    elif status == "Reasoning":
+                        update_type = "reasoning"
+                        message = details if details else "Agent is thinking..."
+                    elif status == "Executing":
+                        update_type = "tool_use"
+                        message = f"Using {action_name}"
+                    elif status in ["Completed", "Failed"]:
+                        update_type = "tool_result"
+                        message = f"{status}: {action_name}"
+                    elif status == "Refreshing":
+                        update_type = "status"
+                        message = f"{action_name}: {details}" if details else action_name
+                    elif status == "Finalizing":
+                        update_type = "thinking"
+                        message = "Preparing final response..."
+                    elif status == "Starting":
+                        update_type = "thinking"
+                        message = f"{action_name}: {details}" if details else action_name
+                    else:
+                        update_type = "status"
+                        message = f"{status}" + (f": {action_name}" if action_name else "")
+                    
+                    # Capture workflow step
+                    workflow_steps.append({
+                        "type": update_type,
+                        "message": message,
+                        "timestamp": time.time(),
+                        "status": status,
+                        "actionName": action_name
+                    })
+                
+                # Apply the override
+                voice_agent.show_status = capture_show_status
+                
+                try:
+                    # Process the voice query normally
+                    response = voice_agent.invoke(transcript)
+                finally:
+                    # Always restore the original method
+                    voice_agent.show_status = original_show_status
                 
                 if response and hasattr(response, 'content') and response.content:
                     print(f"AI Response: {response.content}")
                     
-                    # Store assistant response
+                    # Store assistant response with workflow steps
                     voice_conversation.append({
                         "role": "assistant", 
                         "content": response.content,
-                        "timestamp": time.time()
+                        "timestamp": time.time(),
+                        "workflowSteps": workflow_steps
                     })
                     
                     # Speak the response if TTS is available
@@ -679,6 +764,9 @@ async def start_voice_mode(request: VoiceModeRequest):
                         
             except Exception as e:
                 print(f"Error processing voice input: {e}")
+            finally:
+                # Always release the lock
+                _voice_processing_lock = False
         
         # Set the callback
         voice_stt_service.on_transcription = on_transcription
@@ -704,9 +792,10 @@ async def stop_voice_mode():
             agent.stt_service.stop_listening()
             agent.stt_service = None
         
-        # Clear voice conversation history
-        global voice_conversation
+        # Clear voice conversation history and reset processing lock
+        global voice_conversation, _voice_processing_lock
         voice_conversation.clear()
+        _voice_processing_lock = False
         
         return {"success": True, "message": "Voice mode stopped"}
         

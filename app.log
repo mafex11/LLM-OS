@@ -4150,3 +4150,445 @@ Hello there! How can I help you today?[0m
 2025-10-11 01:40:02 | INFO | SESSION ENDED
 2025-10-11 01:40:02 | INFO | ================================================================================
 
+2025-10-11 01:43:35 | INFO | ================================================================================
+2025-10-11 01:43:35 | INFO | NEW SESSION STARTED
+2025-10-11 01:43:35 | INFO | ================================================================================
+2025-10-11 01:44:19 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-11 01:44:19 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-11 01:44:19 | INFO | Started listening for speech...
+2025-10-11 01:44:20 | INFO | Microphone opened and streaming...
+2025-10-11 01:44:23 | DEBUG | Speech started
+2025-10-11 01:44:23 | DEBUG | Speech started
+2025-10-11 01:44:25 | DEBUG | Speech started
+2025-10-11 01:44:25 | DEBUG | Interim: Hello.
+2025-10-11 01:44:26 | INFO | Final transcript: Hello.
+2025-10-11 01:44:26 | INFO | Finalized transcript: Hello.
+2025-10-11 01:44:26 | INFO | USER QUERY: Hello.
+2025-10-11 01:44:26 | INFO | [33m[Starting] Task Analysis: Processing: 'Hello.'[0m
+2025-10-11 01:44:27 | DEBUG | Speech started
+2025-10-11 01:44:27 | DEBUG | Utterance end
+2025-10-11 01:44:27 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-11 01:44:27 | DEBUG | Speech started
+2025-10-11 01:44:29 | INFO | --- ITERATION 1/30 ---
+2025-10-11 01:44:29 | INFO | EVALUATE: Neutral - The agent is ready to receive instructions.
+2025-10-11 01:44:29 | INFO | PLAN: The agent is waiting for user instructions.
+2025-10-11 01:44:29 | INFO | THOUGHT: The agent is waiting for user instructions.
+2025-10-11 01:44:29 | INFO | [95mThe agent is waiting for user instructions.[0m
+2025-10-11 01:44:29 | INFO | [33m[Reasoning] Agent Thought: The agent is waiting for user instructions.[0m
+2025-10-11 01:44:29 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-11 01:44:29 | INFO | FINAL ANSWER: Hello! How can I help you today?
+2025-10-11 01:44:29 | INFO | [36m
+Hello! How can I help you today?[0m
+2025-10-11 01:44:29 | DEBUG | TTS: Hello! How can I help you today?
+2025-10-11 01:44:29 | INFO | Generating speech for: Hello! How can I help you today?...
+2025-10-11 01:44:30 | INFO | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1760127269979.mp3
+2025-10-11 01:44:30 | DEBUG | Speech started
+2025-10-11 01:44:30 | INFO | Generating speech for: Hello! How can I help you today?...
+2025-10-11 01:44:31 | INFO | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1760127270979.mp3
+2025-10-11 01:44:32 | DEBUG | Speech started
+2025-10-11 01:44:36 | DEBUG | Speech started
+2025-10-11 01:44:38 | DEBUG | Speech started
+2025-10-11 01:44:38 | INFO | Stopping listening...
+2025-10-11 01:44:38 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-11 01:45:22 | INFO | USER QUERY: hi
+2025-10-11 01:45:22 | INFO | [33m[Starting] Task Analysis: Processing: 'hi'[0m
+2025-10-11 01:45:23 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-11 01:45:26 | INFO | --- ITERATION 1/30 ---
+2025-10-11 01:45:26 | INFO | EVALUATE: Neutral - The agent received a greeting.
+2025-10-11 01:45:26 | INFO | PLAN: Respond to the user's greeting.
+2025-10-11 01:45:26 | INFO | THOUGHT: The user said "hi". I should respond in a friendly manner.
+2025-10-11 01:45:26 | INFO | [95mThe user said "hi". I should respond in a friendly manner.[0m
+2025-10-11 01:45:26 | INFO | [33m[Reasoning] Agent Thought: The user said "hi". I should respond in a friendly manner.[0m
+2025-10-11 01:45:26 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-11 01:45:26 | INFO | FINAL ANSWER: Hello there!
+2025-10-11 01:45:26 | INFO | [36m
+Hello there![0m
+2025-10-11 01:48:49 | INFO | ================================================================================
+2025-10-11 01:48:49 | INFO | SESSION ENDED
+2025-10-11 01:48:49 | INFO | ================================================================================
+
+2025-10-11 01:48:58 | DEBUG | Metadata: MetadataResponse(type='Metadata', transaction_key='deprecated', request_id='804a96e0-f3dd-4d61-ba69-ce5f36051d58', sha256='incomplete', created='2025-10-10T20:14:24.624Z', duration=16.72, channels=1, models=['1dbdfb4d-85b2-4659-9831-16b3c76229aa'], model_info={'1dbdfb4d-85b2-4659-9831-16b3c76229aa': ModelInfo(name='2-general-nova', version='2024-01-11.36317', arch='nova-2')}, extra=None)
+2025-10-11 01:48:58 | ERROR | Deepgram error: {
+    "description": "ConnectionClosed in ListenWebSocketClient._listening",
+    "message": "received 1011 (internal error) Deepgram did not receive audio data or a text message within the timeout window. See https://dpgr.am/net0001; then sent 1011 (internal error) Deepgram did not receive audio data or a text message within the timeout window. See https://dpgr.am/net0001",
+    "type": "ConnectionClosed",
+    "variant": ""
+}
+2025-10-11 01:48:58 | INFO | Deepgram connection closed
+2025-10-11 01:49:12 | INFO | ================================================================================
+2025-10-11 01:49:12 | INFO | NEW SESSION STARTED
+2025-10-11 01:49:12 | INFO | ================================================================================
+2025-10-11 01:50:16 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-11 01:50:17 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-11 01:50:17 | INFO | Started listening for speech...
+2025-10-11 01:50:18 | INFO | Microphone opened and streaming...
+2025-10-11 01:50:23 | DEBUG | Speech started
+2025-10-11 01:50:23 | INFO | Final transcript: Hello.
+2025-10-11 01:50:23 | DEBUG | Utterance end
+2025-10-11 01:50:23 | INFO | Finalized transcript: Hello.
+2025-10-11 01:50:23 | INFO | USER QUERY: Hello.
+2025-10-11 01:50:23 | INFO | [33m[Starting] Task Analysis: Processing: 'Hello.'[0m
+2025-10-11 01:50:24 | INFO | Finalized transcript: Hello.
+2025-10-11 01:50:24 | INFO | USER QUERY: Hello.
+2025-10-11 01:50:24 | INFO | [33m[Starting] Task Analysis: Processing: 'Hello.'[0m
+2025-10-11 01:50:25 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-11 01:50:25 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-11 01:50:28 | INFO | --- ITERATION 1/30 ---
+2025-10-11 01:50:28 | INFO | EVALUATE: Neutral - The agent is ready to receive instructions.
+2025-10-11 01:50:28 | INFO | PLAN: The user has said hello. I will respond to the user.
+2025-10-11 01:50:28 | INFO | THOUGHT: The user has initiated a conversation with a greeting. I will respond appropriately.
+2025-10-11 01:50:28 | INFO | [95mThe user has initiated a conversation with a greeting. I will respond appropriately.[0m
+2025-10-11 01:50:28 | INFO | [33m[Reasoning] Agent Thought: The user has initiated a conversation with a greeting. I will respond appropriately.[0m
+2025-10-11 01:50:28 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-11 01:50:28 | INFO | FINAL ANSWER: Hello there! How can I help you today?
+2025-10-11 01:50:28 | INFO | [36m
+Hello there! How can I help you today?[0m
+2025-10-11 01:50:28 | INFO | --- ITERATION 1/30 ---
+2025-10-11 01:50:28 | INFO | EVALUATE: Neutral - The agent has initialized and is ready to receive instructions.
+2025-10-11 01:50:28 | INFO | PLAN: The user has said hello. I will respond in a friendly manner.
+2025-10-11 01:50:28 | INFO | THOUGHT: The user has just greeted me. I should respond to acknowledge their greeting.
+2025-10-11 01:50:28 | INFO | [95mThe user has just greeted me. I should respond to acknowledge their greeting.[0m
+2025-10-11 01:50:28 | INFO | [33m[Reasoning] Agent Thought: The user has just greeted me. I should respond to acknowledge their greeting.[0m
+2025-10-11 01:50:28 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-11 01:50:28 | INFO | FINAL ANSWER: Hello there! How can I help you today?
+2025-10-11 01:50:28 | INFO | [36m
+Hello there! How can I help you today?[0m
+2025-10-11 01:50:28 | INFO | Generating speech for: Hello there! How can I help you today?...
+2025-10-11 01:50:28 | INFO | Generating speech for: Hello there! How can I help you today?...
+2025-10-11 01:50:29 | INFO | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1760127628099.mp3
+2025-10-11 01:50:29 | DEBUG | Speech started
+2025-10-11 01:50:29 | INFO | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1760127628189.mp3
+2025-10-11 01:50:32 | INFO | Stopping listening...
+2025-10-11 01:50:33 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-11 01:52:06 | INFO | ================================================================================
+2025-10-11 01:52:06 | INFO | SESSION ENDED
+2025-10-11 01:52:06 | INFO | ================================================================================
+
+2025-10-11 01:52:17 | DEBUG | Metadata: MetadataResponse(type='Metadata', transaction_key='deprecated', request_id='c8064f26-e184-4b1d-9d14-9c4bce29cbe7', sha256='incomplete', created='2025-10-10T20:20:23.066Z', duration=13.827375, channels=1, models=['1dbdfb4d-85b2-4659-9831-16b3c76229aa'], model_info={'1dbdfb4d-85b2-4659-9831-16b3c76229aa': ModelInfo(name='2-general-nova', version='2024-01-11.36317', arch='nova-2')}, extra=None)
+2025-10-11 01:52:17 | ERROR | Deepgram error: {
+    "description": "ConnectionClosed in ListenWebSocketClient._listening",
+    "message": "received 1011 (internal error) Deepgram did not receive audio data or a text message within the timeout window. See https://dpgr.am/net0001; then sent 1011 (internal error) Deepgram did not receive audio data or a text message within the timeout window. See https://dpgr.am/net0001",
+    "type": "ConnectionClosed",
+    "variant": ""
+}
+2025-10-11 01:52:17 | INFO | Deepgram connection closed
+2025-10-11 01:53:05 | INFO | ================================================================================
+2025-10-11 01:53:05 | INFO | NEW SESSION STARTED
+2025-10-11 01:53:05 | INFO | ================================================================================
+2025-10-11 01:53:56 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-11 01:53:57 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-11 01:53:57 | INFO | Started listening for speech...
+2025-10-11 01:53:58 | INFO | Microphone opened and streaming...
+2025-10-11 01:54:02 | DEBUG | Speech started
+2025-10-11 01:54:02 | DEBUG | Interim: Hello,
+2025-10-11 01:54:03 | INFO | Final transcript: Hello.
+2025-10-11 01:54:03 | INFO | Finalized transcript: Hello.
+2025-10-11 01:54:03 | INFO | USER QUERY: Hello.
+2025-10-11 01:54:03 | INFO | [33m[Starting] Task Analysis: Processing: 'Hello.'[0m
+2025-10-11 01:54:04 | DEBUG | Utterance end
+2025-10-11 01:54:04 | INFO | Finalized transcript: Hello.
+2025-10-11 01:54:04 | INFO | USER QUERY: Hello.
+2025-10-11 01:54:04 | INFO | [33m[Starting] Task Analysis: Processing: 'Hello.'[0m
+2025-10-11 01:54:05 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-11 01:54:05 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-11 01:54:08 | INFO | --- ITERATION 1/30 ---
+2025-10-11 01:54:08 | INFO | EVALUATE: Neutral - The agent is ready to receive instructions.
+2025-10-11 01:54:08 | INFO | PLAN: The user has greeted the agent. The agent should respond to the greeting and wait for further instructions.
+2025-10-11 01:54:08 | INFO | THOUGHT: The user has said hello. I should respond in a friendly manner.
+2025-10-11 01:54:08 | INFO | [95mThe user has said hello. I should respond in a friendly manner.[0m
+2025-10-11 01:54:08 | INFO | [33m[Reasoning] Agent Thought: The user has said hello. I should respond in a friendly manner.[0m
+2025-10-11 01:54:08 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-11 01:54:08 | INFO | FINAL ANSWER: Hello there! How can I help you today?
+2025-10-11 01:54:08 | INFO | [36m
+Hello there! How can I help you today?[0m
+2025-10-11 01:54:08 | INFO | Generating speech for: Hello there! How can I help you today?...
+2025-10-11 01:54:08 | INFO | --- ITERATION 1/30 ---
+2025-10-11 01:54:08 | INFO | EVALUATE: Neutral - The agent is ready to receive instructions.
+2025-10-11 01:54:08 | INFO | PLAN: The agent is waiting for user instructions.
+2025-10-11 01:54:08 | INFO | THOUGHT: The user has said hello. I should respond in a friendly manner.
+2025-10-11 01:54:08 | INFO | [95mThe user has said hello. I should respond in a friendly manner.[0m
+2025-10-11 01:54:08 | INFO | [33m[Reasoning] Agent Thought: The user has said hello. I should respond in a friendly manner.[0m
+2025-10-11 01:54:08 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-11 01:54:08 | INFO | FINAL ANSWER: Hello there! How can I help you today?
+2025-10-11 01:54:08 | INFO | [36m
+Hello there! How can I help you today?[0m
+2025-10-11 01:54:08 | INFO | Generating speech for: Hello there! How can I help you today?...
+2025-10-11 01:54:09 | INFO | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1760127848377.mp3
+2025-10-11 01:54:09 | DEBUG | Speech started
+2025-10-11 01:54:09 | DEBUG | Speech started
+2025-10-11 01:54:09 | INFO | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1760127848388.mp3
+2025-10-11 01:54:09 | DEBUG | Speech started
+2025-10-11 01:54:12 | DEBUG | Speech started
+2025-10-11 01:54:14 | INFO | Stopping listening...
+2025-10-11 01:54:14 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-11 02:00:50 | INFO | ================================================================================
+2025-10-11 02:00:50 | INFO | SESSION ENDED
+2025-10-11 02:00:50 | INFO | ================================================================================
+
+2025-10-11 02:01:03 | DEBUG | Metadata: MetadataResponse(type='Metadata', transaction_key='deprecated', request_id='05859f0d-00ec-4927-b0f7-b68d7e9532b3', sha256='incomplete', created='2025-10-10T20:24:02.424Z', duration=15.36375, channels=1, models=['1dbdfb4d-85b2-4659-9831-16b3c76229aa'], model_info={'1dbdfb4d-85b2-4659-9831-16b3c76229aa': ModelInfo(name='2-general-nova', version='2024-01-11.36317', arch='nova-2')}, extra=None)
+2025-10-11 02:01:03 | ERROR | Deepgram error: {
+    "description": "ConnectionClosed in ListenWebSocketClient._listening",
+    "message": "received 1011 (internal error) Deepgram did not receive audio data or a text message within the timeout window. See https://dpgr.am/net0001; then sent 1011 (internal error) Deepgram did not receive audio data or a text message within the timeout window. See https://dpgr.am/net0001",
+    "type": "ConnectionClosed",
+    "variant": ""
+}
+2025-10-11 02:01:03 | INFO | Deepgram connection closed
+2025-10-11 02:01:23 | INFO | ================================================================================
+2025-10-11 02:01:23 | INFO | NEW SESSION STARTED
+2025-10-11 02:01:23 | INFO | ================================================================================
+2025-10-11 02:03:58 | INFO | ================================================================================
+2025-10-11 02:03:58 | INFO | SESSION ENDED
+2025-10-11 02:03:58 | INFO | ================================================================================
+
+2025-10-11 02:05:32 | INFO | ================================================================================
+2025-10-11 02:05:32 | INFO | NEW SESSION STARTED
+2025-10-11 02:05:32 | INFO | ================================================================================
+2025-10-11 02:05:47 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-11 02:05:49 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-11 02:05:49 | INFO | Started listening for speech...
+2025-10-11 02:05:50 | INFO | Microphone opened and streaming...
+2025-10-11 02:05:52 | DEBUG | Speech started
+2025-10-11 02:05:53 | DEBUG | Speech started
+2025-10-11 02:05:53 | DEBUG | Interim: Hello.
+2025-10-11 02:05:54 | INFO | Final transcript: Hello.
+2025-10-11 02:05:55 | INFO | Finalized transcript: Hello.
+2025-10-11 02:05:55 | DEBUG | Utterance end
+2025-10-11 02:05:56 | DEBUG | Speech started
+2025-10-11 02:06:01 | DEBUG | Speech started
+2025-10-11 02:06:02 | INFO | Stopping listening...
+2025-10-11 02:06:02 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-11 02:06:14 | INFO | ================================================================================
+2025-10-11 02:06:14 | INFO | SESSION ENDED
+2025-10-11 02:06:14 | INFO | ================================================================================
+
+2025-10-11 02:06:32 | DEBUG | Metadata: MetadataResponse(type='Metadata', transaction_key='deprecated', request_id='7d781931-bf75-44c4-874f-bd8ed94af104', sha256='incomplete', created='2025-10-10T20:35:53.797Z', duration=11.778875, channels=1, models=['1dbdfb4d-85b2-4659-9831-16b3c76229aa'], model_info={'1dbdfb4d-85b2-4659-9831-16b3c76229aa': ModelInfo(name='2-general-nova', version='2024-01-11.36317', arch='nova-2')}, extra=None)
+2025-10-11 02:06:32 | ERROR | Deepgram error: {
+    "description": "ConnectionClosed in ListenWebSocketClient._listening",
+    "message": "received 1011 (internal error) Deepgram did not receive audio data or a text message within the timeout window. See https://dpgr.am/net0001; then sent 1011 (internal error) Deepgram did not receive audio data or a text message within the timeout window. See https://dpgr.am/net0001",
+    "type": "ConnectionClosed",
+    "variant": ""
+}
+2025-10-11 02:06:32 | INFO | Deepgram connection closed
+2025-10-11 02:07:38 | INFO | ================================================================================
+2025-10-11 02:07:38 | INFO | NEW SESSION STARTED
+2025-10-11 02:07:38 | INFO | ================================================================================
+2025-10-11 02:10:05 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-11 02:10:06 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-11 02:10:06 | INFO | Started listening for speech...
+2025-10-11 02:10:07 | INFO | Microphone opened and streaming...
+2025-10-11 02:10:12 | DEBUG | Speech started
+2025-10-11 02:10:12 | DEBUG | Interim: Hello.
+2025-10-11 02:10:12 | INFO | Final transcript: Hello.
+2025-10-11 02:10:13 | INFO | Finalized transcript: Hello.
+2025-10-11 02:10:13 | INFO | USER QUERY: Hello.
+2025-10-11 02:10:13 | INFO | [33m[Starting] Task Analysis: Processing: 'Hello.'[0m
+2025-10-11 02:10:14 | DEBUG | Utterance end
+2025-10-11 02:10:14 | INFO | Finalized transcript: Hello.
+2025-10-11 02:10:14 | INFO | USER QUERY: Hello.
+2025-10-11 02:10:14 | INFO | [33m[Starting] Task Analysis: Processing: 'Hello.'[0m
+2025-10-11 02:10:15 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-11 02:10:16 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-11 02:10:18 | INFO | --- ITERATION 1/30 ---
+2025-10-11 02:10:18 | INFO | EVALUATE: Neutral - The agent is ready to receive instructions.
+2025-10-11 02:10:18 | INFO | PLAN: The agent is waiting for user instructions.
+2025-10-11 02:10:18 | INFO | THOUGHT: The agent is waiting for user instructions.
+2025-10-11 02:10:18 | INFO | [95mThe agent is waiting for user instructions.[0m
+2025-10-11 02:10:18 | INFO | [33m[Reasoning] Agent Thought: The agent is waiting for user instructions.[0m
+2025-10-11 02:10:18 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-11 02:10:18 | INFO | FINAL ANSWER: Hello! I am ready to assist you.
+2025-10-11 02:10:18 | INFO | [36m
+Hello! I am ready to assist you.[0m
+2025-10-11 02:10:18 | INFO | Generating speech for: Hello! I am ready to assist you....
+2025-10-11 02:10:18 | INFO | --- ITERATION 1/30 ---
+2025-10-11 02:10:18 | INFO | EVALUATE: Neutral - The agent is ready to receive instructions.
+2025-10-11 02:10:18 | INFO | PLAN: The user has greeted the agent. The agent will respond to the user.
+2025-10-11 02:10:18 | INFO | THOUGHT: The user has greeted the agent. I will respond to the user with a greeting.
+2025-10-11 02:10:18 | INFO | [95mThe user has greeted the agent. I will respond to the user with a greeting.[0m
+2025-10-11 02:10:18 | INFO | [33m[Reasoning] Agent Thought: The user has greeted the agent. I will respond to the user with a greeting.[0m
+2025-10-11 02:10:18 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-11 02:10:18 | INFO | FINAL ANSWER: Hello! How can I help you today?
+2025-10-11 02:10:18 | INFO | [36m
+Hello! How can I help you today?[0m
+2025-10-11 02:10:18 | INFO | Generating speech for: Hello! How can I help you today?...
+2025-10-11 02:10:19 | INFO | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1760128818409.mp3
+2025-10-11 02:10:19 | DEBUG | Speech started
+2025-10-11 02:10:19 | INFO | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1760128818622.mp3
+2025-10-11 02:10:21 | DEBUG | Speech started
+2025-10-11 02:10:29 | DEBUG | Speech started
+2025-10-11 02:10:32 | DEBUG | Speech started
+2025-10-11 02:10:37 | DEBUG | Speech started
+2025-10-11 02:10:41 | DEBUG | Speech started
+2025-10-11 02:10:55 | DEBUG | Speech started
+2025-10-11 02:11:07 | DEBUG | Speech started
+2025-10-11 02:11:27 | DEBUG | Speech started
+2025-10-11 02:11:42 | DEBUG | Speech started
+2025-10-11 02:12:30 | DEBUG | Speech started
+2025-10-11 02:12:38 | DEBUG | Speech started
+2025-10-11 02:12:45 | INFO | ================================================================================
+2025-10-11 02:12:45 | INFO | SESSION ENDED
+2025-10-11 02:12:45 | INFO | ================================================================================
+
+2025-10-11 02:12:59 | DEBUG | Metadata: MetadataResponse(type='Metadata', transaction_key='deprecated', request_id='40554d1b-1250-476f-ae77-b96600c12375', sha256='incomplete', created='2025-10-10T20:40:11.746Z', duration=157.22238, channels=1, models=['1dbdfb4d-85b2-4659-9831-16b3c76229aa'], model_info={'1dbdfb4d-85b2-4659-9831-16b3c76229aa': ModelInfo(name='2-general-nova', version='2024-01-11.36317', arch='nova-2')}, extra=None)
+2025-10-11 02:12:59 | ERROR | Deepgram error: {
+    "description": "ConnectionClosed in ListenWebSocketClient._listening",
+    "message": "received 1011 (internal error) Deepgram did not receive audio data or a text message within the timeout window. See https://dpgr.am/net0001; then sent 1011 (internal error) Deepgram did not receive audio data or a text message within the timeout window. See https://dpgr.am/net0001",
+    "type": "ConnectionClosed",
+    "variant": ""
+}
+2025-10-11 02:12:59 | INFO | Deepgram connection closed
+2025-10-11 02:16:48 | INFO | ================================================================================
+2025-10-11 02:16:48 | INFO | NEW SESSION STARTED
+2025-10-11 02:16:48 | INFO | ================================================================================
+2025-10-11 02:16:59 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-11 02:17:01 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-11 02:17:01 | INFO | Started listening for speech...
+2025-10-11 02:17:02 | INFO | Microphone opened and streaming...
+2025-10-11 02:17:06 | DEBUG | Speech started
+2025-10-11 02:17:06 | DEBUG | Interim: Hello.
+2025-10-11 02:17:07 | DEBUG | Interim: Hello. What's today's date?
+2025-10-11 02:17:07 | INFO | Final transcript: Hello. What's today's date?
+2025-10-11 02:17:08 | INFO | Finalized transcript: Hello. What's today's date?
+2025-10-11 02:17:08 | INFO | USER QUERY: Hello. What's today's date?
+2025-10-11 02:17:08 | INFO | [33m[Starting] Task Analysis: Processing: 'Hello. What's today's date?'[0m
+2025-10-11 02:17:08 | DEBUG | Utterance end
+2025-10-11 02:17:08 | INFO | Finalized transcript: Hello. What's today's date?
+2025-10-11 02:17:08 | INFO | USER QUERY: Hello. What's today's date?
+2025-10-11 02:17:08 | INFO | [33m[Starting] Task Analysis: Processing: 'Hello. What's today's date?'[0m
+2025-10-11 02:17:11 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-11 02:17:11 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-11 02:17:14 | INFO | --- ITERATION 1/30 ---
+2025-10-11 02:17:14 | INFO | EVALUATE: Neutral - The user asked for the date, which I can provide directly.
+2025-10-11 02:17:14 | INFO | PLAN: The user asked for the date. I can provide this information directly without using any tools.
+2025-10-11 02:17:14 | INFO | THOUGHT: The user asked a question that I can answer directly using my knowledge. I will respond with the date and use the Done Tool to indicate the task is complete.
+2025-10-11 02:17:14 | INFO | [95mThe user asked a question that I can answer directly using my knowledge. I will respond with the date and use the Done Tool to indicate the task is complete.[0m
+2025-10-11 02:17:14 | INFO | [33m[Reasoning] Agent Thought: The user asked a question that I can answer directly using my knowledge. I will respond with the date and use the Done Tool to indicate the task is complete.[0m
+2025-10-11 02:17:14 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-11 02:17:14 | INFO | FINAL ANSWER: Today is Saturday, October 11, 2025.
+2025-10-11 02:17:14 | INFO | [36m
+Today is Saturday, October 11, 2025.[0m
+2025-10-11 02:17:14 | INFO | Generating speech for: Today is Saturday, October 11, 2025....
+2025-10-11 02:17:14 | INFO | --- ITERATION 1/30 ---
+2025-10-11 02:17:14 | INFO | EVALUATE: Neutral - The agent can answer the question directly.
+2025-10-11 02:17:14 | INFO | PLAN: The agent can answer the question directly using its knowledge.
+2025-10-11 02:17:14 | INFO | THOUGHT: The user asked for the date, which I know. I will respond using the Done Tool.
+2025-10-11 02:17:14 | INFO | [95mThe user asked for the date, which I know. I will respond using the Done Tool.[0m
+2025-10-11 02:17:14 | INFO | [33m[Reasoning] Agent Thought: The user asked for the date, which I know. I will respond using the Done Tool.[0m
+2025-10-11 02:17:14 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-11 02:17:14 | INFO | FINAL ANSWER: Today is Saturday, October 11, 2025.
+2025-10-11 02:17:14 | INFO | [36m
+Today is Saturday, October 11, 2025.[0m
+2025-10-11 02:17:14 | INFO | Generating speech for: Today is Saturday, October 11, 2025....
+2025-10-11 02:17:15 | INFO | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1760129234285.mp3
+2025-10-11 02:17:15 | INFO | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1760129234592.mp3
+2025-10-11 02:17:15 | DEBUG | Speech started
+2025-10-11 02:17:19 | DEBUG | Speech started
+2025-10-11 02:17:19 | INFO | Stopping listening...
+2025-10-11 02:17:20 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-11 02:18:20 | INFO | ================================================================================
+2025-10-11 02:18:20 | INFO | SESSION ENDED
+2025-10-11 02:18:20 | INFO | ================================================================================
+
+2025-10-11 02:18:31 | DEBUG | Metadata: MetadataResponse(type='Metadata', transaction_key='deprecated', request_id='8c75681f-aa2e-437e-98b1-49cab3c59810', sha256='incomplete', created='2025-10-10T20:47:07.252Z', duration=15.875875, channels=1, models=['1dbdfb4d-85b2-4659-9831-16b3c76229aa'], model_info={'1dbdfb4d-85b2-4659-9831-16b3c76229aa': ModelInfo(name='2-general-nova', version='2024-01-11.36317', arch='nova-2')}, extra=None)
+2025-10-11 02:18:31 | ERROR | Deepgram error: {
+    "description": "ConnectionClosed in ListenWebSocketClient._listening",
+    "message": "received 1011 (internal error) Deepgram did not receive audio data or a text message within the timeout window. See https://dpgr.am/net0001; then sent 1011 (internal error) Deepgram did not receive audio data or a text message within the timeout window. See https://dpgr.am/net0001",
+    "type": "ConnectionClosed",
+    "variant": ""
+}
+2025-10-11 02:18:31 | INFO | Deepgram connection closed
+2025-10-11 02:19:08 | INFO | ================================================================================
+2025-10-11 02:19:08 | INFO | NEW SESSION STARTED
+2025-10-11 02:19:08 | INFO | ================================================================================
+2025-10-11 02:19:45 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-11 02:19:46 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-11 02:19:46 | INFO | Started listening for speech...
+2025-10-11 02:19:48 | INFO | Microphone opened and streaming...
+2025-10-11 02:19:49 | DEBUG | Speech started
+2025-10-11 02:19:49 | DEBUG | Interim: Hello.
+2025-10-11 02:19:50 | INFO | Final transcript: Hello.
+2025-10-11 02:19:50 | INFO | Finalized transcript: Hello.
+2025-10-11 02:19:50 | INFO | USER QUERY: Hello.
+2025-10-11 02:19:50 | INFO | [33m[Starting] Task Analysis: Processing: 'Hello.'[0m
+2025-10-11 02:19:51 | DEBUG | Interim: I
+2025-10-11 02:19:51 | DEBUG | Utterance end
+2025-10-11 02:19:51 | INFO | Finalized transcript: Hello.
+2025-10-11 02:19:51 | INFO | USER QUERY: Hello.
+2025-10-11 02:19:51 | INFO | [33m[Starting] Task Analysis: Processing: 'Hello.'[0m
+2025-10-11 02:19:52 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-11 02:19:52 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-11 02:19:54 | INFO | --- ITERATION 1/30 ---
+2025-10-11 02:19:54 | INFO | EVALUATE: Neutral - The agent is ready to receive instructions.
+2025-10-11 02:19:54 | INFO | PLAN: The user has initiated a conversation. I will respond to the greeting and wait for further instructions.
+2025-10-11 02:19:54 | INFO | THOUGHT: The user has simply said "Hello." I should respond in a friendly manner and indicate that I am ready to assist.
+2025-10-11 02:19:54 | INFO | [95mThe user has simply said "Hello." I should respond in a friendly manner and indicate that I am ready to assist.[0m
+2025-10-11 02:19:54 | INFO | [33m[Reasoning] Agent Thought: The user has simply said "Hello." I should respond in a friendly manner and indicate that I am ready to assist.[0m
+2025-10-11 02:19:54 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-11 02:19:54 | INFO | FINAL ANSWER: Hello! I am ready to assist you.
+2025-10-11 02:19:54 | INFO | [36m
+Hello! I am ready to assist you.[0m
+2025-10-11 02:19:54 | INFO | Generating speech for: Hello! I am ready to assist you....
+2025-10-11 02:19:55 | INFO | --- ITERATION 1/30 ---
+2025-10-11 02:19:55 | INFO | EVALUATE: Neutral - The agent is ready to receive instructions.
+2025-10-11 02:19:55 | INFO | PLAN: The agent is waiting for the user to provide a task.
+2025-10-11 02:19:55 | INFO | THOUGHT: The user has just said "Hello". I should wait for the user to provide a task.
+2025-10-11 02:19:55 | INFO | [95mThe user has just said "Hello". I should wait for the user to provide a task.[0m
+2025-10-11 02:19:55 | INFO | [33m[Reasoning] Agent Thought: The user has just said "Hello". I should wait for the user to provide a task.[0m
+2025-10-11 02:19:55 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-11 02:19:55 | INFO | FINAL ANSWER: Hello there! How can I help you today?
+2025-10-11 02:19:55 | INFO | [36m
+Hello there! How can I help you today?[0m
+2025-10-11 02:19:55 | INFO | Generating speech for: Hello there! How can I help you today?...
+2025-10-11 02:19:55 | INFO | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1760129394724.mp3
+2025-10-11 02:19:56 | INFO | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1760129395253.mp3
+2025-10-11 02:20:00 | INFO | Stopping listening...
+2025-10-11 02:20:00 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-11 02:30:15 | INFO | ================================================================================
+2025-10-11 02:30:15 | INFO | SESSION ENDED
+2025-10-11 02:30:15 | INFO | ================================================================================
+
+2025-10-11 02:31:35 | INFO | ================================================================================
+2025-10-11 02:31:35 | INFO | NEW SESSION STARTED
+2025-10-11 02:31:35 | INFO | ================================================================================
+2025-10-11 02:31:51 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-11 02:31:52 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-11 02:31:52 | INFO | Started listening for speech...
+2025-10-11 02:31:53 | INFO | Microphone opened and streaming...
+2025-10-11 02:31:57 | DEBUG | Speech started
+2025-10-11 02:31:57 | DEBUG | Interim: Hello.
+2025-10-11 02:31:57 | INFO | Final transcript: Hello.
+2025-10-11 02:31:58 | INFO | Finalized transcript: Hello.
+2025-10-11 02:31:58 | INFO | USER QUERY: Hello.
+2025-10-11 02:31:58 | INFO | [33m[Starting] Task Analysis: Processing: 'Hello.'[0m
+2025-10-11 02:31:58 | DEBUG | Utterance end
+2025-10-11 02:31:58 | INFO | Finalized transcript: Hello.
+2025-10-11 02:31:59 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-11 02:32:01 | DEBUG | Speech started
+2025-10-11 02:32:02 | INFO | --- ITERATION 1/30 ---
+2025-10-11 02:32:02 | INFO | EVALUATE: Neutral - The agent is ready to receive instructions.
+2025-10-11 02:32:02 | INFO | PLAN: The agent is waiting for user instructions.
+2025-10-11 02:32:02 | INFO | THOUGHT: The agent is waiting for user instructions.
+2025-10-11 02:32:02 | INFO | [95mThe agent is waiting for user instructions.[0m
+2025-10-11 02:32:02 | INFO | [33m[Reasoning] Agent Thought: The agent is waiting for user instructions.[0m
+2025-10-11 02:32:02 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-11 02:32:02 | INFO | FINAL ANSWER: Hello! I am ready to assist you.
+2025-10-11 02:32:02 | INFO | [36m
+Hello! I am ready to assist you.[0m
+2025-10-11 02:32:02 | INFO | Generating speech for: Hello! I am ready to assist you....
+2025-10-11 02:32:03 | INFO | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1760130122178.mp3
+2025-10-11 02:32:08 | INFO | Stopping listening...
+2025-10-11 02:32:08 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-11 03:04:14 | INFO | ================================================================================
+2025-10-11 03:04:14 | INFO | SESSION ENDED
+2025-10-11 03:04:14 | INFO | ================================================================================
+
+2025-10-11 03:04:26 | DEBUG | Metadata: MetadataResponse(type='Metadata', transaction_key='deprecated', request_id='be578cbd-49d6-47a7-b528-9ab0755392d7', sha256='incomplete', created='2025-10-10T21:01:57.814Z', duration=13.31525, channels=1, models=['1dbdfb4d-85b2-4659-9831-16b3c76229aa'], model_info={'1dbdfb4d-85b2-4659-9831-16b3c76229aa': ModelInfo(name='2-general-nova', version='2024-01-11.36317', arch='nova-2')}, extra=None)
+2025-10-11 03:04:26 | ERROR | Deepgram error: {
+    "description": "ConnectionClosed in ListenWebSocketClient._listening",
+    "message": "received 1011 (internal error) Deepgram did not receive audio data or a text message within the timeout window. See https://dpgr.am/net0001; then sent 1011 (internal error) Deepgram did not receive audio data or a text message within the timeout window. See https://dpgr.am/net0001",
+    "type": "ConnectionClosed",
+    "variant": ""
+}
+2025-10-11 03:04:26 | INFO | Deepgram connection closed
+2025-10-11 03:19:23 | INFO | ================================================================================
+2025-10-11 03:19:23 | INFO | NEW SESSION STARTED
+2025-10-11 03:19:23 | INFO | ================================================================================

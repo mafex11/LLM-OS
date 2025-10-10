@@ -66,8 +66,7 @@ xcopy /E /I /Y "out" "..\desktop-app\frontend-build"
 
 # 6. Build Electron installer
 cd ../desktop-app
-npm run electron:build
-```
+c```
 
 ## 📁 Output
 
