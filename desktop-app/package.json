@@ -37,7 +37,9 @@
       "createStartMenuShortcut": true,
       "license": "resources/LICENSE.txt",
       "installerIcon": "resources/icon.ico",
-      "uninstallerIcon": "resources/icon.ico"
+      "uninstallerIcon": "resources/icon.ico",
+      "include": "installer-script.nsh",
+      "deleteAppDataOnUninstall": false
     },
     "directories": {
       "output": "dist",

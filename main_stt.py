@@ -100,7 +100,7 @@ def main():
     llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.3)
     
     # TTS configuration
-    enable_tts = os.getenv("ENABLE_TTS", "true").lower() == "true"
+    enable_tts = os.getenv("ENABLE_TTS", "false").lower() == "true"
     tts_voice_id = os.getenv("TTS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
     
     agent = Agent(

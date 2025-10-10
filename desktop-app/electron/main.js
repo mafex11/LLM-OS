@@ -3,6 +3,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 const fs = require('fs');
 const Store = require('electron-store');
+const dataPaths = require('./data-paths');
 
 const store = new Store();
 
@@ -13,6 +14,14 @@ const isDev = !app.isPackaged;
 
 const BACKEND_PORT = 8000;
 const FRONTEND_PORT = 3000;
+
+// Initialize data directories on app start
+let appDataPaths;
+try {
+  appDataPaths = dataPaths.initializeDataDirectories();
+} catch (error) {
+  console.error('Failed to initialize data directories:', error);
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -92,9 +101,35 @@ function startBackend() {
     console.log(`Starting backend: ${pythonCmd}`, args);
     console.log(`Backend path: ${backendPath}`);
 
+    // Set environment variables for data paths
+    const backendEnv = {
+      ...process.env,
+      WINDOWS_USE_DATA_PATH: appDataPaths.data,
+      WINDOWS_USE_LOGS_PATH: appDataPaths.logs,
+      WINDOWS_USE_CONFIG_PATH: appDataPaths.config,
+      WINDOWS_USE_CACHE_PATH: appDataPaths.cache
+    };
+
+    // Load .env file from config directory if it exists
+    const envFilePath = dataPaths.getEnvFilePath();
+    if (fs.existsSync(envFilePath)) {
+      console.log('Loading .env from:', envFilePath);
+      const envContent = fs.readFileSync(envFilePath, 'utf-8');
+      envContent.split('\n').forEach(line => {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+          const [key, ...valueParts] = trimmed.split('=');
+          const value = valueParts.join('=').trim();
+          if (value) {
+            backendEnv[key.trim()] = value;
+          }
+        }
+      });
+    }
+
     backendProcess = spawn(pythonCmd, args, {
       cwd: isDev ? path.join(__dirname, '../..') : path.join(process.resourcesPath, 'backend'),
-      env: { ...process.env }
+      env: backendEnv
     });
 
     backendProcess.stdout.on('data', (data) => {
@@ -222,5 +257,21 @@ ipcMain.handle('open-external', async (event, url) => {
 
 ipcMain.handle('get-app-version', () => {
   return app.getVersion();
+});
+
+ipcMain.handle('get-data-paths', () => {
+  return appDataPaths;
+});
+
+ipcMain.handle('open-data-folder', async () => {
+  await shell.openPath(appDataPaths.data);
+});
+
+ipcMain.handle('open-config-folder', async () => {
+  await shell.openPath(appDataPaths.config);
+});
+
+ipcMain.handle('open-logs-folder', async () => {
+  await shell.openPath(appDataPaths.logs);
 });
 

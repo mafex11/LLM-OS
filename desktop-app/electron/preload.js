@@ -5,6 +5,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   declineTerms: () => ipcRenderer.send('decline-terms'),
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  getDataPaths: () => ipcRenderer.invoke('get-data-paths'),
+  openDataFolder: () => ipcRenderer.invoke('open-data-folder'),
+  openConfigFolder: () => ipcRenderer.invoke('open-config-folder'),
+  openLogsFolder: () => ipcRenderer.invoke('open-logs-folder'),
   onStatus: (callback) => ipcRenderer.on('status', (event, status) => callback(status))
 });
 

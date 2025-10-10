@@ -9,6 +9,8 @@ import subprocess
 import json
 import time
 import argparse
+import threading
+import queue
 
 # Import overlay functionality
 # try:
@@ -167,7 +169,7 @@ def display_running_programs(programs):
     print("-" * 40)
 
 def run_voice_mode(agent):
-    """Run agent in continuous voice listening mode"""
+    """Run agent in continuous voice listening mode with async task execution"""
     print("\n🎤 Voice Mode Activated")
     print("=" * 50)
     
@@ -185,23 +187,93 @@ def run_voice_mode(agent):
     
     print("STT Status: Enabled and ready")
     print("\n🎤 Voice Commands:")
-    print("  - Speak your query naturally")
+    print("  - Speak your query naturally (even during task execution)")
+    print("  - Mid-task queries will pause, answer, then resume")
     print("  - Say 'switch to text' to switch to keyboard input")
     print("  - Say 'clear conversation' to clear history")
     print("  - Say 'quit' or 'exit' to exit")
     print("=" * 50)
     
-    # Flag to track if we're waiting for next query
-    waiting_for_query = True
+    # Task execution state
+    task_thread = None
+    task_running = False
+    task_lock = threading.Lock()
+    mid_query_queue = queue.Queue()
     switch_to_text = False
+    
+    def run_task_async(task_query: str):
+        """Run a task in background thread with pause support"""
+        nonlocal task_running
+        try:
+            with task_lock:
+                task_running = True
+            
+            print(f"\n🤖 Working on: {task_query[:50]}{'...' if len(task_query) > 50 else ''}")
+            
+            # Execute the agent task
+            response = agent.invoke(task_query)
+            
+            # Handle response
+            try:
+                content = response.content or response.error or "No response"
+                if isinstance(content, bytes):
+                    content = content.decode('utf-8', errors='replace')
+                
+                # Check if it's a question for user
+                if "QUESTION_FOR_USER:" in content:
+                    question = content.split("QUESTION_FOR_USER:")[1].strip()
+                    print(f"\n{question}")
+                    
+                    # Speak the question if TTS is enabled
+                    if agent.tts_service and agent.tts_service.enabled:
+                        agent.tts_service.speak_async(question)
+                    
+                    print("\n🎤 Listening for your answer...")
+                # Response is already printed by agent service
+                
+            except Exception:
+                safe = (response.content or response.error or "No response")
+                safe = safe.encode('ascii', errors='ignore').decode('ascii')
+                print(f"\n{safe}")
+                
+        finally:
+            # Mark task as finished and ensure agent is resumed
+            agent.resume()
+            with task_lock:
+                task_running = False
+            print("\n✅ Task completed!")
+            print("🎤 Listening for your next command...")
+            sys.stdout.flush()
+            sys.stderr.flush()
+    
+    def answer_mid_query(q: str):
+        """Answer a user query conversationally without executing a new task"""
+        try:
+            # Build a light conversational prompt using recent context
+            context = agent.get_conversation_summary() if agent.enable_conversation else ""
+            prompt = (
+                f"You are in Chat mode. Answer the user's question briefly and conversationally. "
+                f"Do not perform any actions or use tools - just provide information.\n\n"
+                f"Context:\n{context}\n\nQuestion: {q}"
+            )
+            from langchain_core.messages import HumanMessage
+            result = agent.llm.invoke([HumanMessage(content=prompt)])
+            answer_text = getattr(result, 'content', None) or str(result)
+            
+            # Print the answer
+            print(f"\n💬 {answer_text}\n")
+            
+            # Speak the answer if TTS is enabled
+            if agent.tts_service and agent.tts_service.enabled:
+                agent.tts_service.speak_async(answer_text)
+                
+        except Exception as e:
+            answer_text = f"(Failed to answer: {e})"
+            print(f"\n{answer_text}\n")
     
     def on_transcription(transcript: str):
         """Callback when transcription is received"""
-        nonlocal waiting_for_query, switch_to_text
-        
-        if not waiting_for_query:
-            print(f"\n[Ignoring speech while processing: '{transcript}']")
-            return
+        nonlocal switch_to_text, task_thread
         
         print(f"\n🎤 You said: {transcript}")
         
@@ -215,20 +287,7 @@ def run_voice_mode(agent):
             print("\n⌨️ Switching to text input mode...")
             return
         
-        # Mark that we're processing
-        waiting_for_query = False
-        
-        # Process the query
-        process_voice_query(agent, transcript)
-        
-        # Mark that we're ready for next query
-        waiting_for_query = True
-        if not switch_to_text:
-            print("\n🎤 Listening for your next command...")
-    
-    def process_voice_query(agent, query: str):
-        """Process a voice query through the agent"""
-        query_lower = query.strip().lower()
+        query_lower = transcript.strip().lower()
         
         # Handle special commands
         if query_lower in ['quit', 'exit', 'stop', 'goodbye']:
@@ -238,11 +297,13 @@ def run_voice_mode(agent):
                 agent.cleanup()
             except Exception:
                 pass
+            import sys
             sys.exit(0)
         
         elif query_lower == 'clear conversation':
             agent.clear_conversation()
             print("Conversation history cleared!")
+            print("🎤 Listening for your next command...")
             return
         
         elif query_lower == 'programs':
@@ -250,6 +311,7 @@ def run_voice_mode(agent):
             programs = get_running_programs()
             agent.running_programs = programs
             display_running_programs(programs)
+            print("🎤 Listening for your next command...")
             return
         
         elif 'stop speaking' in query_lower or 'be quiet' in query_lower:
@@ -258,35 +320,36 @@ def run_voice_mode(agent):
                 print("Stopped speaking.")
             else:
                 print("Agent is not currently speaking.")
+            print("🎤 Listening for your next command...")
             return
         
-        # Process the query through agent
-        try:
-            print()
-            response = agent.invoke(query)
+        # Decide how to handle the query based on task state
+        with task_lock:
+            is_running = task_running
+        
+        if is_running:
+            # Task is running - pause, answer, resume
+            print("⏸️  Pausing current task to answer your question...")
+            mid_query_queue.put(transcript)
+            agent.pause()
             
-            # Handle response
-            if response.content and "QUESTION_FOR_USER:" in response.content:
-                # Extract and display the question
-                question = response.content.split("QUESTION_FOR_USER:")[1].strip()
-                print(f"\n{question}")
-                
-                # Speak the question if TTS is enabled
-                if agent.tts_service and agent.tts_service.enabled:
-                    agent.tts_service.speak_async(question)
-                
-                print("\n🎤 Listening for your answer...")
-            else:
-                # Response is already printed by the agent service
-                pass
+            # Process queued queries
+            while not mid_query_queue.empty():
+                q = mid_query_queue.get()
+                answer_mid_query(q)
+                mid_query_queue.task_done()
             
-            print()
-            sys.stdout.flush()
-            sys.stderr.flush()
+            # Auto-resume
+            print("▶️  Resuming original task...")
+            agent.resume()
+        else:
+            # No task running - start new task in background
+            if task_thread and task_thread.is_alive():
+                print("⚠️  Previous task still finishing up, please wait...")
+                return
             
-        except Exception as e:
-            print(f"\nError: {e}")
-            print("Please try again.")
+            task_thread = threading.Thread(target=run_task_async, args=(transcript,), daemon=True)
+            task_thread.start()
     
     # Set the callback
     stt_service.on_transcription = on_transcription
@@ -306,6 +369,11 @@ def run_voice_mode(agent):
     except KeyboardInterrupt:
         print("\n\nSwitching to text input mode...")
         stt_service.stop_listening()
+    
+    # Wait for any running task to complete before switching modes
+    if task_thread and task_thread.is_alive():
+        print("⏳ Waiting for current task to complete...")
+        task_thread.join(timeout=5.0)
     
     return True
 
@@ -358,7 +426,7 @@ def main():
     llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.3)  # Reduced temperature for faster, more focused responses
     
     # TTS configuration
-    enable_tts = os.getenv("ENABLE_TTS", "true").lower() == "true"
+    enable_tts = os.getenv("ENABLE_TTS", "false").lower() == "true"
     tts_voice_id = os.getenv("TTS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")  # Default ElevenLabs voice
     
     agent = Agent(
@@ -399,6 +467,8 @@ def main():
     
     print("\nCommands:")
     print("  - Type your query to interact with the agent")
+    print("  - 💡 NEW: Tasks run in background - you can ask questions anytime!")
+    print("  - Mid-task queries will pause, answer, then auto-resume")
     if stt_available:
         print("  - Type 'voice' or 'switch to voice' to enable voice control")
     print("  - Type 'clear' to clear conversation history")
@@ -412,6 +482,78 @@ def main():
     # Start in voice mode if requested
     if voice_mode:
         run_voice_mode(agent)
+    
+    # Task execution state for text mode (same as voice mode)
+    task_thread = None
+    task_running = False
+    task_lock = threading.Lock()
+    mid_query_queue = queue.Queue()
+    
+    def run_task_async_text(task_query: str):
+        """Run a task in background thread with pause support (text mode)"""
+        nonlocal task_running
+        try:
+            with task_lock:
+                task_running = True
+            
+            # Execute the agent task
+            response = agent.invoke(task_query)
+            
+            # Handle response
+            try:
+                content = response.content or response.error or "No response"
+                if isinstance(content, bytes):
+                    content = content.decode('utf-8', errors='replace')
+                
+                # Check if it's a question for user
+                if "QUESTION_FOR_USER:" in content:
+                    question = content.split("QUESTION_FOR_USER:")[1].strip()
+                    print(f"\n{question}")
+                    
+                    # Speak the question if TTS is enabled
+                    if agent.tts_service and agent.tts_service.enabled:
+                        agent.tts_service.speak_async(question)
+                # Response is already printed by agent service
+                
+            except Exception:
+                safe = (response.content or response.error or "No response")
+                safe = safe.encode('ascii', errors='ignore').decode('ascii')
+                print(f"\n{safe}")
+                
+        finally:
+            # Mark task as finished and ensure agent is resumed
+            agent.resume()
+            with task_lock:
+                task_running = False
+            print()
+            show_ready_indicator()
+            sys.stdout.flush()
+            sys.stderr.flush()
+    
+    def answer_mid_query_text(q: str):
+        """Answer a user query conversationally without executing a new task (text mode)"""
+        try:
+            # Build a light conversational prompt using recent context
+            context = agent.get_conversation_summary() if agent.enable_conversation else ""
+            prompt = (
+                f"You are in Chat mode. Answer the user's question briefly and conversationally. "
+                f"Do not perform any actions or use tools - just provide information.\n\n"
+                f"Context:\n{context}\n\nQuestion: {q}"
+            )
+            from langchain_core.messages import HumanMessage
+            result = agent.llm.invoke([HumanMessage(content=prompt)])
+            answer_text = getattr(result, 'content', None) or str(result)
+            
+            # Print the answer
+            try:
+                agent.console.print(Markdown(answer_text))
+            except Exception:
+                safe = answer_text.encode('ascii', errors='ignore').decode('ascii')
+                print(safe)
+                
+        except Exception as e:
+            answer_text = f"(Failed to answer: {e})"
+            print(f"\n{answer_text}\n")
     
     while True:
         try:
@@ -460,6 +602,11 @@ def main():
                 print("• Scrolling and navigating")
                 print("• Taking screenshots")
                 print("• Running PowerShell commands")
+                print("\n💡 Mid-Task Interruption:")
+                print("• Tasks run in the background automatically")
+                print("• You can ask questions anytime - even during task execution!")
+                print("• Your question pauses the task, gets answered, then auto-resumes")
+                print("• Example: While 'open 10 notepad windows' is running, ask 'what's the weather?'")
                 print("\nThe agent remembers our conversation, so you can ask follow-up questions!")
                 print("Try: 'Open notepad' then 'Type hello world'")
                 print("\nMemory Commands:")
@@ -475,6 +622,7 @@ def main():
                     print("• 'voice' or 'switch to voice' - Enable voice control mode")
                     print("• Say 'switch to text' when in voice mode to return to typing")
                     print("• Start with 'python main.py --voice' for voice-first mode")
+                    print("• Voice mode also supports mid-task interruption!")
                 print("\nSystem Commands:")
                 print("• 'programs' - Refresh running programs list")
                 continue
@@ -580,59 +728,38 @@ def main():
                 break
         
         try:
-            # Process the query
-            print()  # Add spacing
-            response = agent.invoke(query)
+            # Decide how to handle the query based on task state
+            with task_lock:
+                is_running = task_running
             
-            # Check if the agent is asking a question
-            if response.content and "QUESTION_FOR_USER:" in response.content:
-                # Extract and display the question
-                question = response.content.split("QUESTION_FOR_USER:")[1].strip()
-                print(f"\n{question}")
+            if is_running:
+                # Task is running - pause, answer, resume
+                print("\n⏸️  Pausing current task to answer your question...")
+                mid_query_queue.put(query)
+                agent.pause()
                 
-                # Speak the question if TTS is enabled
-                if agent.tts_service and agent.tts_service.enabled:
-                    agent.tts_service.speak_async(question)
+                # Process queued queries
+                while not mid_query_queue.empty():
+                    q = mid_query_queue.get()
+                    answer_mid_query_text(q)
+                    mid_query_queue.task_done()
                 
-                # Get user response and continue the conversation
-                user_response = safe_input("\nYou: ")
-                if user_response:
-                    # Continue the conversation with the user's response
-                    print()  # Add spacing
-                    response = agent.invoke(user_response)
-                    
-                    # Check if the response is another question
-                    if response.content and "QUESTION_FOR_USER:" in response.content:
-                        # Extract and display the question
-                        question = response.content.split("QUESTION_FOR_USER:")[1].strip()
-                        print(f"\n{question}")
-                        
-                        # Speak the question if TTS is enabled
-                        if agent.tts_service and agent.tts_service.enabled:
-                            agent.tts_service.speak_async(question)
-                        
-                        # Get another response
-                        user_response = safe_input("\nYou: ")
-                        if user_response:
-                            print()
-                            agent.invoke(user_response)
-                    # Response is already printed by the agent service
-                else:
-                    print("No response provided. Continuing...")
+                # Auto-resume
+                print("\n▶️  Resuming original task...\n")
+                agent.resume()
+                show_ready_indicator()
+                sys.stdout.flush()
+                sys.stderr.flush()
             else:
-                # Response is already printed by the agent service, no need to print again
-                pass
-            
-            # Ensure we always return to the input prompt
-            print()  # Add spacing before next input
-            
-            # Show ready indicator
-            show_ready_indicator()
-            
-            # Force flush to ensure output is displayed
-            import sys
-            sys.stdout.flush()
-            sys.stderr.flush()
+                # No task running - start new task in background
+                print()  # Add spacing
+                if task_thread and task_thread.is_alive():
+                    print("⚠️  Previous task still finishing up, please wait...")
+                    continue
+                
+                task_thread = threading.Thread(target=run_task_async_text, args=(query,), daemon=True)
+                task_thread.start()
+                print("🤖 Working on it in the background. You can type questions anytime.")
             
         except KeyboardInterrupt:
             print("\n\nGoodbye!")

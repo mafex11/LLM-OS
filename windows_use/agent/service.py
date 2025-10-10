@@ -25,6 +25,7 @@ import logging
 import sys
 import time
 import ctypes
+import threading
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -60,7 +61,7 @@ class Agent:
     Returns:
         Agent
     '''
-    def __init__(self,instructions:list[str]=[],additional_tools:list[BaseTool]=[],browser:Literal['edge','chrome','firefox']='edge', llm: BaseChatModel=None,consecutive_failures:int=3,max_steps:int=20,use_vision:bool=False,enable_conversation:bool=True,literal_mode:bool=True,enable_tts:bool=True,tts_voice_id:str="21m00Tcm4TlvDq8ikWAM"):
+    def __init__(self,instructions:list[str]=[],additional_tools:list[BaseTool]=[],browser:Literal['edge','chrome','firefox']='edge', llm: BaseChatModel=None,consecutive_failures:int=3,max_steps:int=20,use_vision:bool=False,enable_conversation:bool=True,literal_mode:bool=True,enable_tts:bool=False,tts_voice_id:str="21m00Tcm4TlvDq8ikWAM"):
         self.name='Windows Use'
         self.description='An agent that can interact with GUI elements on Windows' 
         self.registry = Registry([
@@ -92,6 +93,34 @@ class Agent:
         self.performance_monitor = PerformanceMonitor()
         # TTS service
         self.tts_service = TTSService(voice_id=tts_voice_id, enable_tts=enable_tts) if enable_tts else None
+        # Cooperative pause controller
+        self._pause_event = threading.Event()
+        self._pause_event.clear()  # not paused by default
+        self._pause_lock = threading.Lock()
+
+    def pause(self):
+        """Request a cooperative pause. Running steps will wait at checkpoints."""
+        with self._pause_lock:
+            self._pause_event.set()
+
+    def resume(self):
+        """Resume execution after a cooperative pause."""
+        with self._pause_lock:
+            self._pause_event.clear()
+
+    def is_paused(self) -> bool:
+        """Check if the agent is currently paused."""
+        return self._pause_event.is_set()
+
+    def _wait_if_paused(self, checkpoint_name: str = ""):
+        """Block cooperatively while paused, emitting a status message once."""
+        if not self._pause_event.is_set():
+            return
+        # Announce pause once per checkpoint entry
+        self.show_status("Paused", "Stop/Wait", f"Waiting at checkpoint: {checkpoint_name}")
+        # Spin-wait cooperatively with small sleeps to reduce CPU
+        while self._pause_event.is_set():
+            time.sleep(0.05)
 
     def clear_conversation(self):
         """Clear the conversation history"""
@@ -232,6 +261,9 @@ class Agent:
 
     @timed("reason")
     def reason(self,state:AgentState):
+        # Cooperative pause checkpoint before planning
+        self._wait_if_paused("reason")
+        
         steps=state.get('steps')
         max_steps=state.get('max_steps')
         messages=state.get('messages')
@@ -300,6 +332,9 @@ class Agent:
 
     @timed("action")
     def action(self,state:AgentState):
+        # Cooperative pause checkpoint before executing an action
+        self._wait_if_paused("action:start")
+        
         steps=state.get('steps')
         max_steps=state.get('max_steps')
         agent_data=state.get('agent_data')
@@ -372,6 +407,9 @@ class Agent:
             self.desktop.get_state(use_vision=self.use_vision)
             self.desktop._last_state_time = time.time()
         
+        # Cooperative pause checkpoint after action side-effects settle
+        self._wait_if_paused("action:end")
+        
         # Log observation to file
         agent_logger.log_observation(observation)
         
@@ -431,6 +469,9 @@ class Agent:
         
         # OPTIMIZATION: Minimal status update
         self.show_status("Finalizing", name, "Preparing response")
+        
+        # Cooperative pause checkpoint before final answer execution
+        self._wait_if_paused("answer")
         
         tool_result = self.registry.execute(tool_name=name, desktop=None, **params)
         

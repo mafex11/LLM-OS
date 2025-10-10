@@ -15,8 +15,30 @@ import sys
 from datetime import datetime
 from dotenv import load_dotenv
 
+# Determine data paths (from environment or defaults)
+DATA_PATH = os.getenv('WINDOWS_USE_DATA_PATH', os.path.join(os.getcwd(), 'data'))
+LOGS_PATH = os.getenv('WINDOWS_USE_LOGS_PATH', os.path.join(os.getcwd(), 'logs'))
+CONFIG_PATH = os.getenv('WINDOWS_USE_CONFIG_PATH', os.path.join(os.getcwd(), 'config'))
+CACHE_PATH = os.getenv('WINDOWS_USE_CACHE_PATH', os.path.join(os.getcwd(), 'cache'))
+
+# Create directories if they don't exist
+for path in [DATA_PATH, LOGS_PATH, CONFIG_PATH, CACHE_PATH]:
+    os.makedirs(path, exist_ok=True)
+
 # Load environment variables from .env file
-load_dotenv()
+# First try config directory (for desktop app), then current directory
+env_file_paths = [
+    os.path.join(CONFIG_PATH, '.env'),
+    os.path.join(os.getcwd(), '.env')
+]
+
+for env_path in env_file_paths:
+    if os.path.exists(env_path):
+        print(f"Loading environment from: {env_path}")
+        load_dotenv(env_path)
+        break
+else:
+    load_dotenv()
 
 # Add the project root to the path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -25,6 +47,7 @@ from windows_use.agent.service import Agent
 from windows_use.agent.logger import agent_logger
 from windows_use.agent.streaming_wrapper import StreamingAgentWrapper
 from langchain_google_genai.chat_models import ChatGoogleGenerativeAI
+from langchain_core.messages import HumanMessage, AIMessage
 from main import get_running_programs
 import threading
 
@@ -50,9 +73,16 @@ streaming_wrapper: Optional[StreamingAgentWrapper] = None
 agent_initialized = False
 
 # Request/Response Models
+class ConversationMessage(BaseModel):
+    role: str
+    content: str
+    timestamp: str
+
 class QueryRequest(BaseModel):
     query: str
     use_vision: bool = False
+    conversation_history: List[ConversationMessage] = []
+    api_key: str  # Frontend must provide API key
 
 class QueryResponse(BaseModel):
     response: str
@@ -76,6 +106,16 @@ class SettingsRequest(BaseModel):
     tts_voice_id: str = "21m00Tcm4TlvDq8ikWAM"
     cache_timeout: float = 2.0
     max_steps: int = 30
+
+class ApiKeysRequest(BaseModel):
+    google_api_key: str
+    elevenlabs_api_key: str = ""
+    deepgram_api_key: str = ""
+
+class ApiKeysResponse(BaseModel):
+    google_api_key: str
+    elevenlabs_api_key: str
+    deepgram_api_key: str
 
 # Initialize agent on startup
 @app.on_event("startup")
@@ -101,7 +141,7 @@ async def startup_event():
         )
         
         # TTS configuration (matching CLI behavior)
-        enable_tts = os.getenv("ENABLE_TTS", "true").lower() == "true"
+        enable_tts = os.getenv("ENABLE_TTS", "false").lower() == "true"
         tts_voice_id = os.getenv("TTS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
         
         # Initialize agent (SAME PARAMS AS main.py line 364!)
@@ -249,13 +289,55 @@ async def process_query_stream(request: QueryRequest):
         try:
             print(f"Streaming query: {request.query}")
             
+            # Validate API key from frontend
+            if not request.api_key or request.api_key.strip() == "":
+                yield f"data: {json.dumps({'type': 'error', 'timestamp': datetime.now().isoformat(), 'data': {'message': 'API key is required. Please set it in settings.'}})}\n\n"
+                return
+            
+            # Create new agent instance with frontend API key
+            print("Using API key from frontend")
+            llm = ChatGoogleGenerativeAI(
+                model="gemini-2.0-flash", 
+                temperature=0.3,
+                google_api_key=request.api_key.strip()
+            )
+            
+            # Create a new agent instance with the frontend API key
+            frontend_agent = Agent(
+                llm=llm,
+                browser='chrome',
+                use_vision=False,
+                enable_conversation=True,
+                literal_mode=True,
+                max_steps=30,
+                enable_tts=os.getenv("ENABLE_TTS", "false").lower() == "true",
+                tts_voice_id=os.getenv("TTS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
+            )
+            
+            # Copy running programs from the original agent
+            frontend_agent.running_programs = agent.running_programs
+            
+            # Load conversation history into agent if provided
+            if request.conversation_history:
+                conversation_messages = []
+                for msg in request.conversation_history:
+                    if msg.role == "user":
+                        conversation_messages.append(HumanMessage(content=msg.content))
+                    elif msg.role == "assistant":
+                        conversation_messages.append(AIMessage(content=msg.content))
+                
+                # Set conversation history on the agent
+                if hasattr(frontend_agent, 'conversation_history'):
+                    frontend_agent.conversation_history = conversation_messages
+                    print(f"Loaded {len(conversation_messages)} messages from conversation history")
+            
             # Container for the result
             result_container = {"response": None, "error": None, "done": False}
             
             def run_agent():
                 """Run agent in background thread"""
                 try:
-                    result_container["response"] = streaming_wrapper.invoke(request.query)
+                    result_container["response"] = frontend_agent.invoke(request.query)
                     result_container["done"] = True
                 except Exception as e:
                     result_container["error"] = e
@@ -513,6 +595,86 @@ async def stop_speaking():
             return {"success": False, "message": "Stop speaking not available"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error stopping TTS: {str(e)}")
+
+@app.get("/api/config/keys", response_model=ApiKeysResponse)
+async def get_api_keys():
+    """Get current API keys from .env file"""
+    try:
+        google_key = os.getenv("GOOGLE_API_KEY", "")
+        elevenlabs_key = os.getenv("ELEVENLABS_API_KEY", "")
+        deepgram_key = os.getenv("DEEPGRAM_API_KEY", "")
+        
+        return ApiKeysResponse(
+            google_api_key=google_key,
+            elevenlabs_api_key=elevenlabs_key,
+            deepgram_api_key=deepgram_key
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching API keys: {str(e)}")
+
+@app.post("/api/config/keys")
+async def save_api_keys(keys: ApiKeysRequest):
+    """Save API keys to .env file (for backup purposes only - frontend uses its own API keys)"""
+    try:
+        # Use config path if available (desktop app), otherwise use current directory
+        env_path = os.path.join(CONFIG_PATH, ".env") if CONFIG_PATH != os.path.join(os.getcwd(), 'config') else os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+        
+        # Read existing .env file and preserve existing variables
+        env_vars = {}
+        if os.path.exists(env_path):
+            with open(env_path, "r", encoding="utf-8") as f:
+                for line_num, line in enumerate(f, 1):
+                    line = line.strip()
+                    # Skip empty lines and comments
+                    if not line or line.startswith("#"):
+                        continue
+                    
+                    # Only process lines with valid key=value format
+                    if "=" in line and not line.startswith(" "):
+                        try:
+                            key, value = line.split("=", 1)
+                            key = key.strip()
+                            value = value.strip()
+                            # Only add if key is valid (no spaces, special chars)
+                            if key and not " " in key and not "{" in key:
+                                env_vars[key] = value
+                        except Exception as e:
+                            print(f"Warning: Skipping malformed line {line_num}: {line}")
+                            continue
+        
+        # Only update the specific API keys if they're provided and valid
+        if keys.google_api_key and keys.google_api_key.strip():
+            env_vars["GOOGLE_API_KEY"] = keys.google_api_key.strip()
+        
+        if keys.elevenlabs_api_key and keys.elevenlabs_api_key.strip():
+            env_vars["ELEVENLABS_API_KEY"] = keys.elevenlabs_api_key.strip()
+        
+        if keys.deepgram_api_key and keys.deepgram_api_key.strip():
+            env_vars["DEEPGRAM_API_KEY"] = keys.deepgram_api_key.strip()
+        
+        # Write clean .env file
+        with open(env_path, "w", encoding="utf-8") as f:
+            f.write("# Windows-Use API Configuration\n")
+            f.write("# Generated by Windows-Use Frontend\n")
+            f.write("# Note: Frontend uses its own API keys, this file is for backup only\n\n")
+            
+            # Write API keys first
+            for key in ["GOOGLE_API_KEY", "ELEVENLABS_API_KEY", "DEEPGRAM_API_KEY"]:
+                if key in env_vars:
+                    f.write(f"{key}={env_vars[key]}\n")
+            
+            # Write other variables
+            f.write("\n")
+            for key, value in env_vars.items():
+                if key not in ["GOOGLE_API_KEY", "ELEVENLABS_API_KEY", "DEEPGRAM_API_KEY"]:
+                    f.write(f"{key}={value}\n")
+        
+        return {
+            "success": True,
+            "message": "API keys saved to backup file. Frontend will use its own API keys."
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving API keys: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
