@@ -1,7 +1,40 @@
 Windows-Use Project Changes Log
 ================================
 
-Date: December 19, 2024 (Latest Update - v4.8)
+Date: December 19, 2024 (Latest Update - v4.10)
+Update: Backend Voice Integration with main.py STT/TTS
+
+CHANGES:
+- Removed Web Speech API implementation from frontend
+- Connected frontend to existing backend voice system from main.py
+- Added voice mode API endpoints for backend STT/TTS control
+- Implemented status polling to sync frontend with backend voice state
+- Added auto-send queries after speech pause (like main.py implementation)
+- Enhanced voice button with real-time status from backend
+- Added comprehensive error handling for API key and service issues
+- Integrated with existing Deepgram STT and ElevenLabs TTS services
+
+TECHNICAL DETAILS:
+- Backend: Added voice control endpoints in api_server.py (/api/voice/start, /api/voice/stop, /api/voice/status)
+- Frontend: Removed Web Speech API, added backend voice integration in frontend/src/app/chat/page.tsx
+- STT: Uses existing Deepgram speech recognition from main.py with auto-send after pause
+- TTS: Uses existing ElevenLabs text-to-speech from main.py for AI responses
+- Threading: Voice mode runs in separate thread to avoid blocking API server
+- Status Sync: Frontend polls backend every second for real-time voice state updates
+- Error Handling: Proper validation for API keys and service availability
+- Integration: Uses existing run_voice_mode function from main.py
+
+VOICE FEATURES:
+- Backend-driven speech recognition with Deepgram
+- Automatic query sending after 1.5 second speech pause
+- Backend TTS for AI responses using ElevenLabs
+- Real-time status synchronization between frontend and backend
+- Visual feedback with animated microphone button
+- Comprehensive error handling and user notifications
+- Uses existing proven voice implementation from main.py
+- No additional browser dependencies required
+
+Date: December 19, 2024 (Previous Update - v4.8)
 Update: Disabled TTS for AI by Default
 
 CHANGES:

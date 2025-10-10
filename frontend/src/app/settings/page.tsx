@@ -175,7 +175,7 @@ export default function SettingsPage() {
             <div className="p-4 border-b border-white/10 mx-2 space-y-4">
               <div className="flex items-center gap-2 px-2">
                 <Image src="/logo.svg" alt="Logo" width={30} height={30} className="flex-shrink-0 rounded-full" />
-                <span className="text-sm font-semibold">Windows-Use AI</span>
+                <span className="text-sm font-semibold">Netra</span>
               </div>
               <Button 
                 onClick={() => router.push("/chat")} 
@@ -267,7 +267,7 @@ export default function SettingsPage() {
                     API Keys
                   </CardTitle>
                   <CardDescription>
-                    Configure your API keys for Windows-Use AI services
+                    Configure your API keys for Netra services
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

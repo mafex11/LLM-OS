@@ -1,6 +1,6 @@
-# Windows-Use Frontend
+# Netra Frontend
 
-A modern Next.js web interface for the Windows-Use AI automation agent.
+A modern Next.js web interface for the Netra automation agent.
 
 ## Features
 
@@ -16,7 +16,7 @@ A modern Next.js web interface for the Windows-Use AI automation agent.
 ### Prerequisites
 
 - Node.js 18+ installed
-- Windows-Use API server running (port 8000)
+- Netra API server running (port 8000)
 
 ### Installation
 
@@ -70,7 +70,7 @@ The UI is built with [Shadcn UI](https://ui.shadcn.com/) components:
 
 ## API Integration
 
-The frontend connects to the Windows-Use API server at `http://localhost:8000`:
+The frontend connects to the Netra API server at `http://localhost:8000`:
 
 - `/api/status` - System status and running programs
 - `/api/query/stream` - Streaming chat responses

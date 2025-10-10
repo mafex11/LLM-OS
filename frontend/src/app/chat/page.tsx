@@ -37,6 +37,15 @@ import { useApiKeys } from "@/contexts/ApiKeyContext"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import { TextGenerateEffect } from "@/components/ui/text-generate-effect"
+import { useToast } from "@/hooks/use-toast"
+
+// Voice mode types for backend integration
+interface VoiceStatus {
+  isListening: boolean;
+  isSpeaking: boolean;
+  transcript?: string;
+  error?: string;
+}
 
 interface Message {
   role: "user" | "assistant"
@@ -72,6 +81,7 @@ export default function Home() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { getApiKey, hasApiKey } = useApiKeys()
+  const { toast } = useToast()
   const [currentSessionId, setCurrentSessionId] = useState("")
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -84,6 +94,8 @@ export default function Home() {
   const [taskExecuted, setTaskExecuted] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
   const [isListening, setIsListening] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const [voiceMode, setVoiceMode] = useState(false)
   const workflowRef = useRef<WorkflowStep[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -176,6 +188,84 @@ export default function Home() {
     const interval = setInterval(fetchSystemStatus, 5000)
     return () => clearInterval(interval)
   }, [])
+
+  // Voice mode connection to backend
+  useEffect(() => {
+    if (voiceMode) {
+      // Start voice mode connection to backend
+      startVoiceMode()
+    } else {
+      // Stop voice mode connection
+      stopVoiceMode()
+    }
+  }, [voiceMode])
+
+  // Prevent multiple voice mode starts
+  const [voiceModeStarting, setVoiceModeStarting] = useState(false)
+
+  // Poll voice status from backend
+  useEffect(() => {
+    if (!voiceMode) return
+
+    const pollVoiceStatus = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/api/voice/status")
+        if (response.ok) {
+          const status = await response.json()
+          setIsListening(status.is_listening)
+          setIsSpeaking(status.is_speaking)
+        }
+      } catch (error) {
+        console.error('Error polling voice status:', error)
+      }
+    }
+
+    const pollVoiceConversation = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/api/voice/conversation")
+        if (response.ok) {
+          const data = await response.json()
+          if (data.conversation && data.conversation.length > 0) {
+            // Convert voice conversation to chat format and add to messages
+            const voiceMessages = data.conversation.map((msg: any) => ({
+              role: msg.role,
+              content: msg.content,
+              timestamp: new Date(msg.timestamp * 1000).toISOString(),
+              workflowSteps: msg.workflowSteps ? msg.workflowSteps.map((step: any) => ({
+                type: step.type,
+                message: step.message,
+                timestamp: new Date(step.timestamp * 1000).toISOString(),
+                status: step.status,
+                actionName: step.actionName
+              })) : undefined
+            }))
+            
+            // Only add new messages that aren't already in our chat
+            const newMessages = voiceMessages.filter((voiceMsg: any) => 
+              !messages.some(existingMsg => 
+                existingMsg.role === voiceMsg.role && 
+                existingMsg.content === voiceMsg.content
+              )
+            )
+            
+            if (newMessages.length > 0) {
+              updateSessionMessages(currentSessionId, [...messages, ...newMessages])
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error polling voice conversation:', error)
+      }
+    }
+
+    const statusInterval = setInterval(pollVoiceStatus, 1000) // Poll status every second
+    const conversationInterval = setInterval(pollVoiceConversation, 2000) // Poll conversation every 2 seconds
+    
+    return () => {
+      clearInterval(statusInterval)
+      clearInterval(conversationInterval)
+    }
+  }, [voiceMode])
 
   // Auto-execute task from query parameter
   useEffect(() => {
@@ -387,9 +477,106 @@ export default function Home() {
     executeTask(input)
   }
 
+  const startVoiceMode = async () => {
+    // Prevent multiple simultaneous calls
+    if (voiceModeStarting) {
+      console.log("Voice mode already starting, skipping...")
+      return
+    }
+    
+    setVoiceModeStarting(true)
+    
+    try {
+      const response = await fetch("http://localhost:8000/api/voice/start", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          api_key: getApiKey('google_api_key')
+        }),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        setIsListening(true)
+        toast({
+          title: "Voice Mode Started",
+          description: result.message || "Listening for your commands..."
+        })
+      } else {
+        let errorMessage = "Failed to start voice mode"
+        console.log('Voice mode failed with status:', response.status, response.statusText)
+        try {
+          const errorData = await response.json()
+          console.log('Error response data:', errorData)
+          // Handle different possible error response structures
+          if (typeof errorData === 'string') {
+            errorMessage = errorData
+          } else if (errorData.detail) {
+            // Handle array of validation errors (FastAPI format)
+            if (Array.isArray(errorData.detail)) {
+              errorMessage = errorData.detail.map((err: any) => 
+                typeof err === 'string' ? err : err.msg || JSON.stringify(err)
+              ).join(', ')
+            } else {
+              errorMessage = errorData.detail
+            }
+          } else if (errorData.message) {
+            errorMessage = errorData.message
+          } else if (errorData.error) {
+            errorMessage = errorData.error
+          } else {
+            errorMessage = JSON.stringify(errorData)
+          }
+        } catch (parseError) {
+          console.log('Failed to parse error response:', parseError)
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`
+        }
+        throw new Error(errorMessage)
+      }
+    } catch (error) {
+      console.error('Error starting voice mode:', error)
+      toast({
+        title: "Error Starting Voice Mode",
+        description: error instanceof Error ? error.message : "Could not connect to voice system. Please check your API keys.",
+        variant: "destructive"
+      })
+      setVoiceMode(false)
+    } finally {
+      setVoiceModeStarting(false)
+    }
+  }
+
+  const stopVoiceMode = async () => {
+    try {
+      await fetch("http://localhost:8000/api/voice/stop", {
+        method: "POST",
+      })
+      setIsListening(false)
+      setIsSpeaking(false)
+    } catch (error) {
+      console.error('Error stopping voice mode:', error)
+    }
+  }
+
   const handleMicClick = () => {
-    setIsListening(!isListening)
-    // TODO: Implement actual voice recognition
+    if (!hasApiKey('google_api_key')) {
+      toast({
+        title: "API Key Required",
+        description: "Please set your Google API key in Settings to use voice features.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    // Prevent rapid clicking
+    if (voiceModeStarting) {
+      console.log("Voice mode operation in progress, please wait...")
+      return
+    }
+
+    setVoiceMode(!voiceMode)
   }
 
   return (
@@ -414,7 +601,7 @@ export default function Home() {
             <div className="p-4 border-b border-white/10 mx-2 space-y-4">
               <div className="flex items-center gap-2 px-2">
                 <Image src="/logo.svg" alt="Logo" width={30} height={30} className="flex-shrink-0 rounded-full" />
-                <span className="text-sm font-semibold">Windows-Use AI</span>
+                <span className="text-sm font-semibold">Netra</span>
               </div>
               <Button 
                 onClick={createNewChat} 
@@ -541,13 +728,13 @@ export default function Home() {
               {showSidebar ? <SidebarLeft01Icon size={24} /> : <SidebarRight01Icon size={24} />}
             </div>
             <div className="flex items-center gap-2">
-              <motion.div
+              {/* <motion.div
                 animate={{ rotate: [0, 10, -10, 0] }}
                 transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
               >
                 <BotIcon size={24} />
-              </motion.div>
-              <h1 className="text-lg font-normal hidden sm:block">Windows-Use AI Agent</h1>
+              </motion.div> */}
+              <h1 className="text-lg font-normal hidden sm:block">Netra</h1>
             </div>
           </div>
         </motion.div>
@@ -556,12 +743,12 @@ export default function Home() {
           <div className="max-w-4xl mx-auto py-4 sm:py-8">
             {messages.length === 0 && !isLoading && (
               <motion.div 
-                className="text-center py-12"
+                className="flex flex-col items-center justify-center min-h-[60vh] text-center"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5 }}
               >
-                <motion.div
+                {/* <motion.div
                   animate={{ 
                     rotate: [0, 10, -10, 0],
                     scale: [1, 1.1, 1]
@@ -569,9 +756,9 @@ export default function Home() {
                   transition={{ duration: 3, repeat: Infinity }}
                 >
                   <BotIcon size={64} className="mx-auto mb-4 text-muted-foreground/50" />
-                </motion.div>
-                <h2 className="text-xl sm:text-2xl font-normal mb-2">How can I help you today?</h2>
-                <p className="text-sm sm:text-base text-muted-foreground px-4">
+                </motion.div> */}
+                <h2 className="text-3xl sm:text-4xl font-normal mb-2">How can I help you today?</h2>
+                <p className="text-sm sm:text-md text-muted-foreground px-4 max-w-md">
                   Ask me to automate Windows tasks, open applications, or control your system.
                 </p>
               </motion.div>
@@ -761,12 +948,34 @@ export default function Home() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-white/20 hover:border-white/30"
+                        className={`h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border ${
+                          isListening 
+                            ? 'border-red-500/50 bg-red-500/10' 
+                            : isSpeaking 
+                            ? 'border-blue-500/50 bg-blue-500/10' 
+                            : 'border-white/20 hover:border-white/30'
+                        }`}
                         disabled={isLoading}
-                        title="Voice input"
+                        title={isListening ? "Stop voice mode" : "Start voice mode"}
                         onClick={handleMicClick}
                       >
-                        <VoiceIcon size={24} />
+                        {isListening ? (
+                          <motion.div
+                            animate={{ scale: [1, 1.2, 1] }}
+                            transition={{ duration: 1, repeat: Infinity }}
+                          >
+                            <VoiceIcon size={24} className="text-red-500" />
+                          </motion.div>
+                        ) : isSpeaking ? (
+                          <motion.div
+                            animate={{ scale: [1, 1.1, 1] }}
+                            transition={{ duration: 0.8, repeat: Infinity }}
+                          >
+                            <VoiceIcon size={24} className="text-blue-500" />
+                          </motion.div>
+                        ) : (
+                          <VoiceIcon size={24} className="text-white" />
+                        )}
                       </Button>
                     </motion.div>
                   </motion.div>

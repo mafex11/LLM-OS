@@ -12,6 +12,7 @@ import asyncio
 import json
 import os
 import sys
+import time
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -116,6 +117,9 @@ class ApiKeysResponse(BaseModel):
     google_api_key: str
     elevenlabs_api_key: str
     deepgram_api_key: str
+
+class VoiceModeRequest(BaseModel):
+    api_key: str
 
 # Initialize agent on startup
 @app.on_event("startup")
@@ -595,6 +599,156 @@ async def stop_speaking():
             return {"success": False, "message": "Stop speaking not available"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error stopping TTS: {str(e)}")
+
+# Voice conversation storage
+voice_conversation = []
+
+@app.get("/api/voice/conversation")
+async def get_voice_conversation():
+    """Get the latest voice conversation"""
+    return {"conversation": voice_conversation}
+
+# Voice mode control endpoints
+@app.post("/api/voice/start")
+async def start_voice_mode(request: VoiceModeRequest):
+    """Start voice mode using backend STT/TTS"""
+    if not agent_initialized or not agent:
+        raise HTTPException(status_code=503, detail="Agent not initialized")
+    
+    try:
+        # Check if STT dependencies are available (without creating global instance)
+        try:
+            from windows_use.agent.stt_service import DEEPGRAM_AVAILABLE
+            if not DEEPGRAM_AVAILABLE:
+                raise HTTPException(status_code=400, detail="Deepgram SDK not available. Install with: pip install deepgram-sdk")
+            
+            # Check for API key without creating STT service
+            import os
+            if not os.getenv("DEEPGRAM_API_KEY"):
+                raise HTTPException(status_code=400, detail="DEEPGRAM_API_KEY not set in environment")
+        except ImportError as e:
+            raise HTTPException(status_code=400, detail=f"STT service import error: {str(e)}")
+        
+        # Create a dedicated voice mode STT service (not using global)
+        from windows_use.agent.stt_service import STTService
+        voice_stt_service = STTService(enable_stt=True)
+        
+        if not voice_stt_service.enabled:
+            raise HTTPException(status_code=400, detail="STT service could not be initialized. Check your Deepgram API key.")
+        
+        # Store voice STT service in agent for access
+        agent.stt_service = voice_stt_service
+        
+        # Enable TTS for voice mode if not already enabled
+        if not hasattr(agent, 'tts_service') or not agent.tts_service or not agent.tts_service.enabled:
+            from windows_use.agent.tts_service import TTSService
+            tts_service = TTSService(enable_tts=True)
+            if tts_service.enabled:
+                agent.tts_service = tts_service
+                print("TTS enabled for voice mode")
+        
+        # Set up transcription callback to handle voice input
+        def on_transcription(transcript: str):
+            """Handle voice transcription and send to chat"""
+            print(f"Voice input: {transcript}")
+            
+            # Store user message
+            voice_conversation.append({
+                "role": "user",
+                "content": transcript,
+                "timestamp": time.time()
+            })
+            
+            # Process the transcript through the agent (simplified approach)
+            try:
+                response = agent.invoke(transcript)
+                
+                if response and hasattr(response, 'content') and response.content:
+                    print(f"AI Response: {response.content}")
+                    
+                    # Store assistant response
+                    voice_conversation.append({
+                        "role": "assistant", 
+                        "content": response.content,
+                        "timestamp": time.time()
+                    })
+                    
+                    # Speak the response if TTS is available
+                    if hasattr(agent, 'tts_service') and agent.tts_service and agent.tts_service.enabled:
+                        agent.tts_service.speak_async(response.content)
+                        
+            except Exception as e:
+                print(f"Error processing voice input: {e}")
+        
+        # Set the callback
+        voice_stt_service.on_transcription = on_transcription
+        
+        # Start listening
+        if voice_stt_service.start_listening():
+            return {"success": True, "message": "Voice mode started"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to start listening")
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error starting voice mode: {str(e)}")
+
+@app.post("/api/voice/stop")
+async def stop_voice_mode():
+    """Stop voice mode"""
+    if not agent_initialized or not agent:
+        raise HTTPException(status_code=503, detail="Agent not initialized")
+    
+    try:
+        # Stop any running voice STT service
+        if hasattr(agent, 'stt_service') and agent.stt_service:
+            agent.stt_service.stop_listening()
+            agent.stt_service = None
+        
+        # Clear voice conversation history
+        global voice_conversation
+        voice_conversation.clear()
+        
+        return {"success": True, "message": "Voice mode stopped"}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error stopping voice mode: {str(e)}")
+
+@app.get("/api/voice/status")
+async def get_voice_status():
+    """Get current voice mode status"""
+    if not agent_initialized or not agent:
+        raise HTTPException(status_code=503, detail="Agent not initialized")
+    
+    try:
+        is_listening = False
+        is_speaking = False
+        
+        # Check STT status
+        if hasattr(agent, 'stt_service') and agent.stt_service:
+            is_listening = agent.stt_service.is_active()
+        
+        # Check TTS status
+        if hasattr(agent, 'is_speaking'):
+            is_speaking = agent.is_speaking()
+        
+        # Check availability (without creating global STT service)
+        try:
+            from windows_use.agent.stt_service import DEEPGRAM_AVAILABLE
+            import os
+            stt_available = DEEPGRAM_AVAILABLE and bool(os.getenv("DEEPGRAM_API_KEY"))
+        except ImportError:
+            stt_available = False
+        tts_available = hasattr(agent, 'tts_service') and agent.tts_service and agent.tts_service.enabled
+        
+        return {
+            "is_listening": is_listening,
+            "is_speaking": is_speaking,
+            "stt_available": stt_available,
+            "tts_available": tts_available
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting voice status: {str(e)}")
 
 @app.get("/api/config/keys", response_model=ApiKeysResponse)
 async def get_api_keys():

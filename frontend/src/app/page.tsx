@@ -77,8 +77,8 @@ export default function LandingPage() {
           {/* Logo */}
           <motion.div variants={item} className="mb-8 flex justify-center">
             <div className="flex items-center gap-3">
-              <Image src="/logo.svg" alt="Windows-Use AI Logo" width={40} height={40} className="flex-shrink-0" />
-              <span className="text-xl font-semibold text-foreground">Windows-Use AI</span>
+              <Image src="/logo.svg" alt="Netra Logo" width={40} height={40} className="flex-shrink-0" />
+              <span className="text-xl font-semibold text-foreground">Netra</span>
                     </div>
           </motion.div>
 

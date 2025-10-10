@@ -108,8 +108,9 @@ class STTService:
             return True
         
         try:
-            # Reset stop event
+            # Reset stop event and transcript tracking
             self.stop_event.clear()
+            self._last_transcript = None  # Reset transcript tracking
             
             # Start listening thread
             self.listening_thread = threading.Thread(
@@ -264,10 +265,11 @@ class STTService:
             # Put in queue
             self.transcription_queue.put(transcript)
             
-            # Call callback if provided
-            if self.on_transcription:
+            # Call callback if provided (only once per transcript)
+            if self.on_transcription and (not hasattr(self, '_last_transcript') or self._last_transcript != transcript):
                 try:
                     self.on_transcription(transcript)
+                    self._last_transcript = transcript  # Remember this transcript to prevent duplicates
                 except Exception as e:
                     logger.error(f"Error in transcription callback: {e}")
         
