@@ -48,6 +48,7 @@ interface VoiceStatus {
 }
 
 interface Message {
+  id?: string
   role: "user" | "assistant"
   content: string
   timestamp: Date
@@ -76,6 +77,84 @@ interface SystemStatus {
   performance_stats: any
 }
 
+// Workflow Steps Component to avoid hooks violation
+function WorkflowSteps({ workflowSteps }: { workflowSteps: WorkflowStep[] }) {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  return (
+    <div>
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <motion.div
+          animate={{ rotate: isOpen ? 90 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ArrowRight01Icon size={12} />
+        </motion.div>
+        <CpuIcon size={12} />
+        <span>View {workflowSteps.length} workflow steps</span>
+      </button>
+      <AnimatePresence mode="wait">
+        {isOpen && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ 
+              duration: 0.3, 
+              ease: "easeInOut",
+              opacity: { duration: 0.2 }
+            }}
+            className="mt-3 overflow-hidden"
+          >
+            <div className="space-y-2 pl-4 border-l-2 border-muted">
+              <AnimatePresence mode="popLayout">
+                {workflowSteps.map((step, stepIndex) => (
+                  <motion.div 
+                    key={stepIndex} 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ 
+                      duration: 0.2, 
+                      delay: stepIndex * 0.05,
+                      ease: "easeOut"
+                    }}
+                    className="flex items-start gap-2 text-xs"
+                  >
+                    <div className="flex-shrink-0 mt-0.5">
+                      {step.type === "thinking" && <Loading01Icon size={12} className="text-blue-500" />}
+                      {step.type === "reasoning" && <BulbIcon size={12} className="text-yellow-500" />}
+                      {step.type === "tool_use" && <PlayIcon size={12} className="text-green-500" />}
+                      {step.type === "tool_result" && step.status === "Completed" && (
+                        <CheckmarkCircle01Icon size={12} className="text-green-500" />
+                      )}
+                      {step.type === "tool_result" && step.status === "Failed" && (
+                        <CancelCircleIcon size={12} className="text-red-500" />
+                      )}
+                      {step.type === "status" && <Loading02Icon size={12} className="text-gray-500" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-muted-foreground">{step.message}</p>
+                      {step.actionName && (
+                        <Badge variant="outline" className="mt-1 text-xs">
+                          {step.actionName}
+                        </Badge>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function ChatContent() {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([])
   const router = useRouter()
@@ -96,6 +175,8 @@ function ChatContent() {
   const [isListening, setIsListening] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [voiceMode, setVoiceMode] = useState(false)
+  const [showVoiceInstructions, setShowVoiceInstructions] = useState(false)
+  const [newlyGeneratedMessageIds, setNewlyGeneratedMessageIds] = useState<Set<string>>(new Set())
   const workflowRef = useRef<WorkflowStep[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -104,11 +185,11 @@ function ChatContent() {
   const currentSession = chatSessions.find(s => s.id === currentSessionId)
   const messages = currentSession?.messages || []
 
-  // Always create a new chat when page opens and focus input
+  // Load existing sessions and create new chat when page opens
   useEffect(() => {
-    const createNewChatAndFocus = () => {
+    const initializeChat = () => {
       try {
-        // Load existing sessions for sidebar
+        // Load existing sessions from localStorage
         const saved = localStorage.getItem('chatSessions')
         let existingSessions: ChatSession[] = []
         
@@ -129,16 +210,16 @@ function ChatContent() {
           }))
         }
 
-        // Always create a new chat session (but don't add to history yet)
+        // Create a new chat session
         const newSession: ChatSession = {
-          id: Date.now().toString(),
+          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           title: "New Chat",
           messages: [],
           createdAt: new Date()
         }
         
-        // Set the new session as current but don't add to existing sessions yet
-        setChatSessions([newSession])
+        // Set all sessions: new session first, then existing ones
+        setChatSessions([newSession, ...existingSessions])
         setCurrentSessionId(newSession.id)
         
         // Focus the input field after a short delay to ensure it's rendered
@@ -149,10 +230,10 @@ function ChatContent() {
         }, 100)
         
       } catch (error) {
-        console.error('Failed to create new chat:', error)
+        console.error('Failed to initialize chat:', error)
         // Create initial session on error
         const initialSession: ChatSession = {
-          id: Date.now().toString(),
+          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           title: "New Chat",
           messages: [],
           createdAt: new Date()
@@ -168,17 +249,27 @@ function ChatContent() {
       }
     }
 
-    createNewChatAndFocus()
+    initializeChat()
     setIsInitialized(true)
   }, [])
 
   // Save chat sessions to localStorage whenever they change
+  // Only save sessions that have actual conversations (messages)
   useEffect(() => {
     if (isInitialized && chatSessions.length > 0) {
-      try {
-        localStorage.setItem('chatSessions', JSON.stringify(chatSessions))
-      } catch (error) {
-        console.error('Failed to save chat sessions:', error)
+      // Check if any sessions have messages
+      const hasMessages = chatSessions.some(session => session.messages.length > 0)
+      
+      if (hasMessages) {
+        // Save only sessions with messages
+        saveSessionsToStorage(chatSessions)
+      } else {
+        // If no sessions have messages, remove from localStorage
+        try {
+          localStorage.removeItem('chatSessions')
+        } catch (error) {
+          console.error('Failed to clear empty chat sessions:', error)
+        }
       }
     }
   }, [chatSessions, isInitialized])
@@ -186,6 +277,17 @@ function ChatContent() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages, currentWorkflow])
+
+  // Clear newly generated message IDs after animation completes
+  useEffect(() => {
+    if (newlyGeneratedMessageIds.size > 0) {
+      const timer = setTimeout(() => {
+        setNewlyGeneratedMessageIds(new Set())
+      }, 3000) // Clear after 3 seconds to allow animation to complete
+      
+      return () => clearTimeout(timer)
+    }
+  }, [newlyGeneratedMessageIds])
 
   // Debug: Log messages when they change
   useEffect(() => {
@@ -220,6 +322,7 @@ function ChatContent() {
 
   // Prevent multiple voice mode starts
   const [voiceModeStarting, setVoiceModeStarting] = useState(false)
+  const [inputPosition, setInputPosition] = useState<'centered' | 'bottom'>('centered')
 
   // Poll voice status from backend
   useEffect(() => {
@@ -299,6 +402,41 @@ function ChatContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, taskExecuted, isLoading, isInitialized, currentSessionId])
 
+  // Keyboard shortcut for voice mode (Ctrl+Shift+V)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check for Ctrl+Shift+V
+      if (event.ctrlKey && event.shiftKey && event.key === 'V') {
+        event.preventDefault()
+        
+        // Only trigger if API key is available and not already in voice mode
+        if (!hasApiKey('google_api_key')) {
+          toast({
+            title: "API Key Required",
+            description: "Please set your Google API key in Settings to use voice features.",
+            variant: "destructive"
+          })
+          return
+        }
+
+        // Toggle voice mode
+        if (!voiceMode && !voiceModeStarting) {
+          setVoiceMode(true)
+        } else if (voiceMode) {
+          setVoiceMode(false)
+        }
+      }
+    }
+
+    // Add event listener
+    document.addEventListener('keydown', handleKeyDown)
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [hasApiKey, voiceMode, voiceModeStarting, toast])
+
   const fetchSystemStatus = async () => {
     try {
       const response = await fetch("http://localhost:8000/api/status")
@@ -325,15 +463,30 @@ function ChatContent() {
     ))
   }
 
+  // Helper function to save sessions with messages to localStorage
+  const saveSessionsToStorage = (sessions: ChatSession[]) => {
+    try {
+      // Only save sessions that have actual conversations
+      const sessionsWithMessages = sessions.filter(session => session.messages.length > 0)
+      localStorage.setItem('chatSessions', JSON.stringify(sessionsWithMessages))
+    } catch (error) {
+      console.error('Failed to save chat sessions:', error)
+    }
+  }
+
   const createNewChat = () => {
     const newSession: ChatSession = {
-      id: Date.now().toString(),
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       title: "New Chat",
       messages: [],
       createdAt: new Date()
     }
     setChatSessions(prev => [newSession, ...prev])
     setCurrentSessionId(newSession.id)
+    setInputPosition('centered')
+    setInput("")
+    // Clear newly generated message IDs when creating new chat
+    setNewlyGeneratedMessageIds(new Set())
   }
 
   const deleteChat = (sessionId: string) => {
@@ -369,48 +522,31 @@ function ChatContent() {
   const executeTask = async (taskContent: string) => {
     if (!taskContent.trim() || isLoading) return
 
+    // Move input to bottom when user submits a query
+    setInputPosition('bottom')
+
     // Check if API key is available
     if (!hasApiKey('google_api_key')) {
+      const messageId = `${Date.now()}-error-${Math.random().toString(36).substr(2, 9)}`
       const errorMsg: Message = {
+        id: messageId,
         role: "assistant",
         content: "Please set your Google API key in Settings before using the chat.",
         timestamp: new Date(),
       }
+      // Mark this message as newly generated for animation
+      setNewlyGeneratedMessageIds(prev => new Set([...prev, messageId]))
       updateSessionMessages(currentSessionId, [...messages, errorMsg])
       return
     }
 
     const userMessage: Message = {
+      id: `${Date.now()}-user-${Math.random().toString(36).substr(2, 9)}`,
       role: "user",
       content: taskContent,
       timestamp: new Date(),
     }
 
-    // If this is the first message in the current session, load existing sessions to add to history
-    if (messages.length === 0) {
-      try {
-        const saved = localStorage.getItem('chatSessions')
-        if (saved) {
-          const parsed = JSON.parse(saved)
-          const existingSessions = parsed.map((session: any) => ({
-            ...session,
-            createdAt: new Date(session.createdAt),
-            messages: session.messages.map((msg: any) => ({
-              ...msg,
-              timestamp: new Date(msg.timestamp),
-              workflowSteps: msg.workflowSteps?.map((step: any) => ({
-                ...step,
-                timestamp: new Date(step.timestamp)
-              }))
-            }))
-          }))
-          // Add existing sessions to the current new session
-          setChatSessions(prev => [prev[0], ...existingSessions])
-        }
-      } catch (error) {
-        console.error('Failed to load existing sessions:', error)
-      }
-    }
 
     const newMessages = [...messages, userMessage]
     updateSessionMessages(currentSessionId, newMessages)
@@ -474,25 +610,33 @@ function ChatContent() {
                 console.log("Updated workflowRef.current:", workflowRef.current)
               } else if (data.type === "response") {
                 console.log("Creating response message, workflowRef.current:", workflowRef.current)
+                const messageId = `${Date.now()}-assistant-${Math.random().toString(36).substr(2, 9)}`
                 const responseMessage: Message = {
+                  id: messageId,
                   role: "assistant",
                   content: data.data.message,
                   timestamp: new Date(data.timestamp),
                   workflowSteps: [...workflowRef.current]
                 }
                 console.log("Response message created with workflowSteps:", responseMessage.workflowSteps)
+                // Mark this message as newly generated for animation
+                setNewlyGeneratedMessageIds(prev => new Set([...prev, messageId]))
                 updateSessionMessages(currentSessionId, [...newMessages, responseMessage])
                 setCurrentWorkflow([])
                 workflowRef.current = []
               } else if (data.type === "error") {
                 console.log("Creating error message, workflowRef.current:", workflowRef.current)
+                const messageId = `${Date.now()}-error-${Math.random().toString(36).substr(2, 9)}`
                 const errorMessage: Message = {
+                  id: messageId,
                   role: "assistant",
                   content: `Error: ${data.data.message}`,
                   timestamp: new Date(data.timestamp),
                   workflowSteps: [...workflowRef.current]
                 }
                 console.log("Error message created with workflowSteps:", errorMessage.workflowSteps)
+                // Mark this message as newly generated for animation
+                setNewlyGeneratedMessageIds(prev => new Set([...prev, messageId]))
                 updateSessionMessages(currentSessionId, [...newMessages, errorMessage])
                 setCurrentWorkflow([])
                 workflowRef.current = []
@@ -505,11 +649,15 @@ function ChatContent() {
       }
     } catch (error) {
       console.error("Error sending message:", error)
+      const messageId = `${Date.now()}-error-${Math.random().toString(36).substr(2, 9)}`
       const errorMsg: Message = {
+        id: messageId,
         role: "assistant",
         content: "Failed to process query. Please make sure the API server is running.",
         timestamp: new Date(),
       }
+      // Mark this message as newly generated for animation
+      setNewlyGeneratedMessageIds(prev => new Set([...prev, messageId]))
       updateSessionMessages(currentSessionId, [...newMessages, errorMsg])
     } finally {
       setIsLoading(false)
@@ -544,9 +692,10 @@ function ChatContent() {
       if (response.ok) {
         const result = await response.json()
         setIsListening(true)
+        setShowVoiceInstructions(true)
         toast({
           title: "Voice Mode Started",
-          description: result.message || "Listening for your commands..."
+          description: "Say 'yuki' followed by your command (e.g., 'yuki, open my calendar')"
         })
       } else {
         let errorMessage = "Failed to start voice mode"
@@ -599,6 +748,7 @@ function ChatContent() {
       })
       setIsListening(false)
       setIsSpeaking(false)
+      setShowVoiceInstructions(false)
     } catch (error) {
       console.error('Error stopping voice mode:', error)
     }
@@ -645,7 +795,7 @@ function ChatContent() {
             <div className="p-4 border-b border-white/10 mx-2 space-y-4">
               <div className="flex items-center gap-2 px-2">
                 <Image src="/logo.svg" alt="Logo" width={30} height={30} className="flex-shrink-0 rounded-full" />
-                <span className="text-sm font-semibold">Netra</span>
+                <span className="text-sm font-semibold">Yuki AI</span>
               </div>
               <Button 
                 onClick={createNewChat} 
@@ -698,7 +848,17 @@ function ChatContent() {
                     {/* <MessageMultiple02Icon size={16} className="flex-shrink-0" /> */}
                     <div 
                       className="flex-1 truncate cursor-pointer"
-                      onClick={() => setCurrentSessionId(session.id)}
+                      onClick={() => {
+                        setCurrentSessionId(session.id)
+                        // Clear newly generated message IDs when switching chats
+                        setNewlyGeneratedMessageIds(new Set())
+                        // Reset input position if switching to a session with no messages
+                        if (session.messages.length === 0) {
+                          setInputPosition('centered')
+                        } else {
+                          setInputPosition('bottom')
+                        }
+                      }}
                     >
                       {session.title}
                     </div>
@@ -758,6 +918,47 @@ function ChatContent() {
         </AnimatePresence>
 
         <div className="flex-1 flex flex-col">
+        {/* Voice Instructions Panel */}
+        <AnimatePresence>
+          {showVoiceInstructions && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="bg-blue-500/10 border-b border-blue-500/20 px-4 py-3 backdrop-blur-sm"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <VoiceIcon size={20} className="text-blue-400" />
+                  </motion.div>
+                  <div className="text-sm">
+                    <div className="font-medium text-blue-100">Voice Mode Active</div>
+                    <div className="text-blue-200/80">Say "yuki" followed by your command</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs border-blue-400/30 text-blue-300">
+                    Example: "yuki, open calculator"
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 text-blue-300 hover:text-blue-100"
+                    onClick={() => setShowVoiceInstructions(false)}
+                  >
+                    <Cancel01Icon size={14} />
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <motion.div 
           className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-10"
           initial={{ opacity: 0, y: -20 }}
@@ -778,16 +979,16 @@ function ChatContent() {
               >
                 <BotIcon size={24} />
               </motion.div> */}
-              <h1 className="text-lg font-normal hidden sm:block">Netra</h1>
+              <h1 className="text-lg font-normal hidden sm:block">Yuki AI</h1>
             </div>
           </div>
         </motion.div>
 
         <ScrollArea className="flex-1 px-2 sm:px-4" ref={scrollRef}>
           <div className="max-w-4xl mx-auto py-4 sm:py-8">
-            {messages.length === 0 && !isLoading && (
+            {messages.length === 0 && !isLoading && inputPosition === 'centered' && (
               <motion.div 
-                className="flex flex-col items-center justify-center min-h-[60vh] text-center"
+                className="flex flex-col items-center justify-center min-h-[80vh] text-center"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5 }}
@@ -801,10 +1002,238 @@ function ChatContent() {
                 >
                   <BotIcon size={64} className="mx-auto mb-4 text-muted-foreground/50" />
                 </motion.div> */}
-                <h2 className="text-3xl sm:text-4xl font-normal mb-2">How can I help you today?</h2>
-                <p className="text-sm sm:text-md text-muted-foreground px-4 max-w-md">
-                  Ask me to automate Windows tasks, open applications, or control your system.
-                </p>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                  className="mb-8"
+                >     
+                <div className="relative overflow-hidden">
+                  <h2 className="text-4xl sm:text-5xl font-thin relative">
+                    {["H", "i", ",", " ", "I", "'", "m", " ", "Y", "u", "k", "i"].map((letter, index) => (
+                      <motion.span
+                        key={index}
+                        className="inline-block"
+                        animate={{
+                          textShadow: [
+                            "0 0 0px rgba(255, 255, 255, 0)",
+                            "0 0 20px rgba(255, 255, 255, 0.8)",
+                            "0 0 0px rgba(255, 255, 255, 0)"
+                          ],
+                          filter: [
+                            "brightness(1)",
+                            "brightness(1.5)",
+                            "brightness(1)"
+                          ]
+                        }}
+                        transition={{
+                          duration: 0.8,
+                          delay: index * 0.15,
+                          repeat: Infinity,
+                          repeatDelay: 2,
+                          ease: "easeInOut"
+                        }}
+                      >
+                        {letter === " " ? "\u00A0" : letter}
+                      </motion.span>
+                    ))}
+                  </h2>
+                </div>
+                <div className="relative overflow-hidden">
+                  <h2 className="text-4xl sm:text-5xl font-thin mb-4 relative">
+                    {["H", "o", "w", " ", "c", "a", "n", " ", "I", " ", "h", "e", "l", "p", " ", "y", "o", "u", " ", "t", "o", "d", "a", "y", "?"].map((letter, index) => (
+                      <motion.span
+                        key={index}
+                        className="inline-block"
+                        animate={{
+                          textShadow: [
+                            "0 0 0px rgba(255, 255, 255, 0)",
+                            "0 0 20px rgba(255, 255, 255, 0.8)",
+                            "0 0 0px rgba(255, 255, 255, 0)"
+                          ],
+                          filter: [
+                            "brightness(1)",
+                            "brightness(1.5)",
+                            "brightness(1)"
+                          ]
+                        }}
+                        transition={{
+                          duration: 0.8,
+                          delay: (index * 0.1) + 2,
+                          repeat: Infinity,
+                          repeatDelay: 2,
+                          ease: "easeInOut"
+                        }}
+                      >
+                        {letter === " " ? "\u00A0" : letter}
+                      </motion.span>
+                    ))}
+                  </h2>
+                </div>
+                  <p className="text-sm sm:text-md text-white/40 px-4 max-w-2xl">
+                    Ask me to automate Windows tasks, open applications, or control your system.
+                  </p>
+                </motion.div>
+                
+                {/* Centered Input Elements */}
+                <motion.div 
+                  className="w-full max-w-2xl"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.3 }}
+                >
+                  <div className="flex items-center gap-3">
+                    <AnimatePresence mode="wait">
+                      {!isListening ? (
+                        <motion.div
+                          key="normal-input"
+                          initial={{ opacity: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          transition={{ duration: 0.3, ease: "easeInOut" }}
+                          className="flex items-center gap-3 w-full"
+                        >
+                          <motion.div
+                            initial={{ opacity: 1, scale: 1 }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className={`h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border ${
+                                isListening 
+                                  ? 'border-red-500/50 bg-red-500/10' 
+                                  : isSpeaking 
+                                  ? 'border-blue-500/50 bg-blue-500/10' 
+                                  : 'border-white/20 hover:border-white/30'
+                              }`}
+                              disabled={isLoading}
+                              title={isListening ? "Stop voice mode" : "Start voice mode (say 'yuki' + command)"}
+                              onClick={handleMicClick}
+                            >
+                              {isListening ? (
+                                <motion.div
+                                  animate={{ scale: [1, 1.2, 1] }}
+                                  transition={{ duration: 1, repeat: Infinity }}
+                                >
+                                  <VoiceIcon size={24} className="text-red-500" />
+                                </motion.div>
+                              ) : isSpeaking ? (
+                                <motion.div
+                                  animate={{ scale: [1, 1.1, 1] }}
+                                  transition={{ duration: 0.8, repeat: Infinity }}
+                                >
+                                  <VoiceIcon size={24} className="text-blue-500" />
+                                </motion.div>
+                              ) : (
+                                <VoiceIcon size={24} className="text-white" />
+                              )}
+                            </Button>
+                          </motion.div>
+                          <motion.div 
+                            className="flex-1 relative"
+                            initial={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            transition={{ duration: 0.3, ease: "easeInOut" }}
+                          >
+                            <Input
+                              ref={inputRef}
+                              placeholder="What can I do for you?"
+                              value={input}
+                              onChange={(e) => setInput(e.target.value)}
+                              onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+                              disabled={isLoading}
+                              className="w-full text-base sm:text-lg bg-black/30 border border-white/20 text-gray-100 placeholder:text-gray-500 rounded-3xl shadow-lg focus-visible:ring-0 focus-visible:ring-offset-0 h-12 sm:h-14 backdrop-blur-sm hover:border-white/30 focus:border-white/40"
+                            />
+                          </motion.div>
+                          <motion.div
+                            initial={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            transition={{ duration: 0.3, ease: "easeInOut" }}
+                          >
+                            <Button
+                              onClick={sendMessage}
+                              disabled={isLoading || !input.trim()}
+                              variant="ghost"
+                              size="sm"
+                              className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-white/20 hover:border-white/30"
+                            >
+                              {isLoading ? (
+                                <span className="flex items-center justify-center w-full h-full">
+                                  <Loading02Icon size={36} className="animate-spin" />
+                                </span>
+                              ) : (
+                                <span className="flex items-center justify-center w-full h-full">
+                                  <Navigation03Icon size={36} />
+                                </span>
+                              )}
+                            </Button>
+                          </motion.div>
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="listening-input"
+                          className="flex-1 relative"
+                          initial={{ width: "48px", opacity: 0 }}
+                          animate={{ width: "100%", opacity: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          transition={{ duration: 0.3, ease: "easeInOut" }}
+                        >
+                          <motion.div 
+                            className="w-full text-base sm:text-lg bg-black/30 border border-white/20 text-gray-100 rounded-full shadow-lg h-12 sm:h-14 backdrop-blur-sm flex items-center justify-between px-4"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, delay: 0.2 }}
+                          >
+                            <motion.div
+                              className="flex items-center"
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ duration: 0.3, delay: 0.4 }}
+                            >
+                              <motion.div
+                                className="flex items-center justify-center w-8 h-8 bg-red-500/20 rounded-lg  mr-2"
+                                animate={{ 
+                                  scale: [1, 1.1, 1],
+                                  opacity: [0.8, 1, 0.8]
+                                }}
+                                transition={{ 
+                                  duration: 1.2, 
+                                  repeat: Infinity,
+                                  ease: "easeInOut"
+                                }}
+                              >
+                                <VoiceIcon size={20} className="text-red-500" />
+                              </motion.div>
+                              <span className="text-gray-100 font-medium">
+                                Say "yuki" followed by your command...
+                              </span>
+                            </motion.div>
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.3, delay: 0.5 }}
+                            >
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 rounded-full backdrop-blur-sm border border-white/20 hover:bg-black/20 hover:border-white/30"
+                                onClick={handleMicClick}
+                                title="Stop listening"
+                              >
+                                <Cancel01Icon size={16} className="text-white" />
+                              </Button>
+                            </motion.div>
+                          </motion.div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  <p className="text-xs text-gray-500 text-center mt-2 hidden sm:block">
+                    Press Enter to send, Shift+Enter for new line, Ctrl+Shift+V for voice mode
+                  </p>
+                </motion.div>
               </motion.div>
             )}
 
@@ -836,51 +1265,23 @@ function ChatContent() {
                         <div className="space-y-2">
                           {/* Workflow Steps - Clickable at top */}
                           {message.workflowSteps && message.workflowSteps.length > 0 && (
-                            <Collapsible defaultOpen={false}>
-                              <CollapsibleTrigger className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                                <ArrowRight01Icon size={12} className="transition-transform data-[state=open]:rotate-90" />
-                                <CpuIcon size={12} />
-                                <span>View {message.workflowSteps.length} workflow steps</span>
-                              </CollapsibleTrigger>
-                              <CollapsibleContent className="mt-3">
-                                <div className="space-y-2 pl-4 border-l-2 border-muted">
-                                  {message.workflowSteps.map((step, stepIndex) => (
-                                    <div key={stepIndex} className="flex items-start gap-2 text-xs">
-                                      <div className="flex-shrink-0 mt-0.5">
-                                        {step.type === "thinking" && <Loading01Icon size={12} className="text-blue-500" />}
-                                        {step.type === "reasoning" && <BulbIcon size={12} className="text-yellow-500" />}
-                                        {step.type === "tool_use" && <PlayIcon size={12} className="text-green-500" />}
-                                        {step.type === "tool_result" && step.status === "Completed" && (
-                                          <CheckmarkCircle01Icon size={12} className="text-green-500" />
-                                        )}
-                                        {step.type === "tool_result" && step.status === "Failed" && (
-                                          <CancelCircleIcon size={12} className="text-red-500" />
-                                        )}
-                                        {step.type === "status" && <Loading02Icon size={12} className="text-gray-500" />}
-                                      </div>
-                                      <div className="flex-1">
-                                        <p className="text-muted-foreground">{step.message}</p>
-                                        {step.actionName && (
-                                          <Badge variant="outline" className="mt-1 text-xs">
-                                            {step.actionName}
-                                          </Badge>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </CollapsibleContent>
-                            </Collapsible>
+                            <WorkflowSteps workflowSteps={message.workflowSteps} />
                           )}
                           
                           {/* AI Message Content */}
                           <div className="prose dark:prose-invert max-w-none">
-                            <TextGenerateEffect 
-                              words={message.content}
-                              className="text-sm sm:text-base leading-relaxed text-gray-100 font-normal [&>div>div]:text-sm [&>div>div]:sm:text-base [&>div>div]:leading-relaxed [&>div>div]:text-gray-100 [&>div>div]:font-normal [&>div]:mt-0"
-                              duration={0.3}
-                              filter={false}
-                            />
+                            {message.id && newlyGeneratedMessageIds.has(message.id) ? (
+                              <TextGenerateEffect 
+                                words={message.content}
+                                className="text-sm sm:text-base leading-relaxed text-gray-100 font-normal [&>div>div]:text-sm [&>div>div]:sm:text-base [&>div>div]:leading-relaxed [&>div>div]:text-gray-100 [&>div>div]:font-normal [&>div]:mt-0"
+                                duration={0.3}
+                                filter={false}
+                              />
+                            ) : (
+                              <p className="text-sm sm:text-base leading-relaxed text-gray-100 font-normal whitespace-pre-wrap">
+                                {message.content}
+                              </p>
+                            )}
                           </div>
                         </div>
                       )}
@@ -901,21 +1302,21 @@ function ChatContent() {
                       <div className="h-8 w-8"></div>
                     </div>
                     <div className="flex-1 space-y-2">
-                      <div className="text-sm text-gray-100">
+                      <div className="text-2xl font-thin text-gray-100">
                         <TextGenerateEffect 
                           words="Thinking..."
-                          className="font-normal [&>div>div]:text-sm [&>div>div]:text-gray-100 [&>div>div]:font-normal [&>div]:mt-0"
+                          className="font-thin [&>div>div]:text-xl [&>div>div]:text-gray-100 [&>div>div]:font-thin [&>div]:mt-0"
                           duration={0.2}
                           filter={false}
                         />
                       </div>
                       {currentWorkflow.length > 0 && (() => {
                         const latestStep = currentWorkflow[currentWorkflow.length - 1]
-                        return (
-                          <div className="flex items-start gap-2 text-xs pl-6">
-                            <Loading01Icon size={12} className="animate-spin text-purple-500 mt-0.5" />
-                            <p className="text-muted-foreground">{latestStep.message}</p>
-                          </div>
+                          return (
+                            <div className="flex items-start gap-2 text-sm pl-6">
+                              <Loading02Icon size={20} className="animate-spin text-white mt-0.5" />
+                              <p className="text-muted-foreground text-base">{latestStep.message}</p>
+                            </div>
                         )
                       })()}
                     </div>
@@ -928,167 +1329,173 @@ function ChatContent() {
           </div>
         </ScrollArea>
 
-        <motion.div 
-          className="bg-black/20 backdrop-blur-sm p-4 sm:p-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center gap-3">
-              <AnimatePresence mode="wait">
-                {!isListening ? (
-                  <motion.div
-                    key="normal-input"
-                    initial={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="flex items-center gap-3 w-full"
-                  >
-                    <motion.div 
-                      className="flex-1 relative"
-                      initial={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <Input
-                        ref={inputRef}
-                        placeholder="What can I do for you?"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-                        disabled={isLoading}
-                        className="w-full text-base sm:text-lg bg-black/30 border border-white/20 text-gray-100 placeholder:text-gray-500 rounded-3xl shadow-lg focus-visible:ring-0 focus-visible:ring-offset-0 h-12 sm:h-14 backdrop-blur-sm hover:border-white/30 focus:border-white/40"
-                      />
-                    </motion.div>
-                    <motion.div
-                      initial={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20, scale: 0.8 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <Button
-                        onClick={sendMessage}
-                        disabled={isLoading || !input.trim()}
-                        variant="ghost"
-                        size="sm"
-                        className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-white/20 hover:border-white/30"
-                      >
-                        {isLoading ? (
-                          <span className="flex items-center justify-center w-full h-full">
-                            <Loading01Icon size={36} className="animate-spin" />
-                          </span>
-                        ) : (
-                          <span className="flex items-center justify-center w-full h-full">
-                            <Navigation03Icon size={36} />
-                          </span>
-                        )}
-                      </Button>
-                    </motion.div>
-                    <motion.div
-                      initial={{ opacity: 1, scale: 1 }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={`h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border ${
-                          isListening 
-                            ? 'border-red-500/50 bg-red-500/10' 
-                            : isSpeaking 
-                            ? 'border-blue-500/50 bg-blue-500/10' 
-                            : 'border-white/20 hover:border-white/30'
-                        }`}
-                        disabled={isLoading}
-                        title={isListening ? "Stop voice mode" : "Start voice mode"}
-                        onClick={handleMicClick}
-                      >
-                        {isListening ? (
-                          <motion.div
-                            animate={{ scale: [1, 1.2, 1] }}
-                            transition={{ duration: 1, repeat: Infinity }}
-                          >
-                            <VoiceIcon size={24} className="text-red-500" />
-                          </motion.div>
-                        ) : isSpeaking ? (
-                          <motion.div
-                            animate={{ scale: [1, 1.1, 1] }}
-                            transition={{ duration: 0.8, repeat: Infinity }}
-                          >
-                            <VoiceIcon size={24} className="text-blue-500" />
-                          </motion.div>
-                        ) : (
-                          <VoiceIcon size={24} className="text-white" />
-                        )}
-                      </Button>
-                    </motion.div>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="listening-input"
-                    className="flex-1 relative"
-                    initial={{ width: "48px", opacity: 0 }}
-                    animate={{ width: "100%", opacity: 1 }}
-                    exit={{ width: "48px", opacity: 0 }}
-                    transition={{ duration: 0.5, ease: "easeInOut" }}
-                  >
-                    <motion.div 
-                      className="w-full text-base sm:text-lg bg-black/30 border border-white/20 text-gray-100 rounded-full shadow-lg h-12 sm:h-14 backdrop-blur-sm flex items-center justify-between px-4"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.2 }}
-                    >
+        <AnimatePresence>
+          {inputPosition === 'bottom' && (
+            <motion.div 
+              className="bg-black/20 backdrop-blur-sm p-4 sm:p-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4, delay: 0.4 }}
+            >
+              <div className="max-w-4xl mx-auto">
+                <div className="flex items-center gap-3">
+                  <AnimatePresence mode="wait">
+                    {!isListening ? (
                       <motion.div
-                        className="flex items-center"
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: 0.4 }}
+                        key="normal-input"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="flex items-center gap-3 w-full"
                       >
                         <motion.div
-                          className="flex items-center justify-center w-8 h-8 bg-red-500/20 rounded-lg  mr-2"
-                          animate={{ 
-                            scale: [1, 1.1, 1],
-                            opacity: [0.8, 1, 0.8]
-                          }}
-                          transition={{ 
-                            duration: 1.2, 
-                            repeat: Infinity,
-                            ease: "easeInOut"
-                          }}
+                          initial={{ opacity: 1, scale: 1 }}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          transition={{ duration: 0.2 }}
                         >
-                          <VoiceIcon size={20} className="text-red-500" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className={`h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border ${
+                              isListening 
+                                ? 'border-red-500/50 bg-red-500/10' 
+                                : isSpeaking 
+                                ? 'border-blue-500/50 bg-blue-500/10' 
+                                : 'border-white/20 hover:border-white/30'
+                            }`}
+                            disabled={isLoading}
+                            title={isListening ? "Stop voice mode" : "Start voice mode (say 'yuki' + command)"}
+                            onClick={handleMicClick}
+                          >
+                            {isListening ? (
+                              <motion.div
+                                animate={{ scale: [1, 1.2, 1] }}
+                                transition={{ duration: 1, repeat: Infinity }}
+                              >
+                                <VoiceIcon size={24} className="text-red-500" />
+                              </motion.div>
+                            ) : isSpeaking ? (
+                              <motion.div
+                                animate={{ scale: [1, 1.1, 1] }}
+                                transition={{ duration: 0.8, repeat: Infinity }}
+                              >
+                                <VoiceIcon size={24} className="text-blue-500" />
+                              </motion.div>
+                            ) : (
+                              <VoiceIcon size={24} className="text-white" />
+                            )}
+                          </Button>
                         </motion.div>
-                        <span className="text-gray-100 font-medium">
-                          Listening for your command...
-                        </span>
-                      </motion.div>
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.3, delay: 0.5 }}
-                      >
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 rounded-full backdrop-blur-sm border border-white/20 hover:bg-black/20 hover:border-white/30"
-                          onClick={handleMicClick}
-                          title="Stop listening"
+                        <motion.div 
+                          className="flex-1 relative"
+                          initial={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          transition={{ duration: 0.3 }}
                         >
-                          <Cancel01Icon size={16} className="text-white" />
-                        </Button>
+                          <Input
+                            ref={inputRef}
+                            placeholder="What can I do for you?"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+                            disabled={isLoading}
+                            className="w-full text-base sm:text-lg bg-black/30 border border-white/20 text-gray-100 placeholder:text-gray-500 rounded-3xl shadow-lg focus-visible:ring-0 focus-visible:ring-offset-0 h-12 sm:h-14 backdrop-blur-sm hover:border-white/30 focus:border-white/40"
+                          />
+                        </motion.div>
+                        <motion.div
+                          initial={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 20, scale: 0.8 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <Button
+                            onClick={sendMessage}
+                            disabled={isLoading || !input.trim()}
+                            variant="ghost"
+                            size="sm"
+                            className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-white/20 hover:border-white/30"
+                          >
+                            {isLoading ? (
+                              <span className="flex items-center justify-center w-full h-full">
+                                <Loading02Icon size={46} className="animate-spin" />
+                              </span>
+                            ) : (
+                              <span className="flex items-center justify-center w-full h-full">
+                                <Navigation03Icon size={46} />
+                              </span>
+                            )}
+                          </Button>
+                        </motion.div>
                       </motion.div>
+                    ) : (
+                      <motion.div
+                        key="listening-input"
+                        className="flex-1 relative"
+                        initial={{ width: "48px", opacity: 0 }}
+                        animate={{ width: "100%", opacity: 1 }}
+                        exit={{ width: "48px", opacity: 0 }}
+                        transition={{ duration: 0.5, ease: "easeInOut" }}
+                      >
+                        <motion.div 
+                          className="w-full text-base sm:text-lg bg-black/30 border border-white/20 text-gray-100 rounded-full shadow-lg h-12 sm:h-14 backdrop-blur-sm flex items-center justify-between px-4"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: 0.2 }}
+                        >
+                          <motion.div
+                            className="flex items-center"
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.3, delay: 0.4 }}
+                          >
+                            <motion.div
+                              className="flex items-center justify-center w-8 h-8 bg-red-500/20 rounded-lg  mr-2"
+                              animate={{ 
+                                scale: [1, 1.1, 1],
+                                opacity: [0.8, 1, 0.8]
+                              }}
+                              transition={{ 
+                                duration: 1.2, 
+                                repeat: Infinity,
+                                ease: "easeInOut"
+                              }}
+                            >
+                              <VoiceIcon size={20} className="text-red-500" />
+                            </motion.div>
+                            <span className="text-gray-100 font-medium">
+                              Say "yuki" followed by your command...
+                            </span>
+                          </motion.div>
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.3, delay: 0.5 }}
+                          >
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 rounded-full backdrop-blur-sm border border-white/20 hover:bg-black/20 hover:border-white/30"
+                              onClick={handleMicClick}
+                              title="Stop listening"
+                            >
+                              <Cancel01Icon size={16} className="text-white" />
+                            </Button>
+                          </motion.div>
 
-                    </motion.div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-            <p className="text-xs text-gray-500 text-center mt-2 hidden sm:block">
-              Press Enter to send, Shift+Enter for new line
-            </p>
-          </div>
-        </motion.div>
+                        </motion.div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                <p className="text-xs text-gray-500 text-center mt-2 hidden sm:block">
+                  Press Enter to send, Shift+Enter for new line, Ctrl+Shift+V for voice mode
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>

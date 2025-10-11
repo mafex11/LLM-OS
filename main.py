@@ -169,13 +169,13 @@ def display_running_programs(programs):
     print("-" * 40)
 
 def run_voice_mode(agent):
-    """Run agent in continuous voice listening mode with async task execution"""
-    print("\n🎤 Voice Mode Activated")
+    """Run agent in continuous voice listening mode with async task execution and trigger word detection"""
+    print("\n🎤 Voice Mode Activated with Trigger Word Detection")
     print("=" * 50)
     
-    # Initialize STT service
-    print("Initializing Deepgram STT...")
-    stt_service = STTService(enable_stt=True)
+    # Initialize STT service with trigger word
+    print("Initializing Deepgram STT with 'yuki' trigger word...")
+    stt_service = STTService(enable_stt=True, trigger_word="yuki")
     
     if not stt_service.enabled:
         print("ERROR: Deepgram STT is not available!")
@@ -186,9 +186,10 @@ def run_voice_mode(agent):
         return False
     
     print("STT Status: Enabled and ready")
-    print("\n🎤 Voice Commands:")
-    print("  - Speak your query naturally (even during task execution)")
-    print("  - Mid-task queries will pause, answer, then resume")
+    print("\n🎤 Voice Commands with Trigger Word:")
+    print("  - Say 'yuki' followed by your command (e.g., 'yuki, open my calendar')")
+    print("  - Only commands preceded by 'yuki' will be processed")
+    print("  - Say 'yuki' alone to activate command mode, then speak your command")
     print("  - Say 'switch to text' to switch to keyboard input")
     print("  - Say 'clear conversation' to clear history")
     print("  - Say 'quit' or 'exit' to exit")
@@ -272,10 +273,15 @@ def run_voice_mode(agent):
             print(f"\n{answer_text}\n")
     
     def on_transcription(transcript: str):
-        """Callback when transcription is received"""
+        """Callback when transcription is received (only triggered commands after 'yuki')"""
         nonlocal switch_to_text, task_thread
         
-        print(f"\n🎤 You said: {transcript}")
+        # Check if we're waiting for a command after trigger word detection
+        if stt_service.is_waiting_for_command():
+            print(f"\n🎤 Command received: {transcript}")
+            print("🎤 Listening for your next command...")
+        else:
+            print(f"\n🎤 Trigger word detected, command received: {transcript}")
         
         # Log STT input
         agent_logger.log_stt(transcript)
@@ -365,7 +371,13 @@ def run_voice_mode(agent):
     # Keep listening until user switches to text mode
     try:
         while not switch_to_text:
-            time.sleep(0.5)
+            # Check if we're waiting for a command after trigger word detection
+            if stt_service.is_waiting_for_command():
+                print("\n🎤 Waiting for your command... (say 'yuki' to reset)")
+                # Wait a bit longer when waiting for command
+                time.sleep(1.0)
+            else:
+                time.sleep(0.5)
     except KeyboardInterrupt:
         print("\n\nSwitching to text input mode...")
         stt_service.stop_listening()

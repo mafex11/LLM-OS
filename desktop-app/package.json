@@ -1,9 +1,9 @@
 {
-  "name": "windows-use-desktop",
+  "name": "yuki-ai-desktop",
   "version": "1.0.0",
-  "description": "AI-powered Windows automation desktop application",
+  "description": "Yuki AI - Your AI copilot for devices",
   "main": "electron/main.js",
-  "author": "Windows-Use Team",
+  "author": "Yuki AI Team",
   "license": "MIT",
   "scripts": {
     "electron:dev": "set NODE_ENV=development && electron .",
@@ -14,8 +14,8 @@
     "postinstall": "electron-builder install-app-deps"
   },
   "build": {
-    "appId": "com.windowsuse.desktop",
-    "productName": "Windows-Use AI",
+    "appId": "com.yuki.ai.desktop",
+    "productName": "Yuki AI",
     "files": [
       "electron/**/*",
       "backend/**/*",

@@ -321,6 +321,9 @@ async def process_query_stream(request: QueryRequest):
             # Copy running programs from the original agent
             frontend_agent.running_programs = agent.running_programs
             
+            # Create a dedicated streaming wrapper for this frontend agent
+            frontend_streaming_wrapper = StreamingAgentWrapper(frontend_agent)
+            
             # Load conversation history into agent if provided
             if request.conversation_history:
                 conversation_messages = []
@@ -354,8 +357,8 @@ async def process_query_stream(request: QueryRequest):
             # Stream status updates while agent is running
             last_status = None
             while not result_container["done"]:
-                # Get new status updates
-                updates = streaming_wrapper.get_status_updates()
+                # Get new status updates from the frontend agent's streaming wrapper
+                updates = frontend_streaming_wrapper.get_status_updates()
                 
                 for update in updates:
                     status = update["status"]
@@ -634,7 +637,7 @@ async def start_voice_mode(request: VoiceModeRequest):
         
         # Create a dedicated voice mode STT service (not using global)
         from windows_use.agent.stt_service import STTService
-        voice_stt_service = STTService(enable_stt=True)
+        voice_stt_service = STTService(enable_stt=True, trigger_word="yuki")
         
         if not voice_stt_service.enabled:
             raise HTTPException(status_code=400, detail="STT service could not be initialized. Check your Deepgram API key.")
@@ -650,9 +653,9 @@ async def start_voice_mode(request: VoiceModeRequest):
                 agent.tts_service = tts_service
                 print("TTS enabled for voice mode")
         
-        # Set up transcription callback to handle voice input
+        # Set up transcription callback to handle voice input with trigger word detection
         def on_transcription(transcript: str):
-            """Handle voice transcription and send to chat"""
+            """Handle voice transcription and send to chat (only triggered commands after 'yuki')"""
             global _voice_processing_lock
             
             # BULLETPROOF DUPLICATE PREVENTION
@@ -661,7 +664,12 @@ async def start_voice_mode(request: VoiceModeRequest):
                 return
             
             _voice_processing_lock = True
-            print(f"Voice input: {transcript}")
+            
+            # Check if we're waiting for a command after trigger word detection
+            if voice_stt_service.is_waiting_for_command():
+                print(f"Voice command received: {transcript}")
+            else:
+                print(f"Trigger word detected, voice command received: {transcript}")
             
             try:
                 # Store user message

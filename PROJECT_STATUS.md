@@ -1,11 +1,45 @@
 # 📊 Project Status - Windows-Use Desktop App
 
 **Last Updated**: December 19, 2024  
-**Status**: Desktop App Build System Complete + Modern SaaS Frontend + Real-Time Voice Integration ✅
+**Status**: Desktop App Build System Complete + Modern SaaS Frontend + Real-Time Voice Integration + Trigger Word Detection ✅
 
 ## 🎯 What Was Implemented
 
-### Backend Voice Integration (NEW - Dec 19, 2024)
+### Trigger Word Detection System (NEW - Dec 19, 2024)
+
+Implemented "yuki" trigger word functionality for voice control:
+
+#### 1. STT Service Enhancement (`windows_use/agent/stt_service.py`)
+- **Trigger Word Detection**: Added "yuki" trigger word detection to STT service
+- **Command Extraction**: Extracts commands after trigger word (e.g., "yuki, open my calendar")
+- **Waiting State**: Supports saying "yuki" alone, then command in next utterance
+- **Speech Filtering**: Only processes speech that contains the trigger word
+- **State Management**: Tracks trigger word detection and waiting states
+
+#### 2. Main.py Integration (`main.py`)
+- **Voice Mode Enhancement**: Updated `run_voice_mode()` to use trigger word detection
+- **User Instructions**: Updated help text to explain trigger word usage
+- **Status Indicators**: Shows when waiting for command after trigger word detection
+- **Callback Handling**: Modified transcription callback to handle trigger word filtering
+
+#### 3. API Server Integration (`api_server.py`)
+- **Voice API Enhancement**: Updated voice mode API to use trigger word detection
+- **Transcription Callback**: Modified to handle trigger word filtering
+- **Service Initialization**: STT service initialized with trigger word parameter
+
+#### 4. Frontend Integration (`frontend/src/app/chat/page.tsx`)
+- **Voice Instructions Panel**: Added animated instructions panel showing "yuki" trigger word usage
+- **Toast Notifications**: Updated to include trigger word instructions when voice mode starts
+- **UI Updates**: Modified listening status text to show trigger word requirement
+- **User Experience**: Added collapsible help panel with examples and dismissible instructions
+
+#### 5. Usage Examples
+- **Single Utterance**: "yuki, open my calendar" → processes "open my calendar"
+- **Two-Part**: "yuki" (wait) → "open my calendar" → processes "open my calendar"
+- **Ignored Speech**: "open my calendar" (without trigger word) → ignored
+- **Mixed Speech**: "hello yuki open notepad" → processes "open notepad"
+
+### Backend Voice Integration (Dec 19, 2024)
 
 Connected frontend to existing backend voice system from main.py:
 
@@ -262,13 +296,123 @@ ENABLE_TTS=true
 
 ## 📝 Changes Made
 
-### Files Modified (Dec 19, 2024)
-1. `frontend/src/app/chat/page.tsx` - Added comprehensive voice integration with Web Speech API
+### Files Modified (Dec 19, 2024 - Chat UI Enhancement)
+1. `frontend/src/app/chat/page.tsx` - Enhanced chat interface with centered input and smooth animations
+   - **Centered Input Layout**: Input box, mic, and send button now appear centered below "How can I help you today?" section
+   - **Animated Transition**: When user submits a query, input elements smoothly animate to bottom of page
+   - **Smart Position Management**: Input position automatically switches between 'centered' and 'bottom' based on chat state
+   - **Session-Aware Layout**: New chats start with centered input, existing chats with messages show bottom input
+   - **Smooth Animations**: Framer Motion animations for input position transitions and element visibility
+   - **Responsive Design**: Maintains responsive behavior across different screen sizes
+   - **Voice Integration**: All voice features work seamlessly in both centered and bottom positions
+
+### Files Modified (Dec 19, 2024 - Voice Integration)
+2. `frontend/src/app/chat/page.tsx` - Added comprehensive voice integration with backend STT/TTS
    - Real-time STT with visual feedback
    - TTS for AI responses
    - Error handling and toast notifications
    - TypeScript declarations for Web Speech API
    - Voice button states and animations
+
+### Files Modified (Dec 19, 2024 - Workflow Steps Fix)
+3. `api_server.py` - Fixed workflow steps not showing in text mode
+   - **Root Cause**: Streaming wrapper was attached to global agent, but text mode creates new agent instances
+   - **Solution**: Create dedicated streaming wrapper for each frontend agent instance
+   - **Result**: Workflow steps now show correctly in both text and voice modes
+   - **Technical**: Modified `/api/query/stream` endpoint to use `frontend_streaming_wrapper` instead of global `streaming_wrapper`
+
+### Files Modified (Dec 19, 2024 - Workflow Steps Animation)
+4. `frontend/src/app/chat/page.tsx` - Added smooth slide animations for workflow steps
+   - **Slide Animation**: Smooth height and opacity transitions when expanding/collapsing workflow steps
+   - **Staggered Item Animation**: Each workflow step animates in with a slight delay for a polished effect
+   - **Custom State Management**: Replaced shadcn Collapsible with custom state to enable proper exit animations
+   - **Framer Motion Integration**: Uses AnimatePresence and motion.div for smooth enter/exit animations
+   - **Visual Enhancement**: Workflow steps now slide down smoothly when opened and slide up when closed
+   - **Opening Timing**: 0.3s duration with easeInOut for main container, 0.2s for individual items with staggered delays
+   - **Closing Animation**: Proper exit animations with reverse stagger effect for smooth closing
+   - **Enhanced UX**: Creates a natural, polished feel with items appearing sequentially and disappearing smoothly
+
+### Files Modified (Dec 19, 2024 - React Errors Fix)
+5. `frontend/src/app/chat/page.tsx` - Fixed React hooks violations and duplicate key errors
+   - **Hooks Violation Fix**: Created separate `WorkflowSteps` component to avoid using useState inside map function
+   - **Duplicate Keys Fix**: Enhanced session ID generation with timestamp + random string to ensure uniqueness
+   - **Component Architecture**: Extracted workflow steps into reusable component following React best practices
+   - **Error Prevention**: Eliminated "Rendered more hooks than during the previous render" errors
+   - **Key Uniqueness**: Fixed "Encountered two children with the same key" console errors
+   - **Performance**: Improved component structure for better React reconciliation and rendering
+
+### Files Modified (Dec 19, 2024 - Text Reveal Animation Fix)
+6. `frontend/src/app/chat/page.tsx` - Fixed text reveal animation to only trigger during response generation
+   - **Issue**: TextGenerateEffect animation was triggering when switching between different chats from history
+   - **Solution**: Added message ID tracking system to distinguish newly generated vs existing messages
+   - **Implementation**: 
+     - Added `newlyGeneratedMessageIds` state to track which messages should animate
+     - Modified Message interface to include optional `id` field
+     - Generate unique IDs for all new messages (user, assistant, error)
+     - Mark newly generated assistant messages for animation
+     - Clear animation state when switching between chats
+     - Use TextGenerateEffect only for newly generated messages
+     - Use regular text rendering for existing messages when switching chats
+   - **Result**: Reveal animation now only happens during actual response generation, not when browsing chat history
+   - **User Experience**: Smoother navigation between chats without unwanted animations
+
+### Files Modified (Dec 19, 2024 - Chat History Storage Fix)
+7. `frontend/src/app/chat/page.tsx` - Fixed chat history storage and loading issues
+   - **Issue**: Chat sessions weren't showing up correctly in sidebar - existing chats were not loaded on page initialization
+   - **Root Cause**: Sessions were only loaded when first message was sent, not on page load
+   - **Solution**: Completely restructured chat initialization and storage logic
+   - **Implementation**:
+     - **Proper Initialization**: Load existing sessions from localStorage on page mount, not just when sending first message
+     - **Session Merging**: Fixed logic to properly merge existing sessions with new chat instead of overwriting
+     - **Storage Helper**: Added `saveSessionsToStorage()` helper function for consistent localStorage operations
+     - **State Management**: Improved session state management to ensure all chats are properly loaded and displayed
+     - **Error Handling**: Enhanced error handling for localStorage operations with graceful fallbacks
+   - **Result**: Chat history now loads correctly on page refresh, all previous conversations are visible in sidebar
+   - **User Experience**: Users can now see and access all their previous chat sessions immediately when opening the app
+
+### Files Modified (Dec 19, 2024 - Empty Chat Storage Prevention)
+8. `frontend/src/app/chat/page.tsx` - Prevented empty chat sessions from being stored in localStorage
+   - **Issue**: New empty chat sessions were being created and stored on every page refresh, even if user never started a conversation
+   - **Solution**: Modified storage logic to only save chat sessions that contain actual messages
+   - **Implementation**:
+     - **Smart Filtering**: Updated `saveSessionsToStorage()` to filter out sessions with no messages before saving
+     - **Conditional Storage**: Modified localStorage useEffect to check if any sessions have messages before saving
+     - **Cleanup Logic**: Added logic to remove localStorage data when no sessions have messages
+     - **Storage Optimization**: Prevents localStorage bloat from empty sessions
+   - **Result**: Empty chat sessions are no longer stored in localStorage, only conversations with actual messages are persisted
+   - **User Experience**: Cleaner storage, no unnecessary empty chat entries cluttering the sidebar
+
+### Files Modified (Dec 19, 2024 - Yuki AI Rebranding)
+9. **Complete App Rebranding** - Transformed from "Netra" to "Yuki AI" as AI copilot for devices
+   - **Files Updated**:
+     - `frontend/src/app/page.tsx` - Updated landing page branding and messaging
+     - `frontend/src/app/chat/page.tsx` - Updated chat interface branding
+     - `desktop-app/package.json` - Updated desktop app configuration
+   - **Branding Changes**:
+     - **App Name**: Changed from "Netra" to "Yuki AI"
+     - **Agent Name**: Confirmed as "Yuki" (already set in system prompt)
+     - **Tagline**: Updated to "Your AI copilot for devices"
+     - **Description**: "Meet Yuki, your intelligent AI copilot. Have natural conversations, automate tasks, and control your device effortlessly"
+   - **Technical Updates**:
+     - **Desktop App**: Updated package name, product name, and app ID for Yuki AI branding
+     - **Logo References**: Updated alt text and references to reflect Yuki AI branding
+     - **Animated Logo**: Updated letter-by-letter animation from "Netra" to "Yuki"
+   - **Positioning**: Repositioned as an AI copilot for device automation and control
+   - **User Experience**: Consistent Yuki AI branding across all interfaces and touchpoints
+
+### Files Modified (Dec 19, 2024 - Letter-by-Letter Glow Animation)
+10. `frontend/src/app/chat/page.tsx` - Added letter-by-letter glow animation to greeting text
+   - **Enhancement**: Transformed static greeting text into animated letter-by-letter glow effect
+   - **Implementation**:
+     - **"Hi, I'm Yuki"**: Each letter glows individually with staggered timing (0.15s delay between letters)
+     - **"How can I help you today?"**: Each letter glows with faster stagger (0.1s delay) and starts after first text completes
+     - **Animation Properties**: 
+       - Text shadow glow from transparent to white/80% opacity and back
+       - Brightness filter animation from 1 to 1.5 and back
+       - 0.8s duration per letter with 2s repeat delay
+       - Smooth easeInOut transitions
+   - **Visual Effect**: Creates a mesmerizing sequential glow effect that draws attention to the greeting
+   - **User Experience**: Enhanced visual appeal and professional polish to the chat interface
 
 ### Files Modified (Oct 10, 2025)
 1. `frontend/src/app/chat/page.tsx` - Added persistent chat history with localStorage

@@ -28,12 +28,12 @@ logger = logging.getLogger(__name__)
 
 class STTService:
     """
-    Speech-to-Text service using Deepgram with continuous listening
+    Speech-to-Text service using Deepgram with continuous listening and trigger word detection
     """
     
     def __init__(self, api_key: Optional[str] = None, enable_stt: bool = True, 
                  on_transcription: Optional[Callable[[str], None]] = None,
-                 latency_mode: str = "fast"):
+                 latency_mode: str = "fast", trigger_word: str = "yuki"):
         """
         Initialize STT service
         
@@ -42,6 +42,7 @@ class STTService:
             enable_stt: Whether STT is enabled
             on_transcription: Callback function when transcription is received
             latency_mode: 'ultra' (100-200ms), 'fast' (300-500ms), or 'balanced' (800-1500ms, default)
+            trigger_word: Trigger word to listen for (default: "yuki")
         """
         self.enabled = enable_stt and DEEPGRAM_AVAILABLE
         self.is_listening = False
@@ -52,6 +53,9 @@ class STTService:
         self.deepgram_connection = None
         self.microphone = None
         self.latency_mode = latency_mode.lower()
+        self.trigger_word = trigger_word.lower()
+        self.trigger_word_detected = False
+        self.waiting_for_command = False
         
         # Configure latency settings based on mode
         if self.latency_mode == "ultra":
@@ -254,7 +258,7 @@ class STTService:
             self._finalize_transcript()
     
     def _finalize_transcript(self):
-        """Finalize and process the accumulated transcript"""
+        """Finalize and process the accumulated transcript with trigger word detection"""
         if not self.current_transcript:
             return
         
@@ -262,16 +266,72 @@ class STTService:
         if transcript:
             logger.info(f"Finalized transcript: {transcript}")
             
-            # Put in queue
-            self.transcription_queue.put(transcript)
+            # Check for trigger word detection
+            transcript_lower = transcript.lower()
             
-            # Call callback if provided (only once per transcript)
-            if self.on_transcription and (not hasattr(self, '_last_transcript') or self._last_transcript != transcript):
-                try:
-                    self.on_transcription(transcript)
-                    self._last_transcript = transcript  # Remember this transcript to prevent duplicates
-                except Exception as e:
-                    logger.error(f"Error in transcription callback: {e}")
+            # If we're waiting for a command after trigger word was detected
+            if self.waiting_for_command:
+                # Any speech after trigger word is considered a command
+                command = transcript
+                logger.info(f"Command detected: {command}")
+                
+                # Reset trigger word state
+                self.waiting_for_command = False
+                self.trigger_word_detected = False
+                
+                # Put command in queue
+                self.transcription_queue.put(command)
+                
+                # Call callback if provided
+                if self.on_transcription:
+                    try:
+                        self.on_transcription(command)
+                    except Exception as e:
+                        logger.error(f"Error in transcription callback: {e}")
+            
+            # Check if trigger word is present in the transcript
+            elif self.trigger_word in transcript_lower:
+                # Check if trigger word is at the beginning or followed by a command
+                words = transcript_lower.split()
+                trigger_index = -1
+                
+                for i, word in enumerate(words):
+                    if self.trigger_word in word:
+                        trigger_index = i
+                        break
+                
+                if trigger_index >= 0:
+                    # Extract command after trigger word
+                    if trigger_index + 1 < len(words):
+                        # Command follows trigger word
+                        command_words = words[trigger_index + 1:]
+                        command = " ".join(command_words)
+                        
+                        if command.strip():
+                            logger.info(f"Trigger word '{self.trigger_word}' detected with command: {command}")
+                            
+                            # Put command in queue
+                            self.transcription_queue.put(command)
+                            
+                            # Call callback if provided
+                            if self.on_transcription:
+                                try:
+                                    self.on_transcription(command)
+                                except Exception as e:
+                                    logger.error(f"Error in transcription callback: {e}")
+                        else:
+                            # Trigger word detected but no command yet - wait for next utterance
+                            logger.info(f"Trigger word '{self.trigger_word}' detected, waiting for command...")
+                            self.trigger_word_detected = True
+                            self.waiting_for_command = True
+                    else:
+                        # Only trigger word detected - wait for next utterance
+                        logger.info(f"Trigger word '{self.trigger_word}' detected, waiting for command...")
+                        self.trigger_word_detected = True
+                        self.waiting_for_command = True
+            else:
+                # No trigger word detected - ignore the transcript
+                logger.info(f"No trigger word detected, ignoring: {transcript}")
         
         # Reset for next utterance
         self.current_transcript = ""
@@ -309,6 +369,15 @@ class STTService:
         """Check if STT service is currently listening"""
         return self.is_listening
     
+    def is_waiting_for_command(self) -> bool:
+        """Check if service is waiting for a command after trigger word detection"""
+        return self.waiting_for_command
+    
+    def reset_trigger_state(self):
+        """Reset trigger word detection state"""
+        self.trigger_word_detected = False
+        self.waiting_for_command = False
+    
     def cleanup(self):
         """Clean up resources"""
         self.stop_listening()
@@ -321,11 +390,11 @@ class STTService:
 # Global STT service instance
 _stt_service = None
 
-def get_stt_service() -> STTService:
+def get_stt_service(trigger_word: str = "yuki") -> STTService:
     """Get or create global STT service instance"""
     global _stt_service
     if _stt_service is None:
-        _stt_service = STTService()
+        _stt_service = STTService(trigger_word=trigger_word)
     return _stt_service
 
 def start_listening() -> bool:

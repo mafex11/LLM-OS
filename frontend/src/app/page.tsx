@@ -64,11 +64,11 @@ export default function LandingPage() {
         <motion.div className="mx-auto max-w-6xl text-center" variants={container} initial="hidden" animate="show">
           
           {/* Logo */}
-          <motion.div variants={item} className="mb-8 flex justify-center">
-            <div className="flex items-center gap-3">
-              <Image src="/logo.svg" alt="Netra Logo" width={70} height={70} className="flex-shrink-0 rounded-full" />
-               <span className="text-8xl font-semibold text-foreground relative">
-                 {["N", "e", "t", "r", "a"].map((letter, index) => (
+          <motion.div variants={item} className="mb-6 flex justify-center">
+            <div className="flex items-center gap-2">
+              <Image src="/logo.svg" alt="Yuki AI Logo" width={50} height={50} className="flex-shrink-0 rounded-full" />
+               <span className="text-5xl font-semibold text-foreground relative">
+                 {["Y", "u", "k", "i"].map((letter, index) => (
                    <motion.span
                      key={index}
                      className="inline-block"
@@ -102,28 +102,28 @@ export default function LandingPage() {
           {/* Main Headline */}
           <motion.h1
             variants={item}
-            className="mb-6 text-balance font-sans text-4xl font-light leading-tight tracking-tight text-foreground md:text-5xl lg:text-6xl"
+            className="mb-4 text-balance font-sans text-3xl font-light leading-tight tracking-tight text-foreground md:text-4xl lg:text-5xl"
           >
-            The easiest way to interact with your computer.
+            Your AI copilot for devices.
 
           </motion.h1>
 
           {/* Supporting Text */}
           <motion.p
             variants={item}
-            className="hidden sm:block mx-auto mb-12 max-w-4xl text-pretty text-md leading-relaxed text-white/40 md:text-md"
+            className="hidden sm:block mx-auto mb-8 max-w-3xl text-pretty text-sm leading-relaxed text-white/40 md:text-base"
           >
-            Meet your intelligent voice assistant. Have natural conversations, get factual answers, and control
-            everything hands-free. No keyboard. No mouse. Just speak.
+            Meet Yuki, your intelligent AI copilot. Have natural conversations, automate tasks, and control
+            your device effortlessly. Voice commands, smart automation, and seamless integration.
           </motion.p>
 
           {/* Input Box */}
-          <motion.div variants={item} className="mb-8 flex justify-center">
-            <div className="relative w-full max-w-3xl flex gap-2">
-              <button className="relative inline-flex h-12 w-12 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
+          <motion.div variants={item} className="mb-6 flex justify-center">
+            <div className="relative w-full max-w-2xl flex gap-2">
+              <button className="relative inline-flex h-10 w-10 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
                 <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#991B1B_0%,#450A0A_50%,#991B1B_100%)]" />
                 <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 text-white backdrop-blur-3xl">
-                  <VoiceIcon size={24} />
+                  <VoiceIcon size={20} />
                 </span>
               </button>
               <div className="relative flex-1 inline-flex overflow-hidden rounded-full p-[1px]">
@@ -134,15 +134,15 @@ export default function LandingPage() {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="relative w-full px-4 py-2.5 bg-slate-950 backdrop-blur-3xl rounded-full text-white placeholder:text-gray-500 focus:outline-none text-sm"
+                  className="relative w-full px-3 py-2 bg-slate-950 backdrop-blur-3xl rounded-full text-white placeholder:text-gray-500 focus:outline-none text-sm"
                 />
               </div>
               <button 
                 onClick={handleStartNow}
-                className="relative inline-flex h-12 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50"
+                className="relative inline-flex h-10 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50"
               >
                 <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#991B1B_0%,#450A0A_50%,#991B1B_100%)]" />
-                <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl">
+                <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-xs font-medium text-white backdrop-blur-3xl">
                   Start Now
                 </span>
               </button>
@@ -150,16 +150,16 @@ export default function LandingPage() {
           </motion.div>
 
           {/* CTA Buttons */}
-          <motion.div variants={item} className="mb-12 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <motion.div variants={item} className="mb-8 flex flex-col items-center justify-center gap-2 sm:flex-row">
             <Link href="/chat">
-              <Button size="default" className="gap-2">
+              <Button size="sm" className="gap-2">
                 Get Started
-                <ArrowRight01Icon size={16} />
+                <ArrowRight01Icon size={14} />
             </Button>
             </Link>
             <Link href="/settings">
-              <Button size="default" variant="destructive" className="gap-2">
-                <Settings01Icon size={16} />
+              <Button size="sm" variant="destructive" className="gap-2">
+                <Settings01Icon size={14} />
                 Configure API Keys
                 </Button>
             </Link>
@@ -167,7 +167,7 @@ export default function LandingPage() {
 
           {/* Example Commands */}
           <motion.div variants={item} className="hidden sm:block">
-            <p className="mb-4 text-xl font-normal text-white underline-offset-4 underline">Try these</p>
+            <p className="mb-3 text-lg font-normal text-white underline-offset-4 underline">Try these</p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               {exampleCommands.map((command, index) => (
                 <motion.button
@@ -176,7 +176,7 @@ export default function LandingPage() {
                   initial="hidden"
                   animate="show"
                   transition={{ delay: 0.05 * index }}
-                  className="flex-1 min-w-0 justify-center gap-2 hover:bg-black/20 backdrop-blur-sm border border-white/20 hover:border-white/30 rounded-lg px-4 py-3 text-sm text-center transition-colors"
+                  className="flex-1 min-w-0 justify-center gap-2 hover:bg-black/20 backdrop-blur-sm border border-white/20 hover:border-white/30 rounded-lg px-3 py-2 text-xs text-center transition-colors"
                 >
                   {command}
                 </motion.button>

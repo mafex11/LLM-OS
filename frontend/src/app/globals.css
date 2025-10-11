@@ -76,6 +76,29 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Force scrollbar to always be visible to prevent layout shift */
+  html {
+    overflow-y: scroll;
+  }
+  
+  /* For webkit browsers (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
 }
 
 @layer utilities {
