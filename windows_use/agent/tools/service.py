@@ -358,7 +358,7 @@ def scrape_tool(url:str,desktop:Desktop=None)->str:
 @tool('Human Tool',args_schema=Human)
 def human_tool(question:str,desktop:Desktop=None)->str:
     'Ask the user a question for clarification, permission, or additional information. Use this when you need user input before proceeding with an action.'
-    return f"QUESTION_FOR_USER:{question}"
+    return question
 
 @tool('System Tool',args_schema=System)
 def system_tool(info_type:Literal['all','cpu','memory','disk','processes','summary']='all',desktop:Desktop=None)->str:

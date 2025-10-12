@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -61,13 +61,6 @@ export default function SettingsPage() {
   const [pendingApiKey, setPendingApiKey] = useState("")
   const [pendingApiKeyType, setPendingApiKeyType] = useState<keyof ApiKeys | null>(null)
 
-  useEffect(() => {
-    fetchSystemStatus()
-    fetchApiKeys()
-    const interval = setInterval(fetchSystemStatus, 5000)
-    return () => clearInterval(interval)
-  }, [])
-
   const fetchSystemStatus = async () => {
     try {
       const response = await fetch("http://localhost:8000/api/status")
@@ -80,7 +73,7 @@ export default function SettingsPage() {
     }
   }
 
-  const fetchApiKeys = async () => {
+  const fetchApiKeys = useCallback(async () => {
     try {
       const response = await fetch("http://localhost:8000/api/config/keys")
       if (response.ok) {
@@ -93,7 +86,14 @@ export default function SettingsPage() {
     } catch (error) {
       console.error("Failed to fetch API keys:", error)
     }
-  }
+  }, [updateApiKey])
+
+  useEffect(() => {
+    fetchSystemStatus()
+    fetchApiKeys()
+    const interval = setInterval(fetchSystemStatus, 5000)
+    return () => clearInterval(interval)
+  }, [fetchApiKeys])
 
   const handleApiKeyChange = (keyType: keyof ApiKeys, value: string) => {
     setPendingApiKey(value)

@@ -494,11 +494,11 @@ class Agent:
         agent_logger.log_final_answer(tool_result.content)
         
         # Show final answer (skip if it's a question for user)
-        if not (tool_result.content and "QUESTION_FOR_USER:" in tool_result.content):
+        if not (name == 'Human Tool'):
             logger.info(colored(f"\n{tool_result.content}",color='cyan'))
         
         # Speak the response if TTS is enabled (Done Tool only, not questions)
-        if self.tts_service and tool_result.content and name == 'Done Tool' and "QUESTION_FOR_USER:" not in tool_result.content:
+        if self.tts_service and tool_result.content and name == 'Done Tool':
             self._speak_response(tool_result.content)
         
         return {**state,'agent_data':None,'messages':[ai_message],'previous_observation':None,'output':tool_result.content}

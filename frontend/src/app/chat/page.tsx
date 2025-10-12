@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, Suspense } from "react"
+import { useState, useEffect, useRef, Suspense, useMemo, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -183,7 +183,7 @@ function ChatContent() {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const currentSession = chatSessions.find(s => s.id === currentSessionId)
-  const messages = currentSession?.messages || []
+  const messages = useMemo(() => currentSession?.messages || [], [currentSession?.messages])
 
   // Load existing sessions and create new chat when page opens
   useEffect(() => {
@@ -309,17 +309,6 @@ function ChatContent() {
     return () => clearInterval(interval)
   }, [])
 
-  // Voice mode connection to backend
-  useEffect(() => {
-    if (voiceMode) {
-      // Start voice mode connection to backend
-      startVoiceMode()
-    } else {
-      // Stop voice mode connection
-      stopVoiceMode()
-    }
-  }, [voiceMode])
-
   // Prevent multiple voice mode starts
   const [voiceModeStarting, setVoiceModeStarting] = useState(false)
   const [inputPosition, setInputPosition] = useState<'centered' | 'bottom'>('centered')
@@ -386,7 +375,7 @@ function ChatContent() {
       clearInterval(statusInterval)
       clearInterval(conversationInterval)
     }
-  }, [voiceMode])
+  }, [voiceMode, currentSessionId, messages])
 
   // Auto-execute task from query parameter
   useEffect(() => {
@@ -669,7 +658,7 @@ function ChatContent() {
     executeTask(input)
   }
 
-  const startVoiceMode = async () => {
+  const startVoiceMode = useCallback(async () => {
     // Prevent multiple simultaneous calls
     if (voiceModeStarting) {
       console.log("Voice mode already starting, skipping...")
@@ -739,7 +728,18 @@ function ChatContent() {
     } finally {
       setVoiceModeStarting(false)
     }
-  }
+  }, [getApiKey, toast, voiceModeStarting])
+
+  // Voice mode connection to backend
+  useEffect(() => {
+    if (voiceMode) {
+      // Start voice mode connection to backend
+      startVoiceMode()
+    } else {
+      // Stop voice mode connection
+      stopVoiceMode()
+    }
+  }, [voiceMode, startVoiceMode])
 
   const stopVoiceMode = async () => {
     try {
@@ -938,12 +938,12 @@ function ChatContent() {
                   </motion.div>
                   <div className="text-sm">
                     <div className="font-medium text-blue-100">Voice Mode Active</div>
-                    <div className="text-blue-200/80">Say "yuki" followed by your command</div>
+                    <div className="text-blue-200/80">Say &quot;yuki&quot; followed by your command</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="text-xs border-blue-400/30 text-blue-300">
-                    Example: "yuki, open calculator"
+                    Example: &quot;yuki, open calculator&quot;
                   </Badge>
                   <Button
                     variant="ghost"
@@ -1207,7 +1207,7 @@ function ChatContent() {
                                 <VoiceIcon size={20} className="text-red-500" />
                               </motion.div>
                               <span className="text-gray-100 font-medium">
-                                Say "yuki" followed by your command...
+                                Say &quot;yuki&quot; followed by your command...
                               </span>
                             </motion.div>
                             <motion.div
@@ -1465,7 +1465,7 @@ function ChatContent() {
                               <VoiceIcon size={20} className="text-red-500" />
                             </motion.div>
                             <span className="text-gray-100 font-medium">
-                              Say "yuki" followed by your command...
+                              Say &quot;yuki&quot; followed by your command...
                             </span>
                           </motion.div>
                           <motion.div

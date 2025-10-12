@@ -221,9 +221,9 @@ def main():
             response = agent.invoke(query)
             
             # Handle response
-            if response.content and "QUESTION_FOR_USER:" in response.content:
+            if response.content and "Human Tool" in str(response):
                 # Extract and display the question
-                question = response.content.split("QUESTION_FOR_USER:")[1].strip()
+                question = response.content.strip()
                 print(f"\n{question}")
                 
                 # Speak the question if TTS is enabled

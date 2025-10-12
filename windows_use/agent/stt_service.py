@@ -95,6 +95,7 @@ class STTService:
         except Exception as e:
             logger.error(f"Failed to initialize Deepgram client: {e}")
             self.enabled = False
+            return
     
     def start_listening(self) -> bool:
         """
@@ -110,6 +111,21 @@ class STTService:
         if self.is_listening:
             logger.warning("Already listening")
             return True
+        
+        # Check if microphone is available before starting
+        try:
+            import sounddevice as sd
+            devices = sd.query_devices()
+            input_devices = [d for d in devices if d['max_input_channels'] > 0]
+            if not input_devices:
+                logger.error("No audio input devices found")
+                return False
+        except ImportError:
+            # sounddevice not available, try to proceed anyway
+            logger.warning("sounddevice not available for microphone check")
+        except Exception as e:
+            logger.warning(f"Could not check microphone availability: {e}")
+            # Continue anyway, let the microphone initialization fail gracefully
         
         try:
             # Reset stop event and transcript tracking
@@ -219,11 +235,45 @@ class STTService:
                 logger.error("Failed to start Deepgram connection")
                 return
             
-            # Create and start microphone
-            self.microphone = Microphone(self.deepgram_connection.send)
-            
-            # Start microphone
-            self.microphone.start()
+            # Create and start microphone with error handling
+            try:
+                self.microphone = Microphone(self.deepgram_connection.send)
+                
+                # Start microphone with timeout
+                import threading
+                import time
+                
+                mic_started = threading.Event()
+                mic_error = [None]
+                
+                def start_mic():
+                    try:
+                        self.microphone.start()
+                        mic_started.set()
+                    except Exception as e:
+                        mic_error[0] = e
+                        mic_started.set()
+                
+                # Start microphone in a separate thread with timeout
+                mic_thread = threading.Thread(target=start_mic, daemon=True)
+                mic_thread.start()
+                
+                # Wait for microphone to start or timeout after 5 seconds
+                if not mic_started.wait(timeout=5.0):
+                    raise Exception("Microphone initialization timed out")
+                
+                if mic_error[0]:
+                    raise mic_error[0]
+                    
+            except Exception as mic_error:
+                logger.error(f"Failed to initialize microphone: {mic_error}")
+                # Clean up the connection
+                if self.deepgram_connection:
+                    try:
+                        self.deepgram_connection.finish()
+                    except:
+                        pass
+                raise mic_error
             
             self.is_listening = True
             logger.info("Microphone opened and streaming...")
@@ -379,9 +429,33 @@ class STTService:
         self.waiting_for_command = False
     
     def cleanup(self):
-        """Clean up resources"""
-        self.stop_listening()
-    
+        """Clean up all resources"""
+        try:
+            self.stop_listening()
+            
+            # Clean up microphone
+            if hasattr(self, 'microphone') and self.microphone:
+                try:
+                    self.microphone.finish()
+                except:
+                    pass
+                self.microphone = None
+            
+            # Clean up Deepgram connection
+            if hasattr(self, 'deepgram_connection') and self.deepgram_connection:
+                try:
+                    self.deepgram_connection.finish()
+                except:
+                    pass
+                self.deepgram_connection = None
+                
+            # Clean up Deepgram client
+            if hasattr(self, 'deepgram'):
+                self.deepgram = None
+                
+        except Exception as e:
+            logger.error(f"Error during cleanup: {e}")
+
     def __del__(self):
         """Destructor to clean up resources"""
         self.cleanup()

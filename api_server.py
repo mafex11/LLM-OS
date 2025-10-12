@@ -630,8 +630,9 @@ async def start_voice_mode(request: VoiceModeRequest):
             
             # Check for API key without creating STT service
             import os
-            if not os.getenv("DEEPGRAM_API_KEY"):
-                raise HTTPException(status_code=400, detail="DEEPGRAM_API_KEY not set in environment")
+            deepgram_key = os.getenv("DEEPGRAM_API_KEY")
+            if not deepgram_key or deepgram_key.strip() == "":
+                raise HTTPException(status_code=400, detail="DEEPGRAM_API_KEY not set in environment. Please set it in your .env file.")
         except ImportError as e:
             raise HTTPException(status_code=400, detail=f"STT service import error: {str(e)}")
         
@@ -779,11 +780,18 @@ async def start_voice_mode(request: VoiceModeRequest):
         # Set the callback
         voice_stt_service.on_transcription = on_transcription
         
-        # Start listening
-        if voice_stt_service.start_listening():
-            return {"success": True, "message": "Voice mode started"}
-        else:
-            raise HTTPException(status_code=500, detail="Failed to start listening")
+        # Start listening with proper error handling
+        try:
+            if voice_stt_service.start_listening():
+                return {"success": True, "message": "Voice mode started"}
+            else:
+                raise HTTPException(status_code=500, detail="Failed to start listening")
+        except Exception as mic_error:
+            print(f"Microphone initialization error: {mic_error}")
+            # Clean up the STT service if it was created
+            if hasattr(voice_stt_service, 'cleanup'):
+                voice_stt_service.cleanup()
+            raise HTTPException(status_code=500, detail=f"Microphone access failed: {str(mic_error)}")
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error starting voice mode: {str(e)}")

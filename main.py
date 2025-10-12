@@ -221,8 +221,8 @@ def run_voice_mode(agent):
                     content = content.decode('utf-8', errors='replace')
                 
                 # Check if it's a question for user
-                if "QUESTION_FOR_USER:" in content:
-                    question = content.split("QUESTION_FOR_USER:")[1].strip()
+                if "Human Tool" in str(response):
+                    question = content.strip()
                     print(f"\n{question}")
                     
                     # Speak the question if TTS is enabled
@@ -518,8 +518,8 @@ def main():
                     content = content.decode('utf-8', errors='replace')
                 
                 # Check if it's a question for user
-                if "QUESTION_FOR_USER:" in content:
-                    question = content.split("QUESTION_FOR_USER:")[1].strip()
+                if "Human Tool" in str(response):
+                    question = content.strip()
                     print(f"\n{question}")
                     
                     # Speak the question if TTS is enabled
