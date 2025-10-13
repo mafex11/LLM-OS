@@ -51,6 +51,7 @@ from langchain_google_genai.chat_models import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, AIMessage
 from main import get_running_programs
 import threading
+import uuid
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -73,6 +74,9 @@ agent: Optional[Agent] = None
 streaming_wrapper: Optional[StreamingAgentWrapper] = None
 agent_initialized = False
 
+# In-flight request tracking for cooperative stop
+inflight_requests: Dict[str, Dict[str, Any]] = {}
+
 # Request/Response Models
 class ConversationMessage(BaseModel):
     role: str
@@ -84,6 +88,7 @@ class QueryRequest(BaseModel):
     use_vision: bool = False
     conversation_history: List[ConversationMessage] = []
     api_key: str  # Frontend must provide API key
+    request_id: Optional[str] = None
 
 class QueryResponse(BaseModel):
     response: str
@@ -279,7 +284,7 @@ async def process_query(request: QueryRequest, background_tasks: BackgroundTasks
             response="",
             success=False,
             timestamp=datetime.now(),
-            error=str(e)
+            error=("Execution stopped by user" if str(e).strip().lower() == "execution stopped by user" else str(e))
         )
 
 # Streaming query endpoint for real-time responses
@@ -340,6 +345,25 @@ async def process_query_stream(request: QueryRequest):
             
             # Container for the result
             result_container = {"response": None, "error": None, "done": False}
+
+            # Assign or generate request_id and register inflight request
+            req_id = request.request_id or str(uuid.uuid4())
+            inflight_requests[req_id] = {
+                "agent": frontend_agent,
+                "thread": None,
+                "created_at": time.time(),
+            }
+
+            # Emit start event with request_id
+            start_update = {
+                "type": "start",
+                "timestamp": datetime.now().isoformat(),
+                "data": {
+                    "request_id": req_id,
+                    "message": "Started processing",
+                },
+            }
+            yield f"data: {json.dumps(start_update)}\n\n"
             
             def run_agent():
                 """Run agent in background thread"""
@@ -352,6 +376,7 @@ async def process_query_stream(request: QueryRequest):
             
             # Start agent in background thread
             thread = threading.Thread(target=run_agent)
+            inflight_requests[req_id]["thread"] = thread
             thread.start()
             
             # Stream status updates while agent is running
@@ -418,22 +443,38 @@ async def process_query_stream(request: QueryRequest):
             if result_container["error"]:
                 raise result_container["error"]
             
-            # Extract and send final response
+            # Extract and send final response or error
             response = result_container["response"]
-            if hasattr(response, 'content') and response.content:
-                response_text = response.content
-            else:
-                response_text = str(response)
-            
-            response_update = {
-                "type": "response",
-                "timestamp": datetime.now().isoformat(),
-                "data": {
-                    "message": response_text,
-                    "success": True
+            # If AgentResult-like with error, emit error event
+            if hasattr(response, 'error') and response.error:
+                err_msg = str(response.error) if response.error is not None else ""
+                # Normalize user-stop message
+                cleaned = err_msg.strip()
+                if cleaned.lower().endswith("execution stopped by user"):
+                    cleaned = "Execution stopped by user"
+                error_update = {
+                    "type": "error",
+                    "timestamp": datetime.now().isoformat(),
+                    "data": {
+                        "message": cleaned,
+                        "error_type": "Stopped" if cleaned == "Execution stopped by user" else "AgentError"
+                    }
                 }
-            }
-            yield f"data: {json.dumps(response_update)}\n\n"
+                yield f"data: {json.dumps(error_update)}\n\n"
+            else:
+                if hasattr(response, 'content') and response.content:
+                    response_text = response.content
+                else:
+                    response_text = str(response)
+                response_update = {
+                    "type": "response",
+                    "timestamp": datetime.now().isoformat(),
+                    "data": {
+                        "message": response_text,
+                        "success": True
+                    }
+                }
+                yield f"data: {json.dumps(response_update)}\n\n"
             
             # Send completion
             complete_update = {
@@ -442,6 +483,9 @@ async def process_query_stream(request: QueryRequest):
                 "data": {"message": "Done"}
             }
             yield f"data: {json.dumps(complete_update)}\n\n"
+
+            # Cleanup inflight request
+            inflight_requests.pop(req_id, None)
             
         except Exception as e:
             import traceback
@@ -450,11 +494,15 @@ async def process_query_stream(request: QueryRequest):
                 "type": "error",
                 "timestamp": datetime.now().isoformat(),
                 "data": {
-                    "message": str(e),
+                    "message": ("Execution stopped by user" if str(e).strip().lower() == "execution stopped by user" else str(e)),
                     "error_type": type(e).__name__
                 }
             }
             yield f"data: {json.dumps(error_update)}\n\n"
+        finally:
+            # Best-effort cleanup if exception path
+            if 'req_id' in locals():
+                inflight_requests.pop(req_id, None)
     
     return StreamingResponse(
         generate_response(),
@@ -467,6 +515,26 @@ async def process_query_stream(request: QueryRequest):
             "Access-Control-Allow-Headers": "*",
         }
     )
+
+# Stop an in-flight text request
+class StopRequest(BaseModel):
+    request_id: str
+
+@app.post("/api/query/stop")
+async def stop_query(request: StopRequest):
+    """Cooperatively stop a running query by request_id."""
+    if not agent_initialized:
+        raise HTTPException(status_code=503, detail="Agent not initialized")
+    info = inflight_requests.get(request.request_id)
+    if not info:
+        return {"success": False, "message": "Request not found or already finished"}
+    try:
+        agent_to_stop = info.get("agent")
+        if hasattr(agent_to_stop, "stop"):
+            agent_to_stop.stop()
+        return {"success": True, "message": "Stop requested"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to stop: {e}")
 
 # Get running programs
 @app.get("/api/programs", response_model=List[AppInfo])
@@ -606,8 +674,9 @@ async def stop_speaking():
 # Voice conversation storage
 voice_conversation = []
 
-# Global flag to prevent duplicate voice processing
+# Global flags to prevent duplicate voice processing/starts
 _voice_processing_lock = False
+_voice_starting = False
 
 @app.get("/api/voice/conversation")
 async def get_voice_conversation():
@@ -622,6 +691,11 @@ async def start_voice_mode(request: VoiceModeRequest):
         raise HTTPException(status_code=503, detail="Agent not initialized")
     
     try:
+        global _voice_starting
+        # If a start is already in progress, return early
+        if _voice_starting:
+            return {"success": True, "message": "Voice mode starting"}
+        _voice_starting = True
         # Check if STT dependencies are available (without creating global instance)
         try:
             from windows_use.agent.stt_service import DEEPGRAM_AVAILABLE
@@ -636,15 +710,17 @@ async def start_voice_mode(request: VoiceModeRequest):
         except ImportError as e:
             raise HTTPException(status_code=400, detail=f"STT service import error: {str(e)}")
         
-        # Create a dedicated voice mode STT service (not using global)
+        # Reuse existing STT service if already present
         from windows_use.agent.stt_service import STTService
-        voice_stt_service = STTService(enable_stt=True, trigger_word="yuki")
-        
-        if not voice_stt_service.enabled:
-            raise HTTPException(status_code=400, detail="STT service could not be initialized. Check your Deepgram API key.")
-        
-        # Store voice STT service in agent for access
-        agent.stt_service = voice_stt_service
+        voice_stt_service = None
+        if hasattr(agent, 'stt_service') and agent.stt_service:
+            voice_stt_service = agent.stt_service
+        else:
+            voice_stt_service = STTService(enable_stt=True, trigger_word="yuki")
+            if not voice_stt_service.enabled:
+                _voice_starting = False
+                raise HTTPException(status_code=400, detail="STT service could not be initialized. Check your Deepgram API key.")
+            agent.stt_service = voice_stt_service
         
         # Enable TTS for voice mode if not already enabled
         if not hasattr(agent, 'tts_service') or not agent.tts_service or not agent.tts_service.enabled:
@@ -782,6 +858,9 @@ async def start_voice_mode(request: VoiceModeRequest):
         
         # Start listening with proper error handling
         try:
+            # If already listening, treat as idempotent success
+            if getattr(voice_stt_service, 'is_listening', False):
+                return {"success": True, "message": "Voice mode already started"}
             if voice_stt_service.start_listening():
                 return {"success": True, "message": "Voice mode started"}
             else:
@@ -795,6 +874,8 @@ async def start_voice_mode(request: VoiceModeRequest):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error starting voice mode: {str(e)}")
+    finally:
+        _voice_starting = False
 
 @app.post("/api/voice/stop")
 async def stop_voice_mode():

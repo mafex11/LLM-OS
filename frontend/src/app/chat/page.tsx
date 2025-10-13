@@ -164,6 +164,8 @@ function ChatContent() {
   const [currentSessionId, setCurrentSessionId] = useState("")
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [currentRequestId, setCurrentRequestId] = useState<string | null>(null)
+  const [stopRequested, setStopRequested] = useState(false)
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null)
   const [currentWorkflow, setCurrentWorkflow] = useState<WorkflowStep[]>([])
   const [showSidebar, setShowSidebar] = useState(true)
@@ -543,6 +545,8 @@ function ChatContent() {
     setIsLoading(true)
     setCurrentWorkflow([])
     workflowRef.current = []
+    setStopRequested(false)
+    setCurrentRequestId(null)
 
     try {
       // Build conversation history for the backend (excluding current message, workflow steps)
@@ -585,6 +589,11 @@ function ChatContent() {
               const data = JSON.parse(line.slice(6))
               console.log("Received SSE event:", data)
 
+              if (data.type === "start") {
+                const rid = data?.data?.request_id as string | undefined
+                if (rid) setCurrentRequestId(rid)
+              }
+
               if (data.type === "thinking" || data.type === "reasoning" || data.type === "tool_use" || data.type === "tool_result" || data.type === "status") {
                 console.log("Received workflow step:", data)
                 const step: WorkflowStep = {
@@ -616,10 +625,12 @@ function ChatContent() {
               } else if (data.type === "error") {
                 console.log("Creating error message, workflowRef.current:", workflowRef.current)
                 const messageId = `${Date.now()}-error-${Math.random().toString(36).substr(2, 9)}`
+                const rawMessage: string = data?.data?.message || ""
+                const isUserStop = (rawMessage || "").toLowerCase() === "execution stopped by user"
                 const errorMessage: Message = {
                   id: messageId,
                   role: "assistant",
-                  content: `Error: ${data.data.message}`,
+                  content: isUserStop ? "Execution stopped by user" : `Error: ${rawMessage}`,
                   timestamp: new Date(data.timestamp),
                   workflowSteps: [...workflowRef.current]
                 }
@@ -650,6 +661,8 @@ function ChatContent() {
       updateSessionMessages(currentSessionId, [...newMessages, errorMsg])
     } finally {
       setIsLoading(false)
+      setCurrentRequestId(null)
+      setStopRequested(false)
     }
   }
 
@@ -730,16 +743,48 @@ function ChatContent() {
     }
   }, [getApiKey, toast, voiceModeStarting])
 
-  // Voice mode connection to backend
-  useEffect(() => {
-    if (voiceMode) {
-      // Start voice mode connection to backend
-      startVoiceMode()
-    } else {
-      // Stop voice mode connection
-      stopVoiceMode()
+  const stopSpeaking = async () => {
+    try {
+      await fetch("http://localhost:8000/api/tts/stop", { method: "POST" })
+    } catch (e) {
+      console.error('Failed to stop speaking', e)
     }
-  }, [voiceMode, startVoiceMode])
+  }
+
+  const stopCurrentQuery = async () => {
+    if (!currentRequestId || stopRequested) return
+    setStopRequested(true)
+    try {
+      await fetch("http://localhost:8000/api/query/stop", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ request_id: currentRequestId })
+      })
+    } catch (e) {
+      console.error('Failed to request stop', e)
+    }
+  }
+
+  // Voice mode connection to backend (stable, single call per toggle)
+  const voiceToggleGuard = useRef(false)
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      if (voiceToggleGuard.current) return
+      voiceToggleGuard.current = true
+      try {
+        if (voiceMode) {
+          await startVoiceMode()
+        } else {
+          await stopVoiceMode()
+        }
+      } finally {
+        if (!cancelled) voiceToggleGuard.current = false
+      }
+    }
+    run()
+    return () => { cancelled = true }
+  }, [voiceMode])
 
   const stopVoiceMode = async () => {
     try {
@@ -1152,23 +1197,39 @@ function ChatContent() {
                             exit={{ opacity: 0, scale: 0.8 }}
                             transition={{ duration: 0.3, ease: "easeInOut" }}
                           >
-                            <Button
-                              onClick={sendMessage}
-                              disabled={isLoading || !input.trim()}
-                              variant="ghost"
-                              size="sm"
-                              className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-white/20 hover:border-white/30"
-                            >
-                              {isLoading ? (
-                                <span className="flex items-center justify-center w-full h-full">
-                                  <Loading02Icon size={36} className="animate-spin" />
+                            {isLoading ? (
+                              <Button
+                                onClick={() => {
+                                  if (!stopRequested && currentRequestId) {
+                                    fetch("http://localhost:8000/api/query/stop", {
+                                      method: "POST",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ request_id: currentRequestId })
+                                    }).catch(console.error)
+                                    setStopRequested(true)
+                                  }
+                                }}
+                                variant="ghost"
+                                size="sm"
+                                className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-red-500/50"
+                              >
+                                <span className="flex items-center justify-center w-full h-full text-red-500">
+                                  <Cancel01Icon size={28} />
                                 </span>
-                              ) : (
+                              </Button>
+                            ) : (
+                              <Button
+                                onClick={sendMessage}
+                                disabled={!input.trim()}
+                                variant="ghost"
+                                size="sm"
+                                className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-white/20 hover:border-white/30"
+                              >
                                 <span className="flex items-center justify-center w-full h-full">
                                   <Navigation03Icon size={36} />
                                 </span>
-                              )}
-                            </Button>
+                              </Button>
+                            )}
                           </motion.div>
                         </motion.div>
                       ) : (
@@ -1410,23 +1471,39 @@ function ChatContent() {
                           exit={{ opacity: 0, x: 20, scale: 0.8 }}
                           transition={{ duration: 0.3 }}
                         >
-                          <Button
-                            onClick={sendMessage}
-                            disabled={isLoading || !input.trim()}
-                            variant="ghost"
-                            size="sm"
-                            className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-white/20 hover:border-white/30"
-                          >
-                            {isLoading ? (
-                              <span className="flex items-center justify-center w-full h-full">
-                                <Loading02Icon size={46} className="animate-spin" />
+                          {isLoading ? (
+                            <Button
+                              onClick={() => {
+                                if (!stopRequested && currentRequestId) {
+                                  fetch("http://localhost:8000/api/query/stop", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ request_id: currentRequestId })
+                                  }).catch(console.error)
+                                  setStopRequested(true)
+                                }
+                              }}
+                              variant="ghost"
+                              size="sm"
+                              className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-red-500/50"
+                            >
+                              <span className="flex items-center justify-center w-full h-full text-red-500">
+                                <Cancel01Icon size={36} />
                               </span>
-                            ) : (
+                            </Button>
+                          ) : (
+                            <Button
+                              onClick={sendMessage}
+                              disabled={!input.trim()}
+                              variant="ghost"
+                              size="sm"
+                              className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-white/20 hover:border-white/30"
+                            >
                               <span className="flex items-center justify-center w-full h-full">
                                 <Navigation03Icon size={46} />
                               </span>
-                            )}
-                          </Button>
+                            </Button>
+                          )}
                         </motion.div>
                       </motion.div>
                     ) : (

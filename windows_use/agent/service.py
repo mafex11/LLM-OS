@@ -97,6 +97,9 @@ class Agent:
         self._pause_event = threading.Event()
         self._pause_event.clear()  # not paused by default
         self._pause_lock = threading.Lock()
+        # Cooperative stop controller
+        self._stop_event = threading.Event()
+        self._stop_event.clear()
 
     def pause(self):
         """Request a cooperative pause. Running steps will wait at checkpoints."""
@@ -112,14 +115,35 @@ class Agent:
         """Check if the agent is currently paused."""
         return self._pause_event.is_set()
 
+    def stop(self):
+        """Request a cooperative stop. Execution will abort at the next checkpoint."""
+        self._stop_event.set()
+        # Also unpause if paused so checkpoints can notice stop promptly
+        with self._pause_lock:
+            self._pause_event.clear()
+
+    def is_stopped(self) -> bool:
+        """Check if a stop was requested."""
+        return self._stop_event.is_set()
+
+    def _check_stop(self):
+        """Raise an exception if stop was requested to abort execution quickly."""
+        if self._stop_event.is_set():
+            raise RuntimeError("Execution stopped by user")
+
     def _wait_if_paused(self, checkpoint_name: str = ""):
         """Block cooperatively while paused, emitting a status message once."""
+        # Always check for stop first
+        self._check_stop()
         if not self._pause_event.is_set():
             return
         # Announce pause once per checkpoint entry
         self.show_status("Paused", "Stop/Wait", f"Waiting at checkpoint: {checkpoint_name}")
         # Spin-wait cooperatively with small sleeps to reduce CPU
         while self._pause_event.is_set():
+            # Allow stop during pause
+            if self._stop_event.is_set():
+                raise RuntimeError("Execution stopped by user")
             time.sleep(0.05)
 
     def clear_conversation(self):
@@ -261,6 +285,8 @@ class Agent:
 
     @timed("reason")
     def reason(self,state:AgentState):
+        # Abort early if stop requested
+        self._check_stop()
         # Cooperative pause checkpoint before planning
         self._wait_if_paused("reason")
         
@@ -332,6 +358,8 @@ class Agent:
 
     @timed("action")
     def action(self,state:AgentState):
+        # Abort early if stop requested
+        self._check_stop()
         # Cooperative pause checkpoint before executing an action
         self._wait_if_paused("action:start")
         
@@ -463,6 +491,8 @@ class Agent:
         return False
 
     def answer(self,state:AgentState):
+        # Abort early if stop requested
+        self._check_stop()
         agent_data=state.get('agent_data')
         name = agent_data.action.name
         params = agent_data.action.params
