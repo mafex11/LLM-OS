@@ -38,6 +38,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import { TextGenerateEffect } from "@/components/ui/text-generate-effect"
 import { useToast } from "@/hooks/use-toast"
+import { useVoice } from "@/hooks/use-voice"
 
 // Voice mode types for backend integration
 interface VoiceStatus {
@@ -174,11 +175,41 @@ function ChatContent() {
   const [newChatTitle, setNewChatTitle] = useState("")
   const [taskExecuted, setTaskExecuted] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
-  const [isListening, setIsListening] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [voiceMode, setVoiceMode] = useState(false)
   const [showVoiceInstructions, setShowVoiceInstructions] = useState(false)
   const [newlyGeneratedMessageIds, setNewlyGeneratedMessageIds] = useState<Set<string>>(new Set())
+  
+  // Use the new voice hook
+  const { 
+    isRecording: isListening, 
+    isSupported: voiceSupported,
+    error: voiceError,
+    startRecording,
+    stopRecording,
+    toggleRecording,
+    checkSupport
+  } = useVoice({
+    onTranscript: (transcript) => {
+      // Process the transcript as a user message
+      if (transcript.trim()) {
+        setInput(transcript)
+        // Auto-send the voice command
+        setTimeout(() => {
+          sendMessage()
+        }, 100)
+      }
+    },
+    onError: (error) => {
+      console.error('Voice error:', error)
+    },
+    onStart: () => {
+      console.log('Voice recording started')
+    },
+    onStop: () => {
+      console.log('Voice recording stopped')
+    }
+  })
   const workflowRef = useRef<WorkflowStep[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -341,73 +372,12 @@ function ChatContent() {
     return () => clearInterval(interval)
   }, [])
 
-  // Prevent multiple voice mode starts
-  const [voiceModeStarting, setVoiceModeStarting] = useState(false)
   const [inputPosition, setInputPosition] = useState<'centered' | 'bottom'>('centered')
 
-  // Poll voice status from backend
+  // Check voice support on mount
   useEffect(() => {
-    if (!voiceMode) return
-
-    const pollVoiceStatus = async () => {
-      try {
-        const response = await fetch("http://localhost:8000/api/voice/status")
-        if (response.ok) {
-          const status = await response.json()
-          setIsListening(status.is_listening)
-          setIsSpeaking(status.is_speaking)
-        }
-      } catch (error) {
-        console.error('Error polling voice status:', error)
-      }
-    }
-
-    const pollVoiceConversation = async () => {
-      try {
-        const response = await fetch("http://localhost:8000/api/voice/conversation")
-        if (response.ok) {
-          const data = await response.json()
-          if (data.conversation && data.conversation.length > 0) {
-            // Convert voice conversation to chat format and add to messages
-            const voiceMessages = data.conversation.map((msg: any) => ({
-              role: msg.role,
-              content: msg.content,
-              timestamp: new Date(msg.timestamp * 1000).toISOString(),
-              workflowSteps: msg.workflowSteps ? msg.workflowSteps.map((step: any) => ({
-                type: step.type,
-                message: step.message,
-                timestamp: new Date(step.timestamp * 1000).toISOString(),
-                status: step.status,
-                actionName: step.actionName
-              })) : undefined
-            }))
-            
-            // Only add new messages that aren't already in our chat
-            const newMessages = voiceMessages.filter((voiceMsg: any) => 
-              !messages.some(existingMsg => 
-                existingMsg.role === voiceMsg.role && 
-                existingMsg.content === voiceMsg.content
-              )
-            )
-            
-            if (newMessages.length > 0) {
-              updateSessionMessages(currentSessionId, [...messages, ...newMessages])
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error polling voice conversation:', error)
-      }
-    }
-
-    const statusInterval = setInterval(pollVoiceStatus, 1000) // Poll status every second
-    const conversationInterval = setInterval(pollVoiceConversation, 2000) // Poll conversation every 2 seconds
-    
-    return () => {
-      clearInterval(statusInterval)
-      clearInterval(conversationInterval)
-    }
-  }, [voiceMode, currentSessionId, messages])
+    checkSupport()
+  }, [checkSupport])
 
   // Auto-execute task from query parameter
   useEffect(() => {
@@ -440,12 +410,8 @@ function ChatContent() {
           return
         }
 
-        // Toggle voice mode
-        if (!voiceMode && !voiceModeStarting) {
-          setVoiceMode(true)
-        } else if (voiceMode) {
-          setVoiceMode(false)
-        }
+        // Toggle voice recording
+        toggleRecording()
       }
     }
 
@@ -456,7 +422,7 @@ function ChatContent() {
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [hasApiKey, voiceMode, voiceModeStarting, toast])
+  }, [hasApiKey, toggleRecording, toast])
 
   const fetchSystemStatus = async () => {
     try {
@@ -702,76 +668,41 @@ function ChatContent() {
   }
 
   const startVoiceMode = useCallback(async () => {
-    // Prevent multiple simultaneous calls
-    if (voiceModeStarting) {
-      console.log("Voice mode already starting, skipping...")
+    if (!hasApiKey('google_api_key')) {
+      toast({
+        title: "API Key Required",
+        description: "Please set your Google API key in Settings to use voice features.",
+        variant: "destructive"
+      })
       return
     }
-    
-    setVoiceModeStarting(true)
-    
-    try {
-      const response = await fetch("http://localhost:8000/api/voice/start", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          api_key: getApiKey('google_api_key')
-        }),
-      })
 
-      if (response.ok) {
-        const result = await response.json()
-        setIsListening(true)
-        setShowVoiceInstructions(true)
-        toast({
-          title: "Voice Mode Started",
-          description: "Say 'yuki' followed by your command (e.g., 'yuki, open my calendar')"
-        })
-      } else {
-        let errorMessage = "Failed to start voice mode"
-        console.log('Voice mode failed with status:', response.status, response.statusText)
-        try {
-          const errorData = await response.json()
-          console.log('Error response data:', errorData)
-          // Handle different possible error response structures
-          if (typeof errorData === 'string') {
-            errorMessage = errorData
-          } else if (errorData.detail) {
-            // Handle array of validation errors (FastAPI format)
-            if (Array.isArray(errorData.detail)) {
-              errorMessage = errorData.detail.map((err: any) => 
-                typeof err === 'string' ? err : err.msg || JSON.stringify(err)
-              ).join(', ')
-            } else {
-              errorMessage = errorData.detail
-            }
-          } else if (errorData.message) {
-            errorMessage = errorData.message
-          } else if (errorData.error) {
-            errorMessage = errorData.error
-          } else {
-            errorMessage = JSON.stringify(errorData)
-          }
-        } catch (parseError) {
-          console.log('Failed to parse error response:', parseError)
-          errorMessage = `HTTP ${response.status}: ${response.statusText}`
-        }
-        throw new Error(errorMessage)
-      }
+    if (!voiceSupported) {
+      toast({
+        title: "Voice Not Supported",
+        description: "Your browser does not support voice recording. Please use Chrome or Firefox.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      setVoiceMode(true)
+      await startRecording()
+      toast({
+        title: "Voice Mode Started",
+        description: "Speak your command and it will be transcribed automatically."
+      })
     } catch (error) {
       console.error('Error starting voice mode:', error)
       toast({
-        title: "Error Starting Voice Mode",
-        description: error instanceof Error ? error.message : "Could not connect to voice system. Please check your API keys.",
+        title: "Voice Mode Failed",
+        description: error instanceof Error ? error.message : "Could not start voice recording.",
         variant: "destructive"
       })
       setVoiceMode(false)
-    } finally {
-      setVoiceModeStarting(false)
     }
-  }, [getApiKey, toast, voiceModeStarting])
+  }, [hasApiKey, voiceSupported, startRecording, toast])
 
   const stopSpeaking = async () => {
     try {
@@ -796,33 +727,11 @@ function ChatContent() {
   }
 
   // Voice mode connection to backend (stable, single call per toggle)
-  const voiceToggleGuard = useRef(false)
-  useEffect(() => {
-    let cancelled = false
-    const run = async () => {
-      if (voiceToggleGuard.current) return
-      voiceToggleGuard.current = true
-      try {
-        if (voiceMode) {
-          await startVoiceMode()
-        } else {
-          await stopVoiceMode()
-        }
-      } finally {
-        if (!cancelled) voiceToggleGuard.current = false
-      }
-    }
-    run()
-    return () => { cancelled = true }
-  }, [voiceMode])
 
   const stopVoiceMode = async () => {
     try {
-      await fetch("http://localhost:8000/api/voice/stop", {
-        method: "POST",
-      })
-      setIsListening(false)
-      setIsSpeaking(false)
+      stopRecording()
+      setVoiceMode(false)
       setShowVoiceInstructions(false)
     } catch (error) {
       console.error('Error stopping voice mode:', error)
@@ -839,13 +748,16 @@ function ChatContent() {
       return
     }
 
-    // Prevent rapid clicking
-    if (voiceModeStarting) {
-      console.log("Voice mode operation in progress, please wait...")
+    if (!voiceSupported) {
+      toast({
+        title: "Voice Not Supported",
+        description: "Your browser does not support voice recording. Please use Chrome or Firefox.",
+        variant: "destructive"
+      })
       return
     }
 
-    setVoiceMode(!voiceMode)
+    toggleRecording()
   }
 
   return (
@@ -1184,7 +1096,7 @@ function ChatContent() {
                                   : 'border-white/20 hover:border-white/30'
                               }`}
                               disabled={isLoading}
-                              title={isListening ? "Stop voice mode" : "Start voice mode (say 'yuki' + command)"}
+                              title={isListening ? "Stop voice recording" : "Start voice recording"}
                               onClick={handleMicClick}
                             >
                               {isListening ? (
@@ -1322,7 +1234,7 @@ function ChatContent() {
                     </AnimatePresence>
                   </div>
                   <p className="text-xs text-gray-500 text-center mt-2 hidden sm:block">
-                    Press Enter to send, Shift+Enter for new line, Ctrl+Shift+V for voice mode
+                    Press Enter to send, Shift+Enter for new line, Ctrl+Shift+V for voice recording
                   </p>
                 </motion.div>
               </motion.div>
@@ -1458,7 +1370,7 @@ function ChatContent() {
                                 : 'border-white/20 hover:border-white/30'
                             }`}
                             disabled={isLoading}
-                            title={isListening ? "Stop voice mode" : "Start voice mode (say 'yuki' + command)"}
+                            title={isListening ? "Stop voice recording" : "Start voice recording"}
                             onClick={handleMicClick}
                           >
                             {isListening ? (
@@ -1597,7 +1509,7 @@ function ChatContent() {
                   </AnimatePresence>
                 </div>
                 <p className="text-xs text-gray-500 text-center mt-2 hidden sm:block">
-                  Press Enter to send, Shift+Enter for new line, Ctrl+Shift+V for voice mode
+                  Press Enter to send, Shift+Enter for new line, Ctrl+Shift+V for voice recording
                 </p>
               </div>
             </motion.div>

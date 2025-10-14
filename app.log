@@ -18702,3 +18702,146 @@ I have opened the calculator for you.[0m
 2025-10-14 23:34:12 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
 2025-10-14 23:34:12 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
 2025-10-14 23:34:12 | INFO | Started listening for speech...
+2025-10-14 23:46:01 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-14 23:46:01 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-14 23:46:01 | INFO | Started listening for speech...
+2025-10-14 23:48:51 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-14 23:48:51 | INFO | Started listening for speech...
+2025-10-15 00:02:33 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-15 00:02:33 | INFO | Started listening for speech...
+2025-10-15 00:03:53 | WARNING | No Deepgram API key provided. STT will be disabled.
+2025-10-15 00:04:53 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-15 00:04:53 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-15 00:04:53 | INFO | Started listening for speech...
+2025-10-15 00:05:37 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-15 00:22:30 | INFO | ================================================================================
+2025-10-15 00:22:30 | INFO | SESSION ENDED
+2025-10-15 00:22:30 | INFO | ================================================================================
+
+2025-10-15 00:22:49 | INFO | ================================================================================
+2025-10-15 00:22:49 | INFO | NEW SESSION STARTED
+2025-10-15 00:22:49 | INFO | ================================================================================
+2025-10-15 00:23:04 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-15 00:23:05 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-15 00:23:05 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-15 00:23:05 | INFO | Started listening for speech...
+2025-10-15 00:23:31 | INFO | USER QUERY: hi
+2025-10-15 00:23:31 | INFO | [33m[Starting] Task Analysis: Processing: 'hi'[0m
+2025-10-15 00:23:33 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-15 00:23:35 | INFO | --- ITERATION 1/30 ---
+2025-10-15 00:23:35 | INFO | EVALUATE: Neutral
+2025-10-15 00:23:35 | INFO | PLAN: The user said hi, I will respond to the user.
+2025-10-15 00:23:35 | INFO | THOUGHT: The user said hi, I will respond to the user using the Done Tool.
+2025-10-15 00:23:35 | INFO | [95mThe user said hi, I will respond to the user using the Done Tool.[0m
+2025-10-15 00:23:35 | INFO | [33m[Reasoning] Agent Thought: The user said hi, I will respond to the user using the Done Tool.[0m
+2025-10-15 00:23:35 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-15 00:23:35 | INFO | FINAL ANSWER: Hello there!
+2025-10-15 00:23:35 | INFO | [36m
+Hello there![0m
+2025-10-15 00:23:40 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-15 00:23:40 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-15 00:23:40 | INFO | Started listening for speech...
+2025-10-15 00:23:54 | INFO | ================================================================================
+2025-10-15 00:23:54 | INFO | SESSION ENDED
+2025-10-15 00:23:54 | INFO | ================================================================================
+
+2025-10-15 00:24:22 | INFO | ================================================================================
+2025-10-15 00:24:22 | INFO | NEW SESSION STARTED
+2025-10-15 00:24:22 | INFO | ================================================================================
+2025-10-15 00:56:47 | INFO | ================================================================================
+2025-10-15 00:56:47 | INFO | SESSION ENDED
+2025-10-15 00:56:47 | INFO | ================================================================================
+
+2025-10-15 01:22:21 | INFO | ================================================================================
+2025-10-15 01:22:21 | INFO | NEW SESSION STARTED
+2025-10-15 01:22:21 | INFO | ================================================================================
+2025-10-15 01:22:34 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-15 01:22:35 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-15 01:22:35 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-15 01:22:35 | INFO | Started listening for speech...
+2025-10-15 01:22:52 | INFO | ================================================================================
+2025-10-15 01:22:52 | INFO | SESSION ENDED
+2025-10-15 01:22:52 | INFO | ================================================================================
+
+2025-10-15 01:29:49 | INFO | ================================================================================
+2025-10-15 01:29:49 | INFO | NEW SESSION STARTED
+2025-10-15 01:29:49 | INFO | ================================================================================
+2025-10-15 01:29:58 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-15 01:29:59 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-15 01:29:59 | INFO | Found 15 input devices
+2025-10-15 01:29:59 | INFO |   Device 1: Microsoft Sound Mapper - Input
+2025-10-15 01:29:59 | INFO |   Device 2: Line 1/2 (M-Audio AIR 192 4)
+2025-10-15 01:29:59 | INFO |   Device 3: Headset (WH-XB900N)
+2025-10-15 01:29:59 | INFO | Default input device: 1
+2025-10-15 01:29:59 | WARNING | Microphone access test failed: module 'sounddevice' has no attribute 'check_input'
+2025-10-15 01:29:59 | WARNING | This might indicate microphone permission issues
+2025-10-15 01:29:59 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-15 01:29:59 | INFO | Started listening for speech...
+2025-10-15 01:30:12 | INFO | Already stopped listening
+2025-10-15 01:30:18 | INFO | USER QUERY: hi
+2025-10-15 01:30:18 | INFO | [33m[Starting] Task Analysis: Processing: 'hi'[0m
+2025-10-15 01:30:20 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-15 01:30:22 | INFO | --- ITERATION 1/30 ---
+2025-10-15 01:30:22 | INFO | EVALUATE: Neutral - The agent received a greeting.
+2025-10-15 01:30:22 | INFO | PLAN: Acknowledge the user's greeting and respond in a friendly manner.
+2025-10-15 01:30:22 | INFO | THOUGHT: The user has greeted me. I should respond to acknowledge their message.
+2025-10-15 01:30:22 | INFO | [95mThe user has greeted me. I should respond to acknowledge their message.[0m
+2025-10-15 01:30:22 | INFO | [33m[Reasoning] Agent Thought: The user has greeted me. I should respond to acknowledge their message.[0m
+2025-10-15 01:30:22 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-15 01:30:22 | INFO | FINAL ANSWER: Hello there!
+2025-10-15 01:30:22 | INFO | [36m
+Hello there![0m
+2025-10-15 01:30:30 | INFO | Found 15 input devices
+2025-10-15 01:30:30 | INFO |   Device 1: Microsoft Sound Mapper - Input
+2025-10-15 01:30:30 | INFO |   Device 2: Line 1/2 (M-Audio AIR 192 4)
+2025-10-15 01:30:30 | INFO |   Device 3: Headset (WH-XB900N)
+2025-10-15 01:30:30 | INFO | Default input device: 1
+2025-10-15 01:30:30 | WARNING | Microphone access test failed: module 'sounddevice' has no attribute 'check_input'
+2025-10-15 01:30:30 | WARNING | This might indicate microphone permission issues
+2025-10-15 01:30:30 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-15 01:30:30 | INFO | Started listening for speech...
+2025-10-15 01:30:42 | INFO | Already stopped listening
+2025-10-15 01:31:09 | INFO | ================================================================================
+2025-10-15 01:31:09 | INFO | SESSION ENDED
+2025-10-15 01:31:09 | INFO | ================================================================================
+
+2025-10-15 01:31:31 | INFO | ================================================================================
+2025-10-15 01:31:31 | INFO | NEW SESSION STARTED
+2025-10-15 01:31:31 | INFO | ================================================================================
+2025-10-15 01:33:24 | INFO | USER QUERY: hi
+2025-10-15 01:33:24 | INFO | [33m[Starting] Task Analysis: Processing: 'hi'[0m
+2025-10-15 01:33:25 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-15 01:33:27 | INFO | --- ITERATION 1/30 ---
+2025-10-15 01:33:27 | INFO | EVALUATE: Neutral - The agent received a greeting.
+2025-10-15 01:33:27 | INFO | PLAN: Respond to the user's greeting.
+2025-10-15 01:33:27 | INFO | THOUGHT: The user has sent a greeting. I should respond in a friendly manner.
+2025-10-15 01:33:27 | INFO | [95mThe user has sent a greeting. I should respond in a friendly manner.[0m
+2025-10-15 01:33:27 | INFO | [33m[Reasoning] Agent Thought: The user has sent a greeting. I should respond in a friendly manner.[0m
+2025-10-15 01:33:27 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-15 01:33:27 | INFO | FINAL ANSWER: Hello there!
+2025-10-15 01:33:27 | INFO | [36m
+Hello there![0m
+2025-10-15 01:33:29 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-15 01:33:30 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-15 01:33:30 | INFO | Found 15 input devices
+2025-10-15 01:33:30 | INFO |   Device 1: Microsoft Sound Mapper - Input
+2025-10-15 01:33:30 | INFO |   Device 2: Line 1/2 (M-Audio AIR 192 4)
+2025-10-15 01:33:30 | INFO |   Device 3: Headset (WH-XB900N)
+2025-10-15 01:33:30 | INFO | Default input device: 1
+2025-10-15 01:33:30 | WARNING | Microphone access test failed: module 'sounddevice' has no attribute 'check_input'
+2025-10-15 01:33:30 | WARNING | This might indicate microphone permission issues
+2025-10-15 01:33:30 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-15 01:33:30 | INFO | Started listening for speech...
+2025-10-15 01:33:44 | INFO | Already stopped listening
+2025-10-15 01:38:46 | INFO | ================================================================================
+2025-10-15 01:38:46 | INFO | NEW SESSION STARTED
+2025-10-15 01:38:46 | INFO | ================================================================================
+2025-10-15 01:38:49 | INFO | ================================================================================
+2025-10-15 01:38:49 | INFO | SESSION ENDED
+2025-10-15 01:38:49 | INFO | ================================================================================
+
+2025-10-15 01:40:08 | INFO | Already stopped listening
+2025-10-15 01:46:09 | INFO | ================================================================================
+2025-10-15 01:46:09 | INFO | SESSION ENDED
+2025-10-15 01:46:09 | INFO | ================================================================================
+
