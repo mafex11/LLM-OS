@@ -18654,3 +18654,51 @@ I have opened the calculator for you.[0m
 2025-10-13 23:17:22 | INFO | [95mThe next step is to click on the address bar. Based on the desktop state, the address bar's coordinates are (990,63).[0m
 2025-10-13 23:17:22 | INFO | [33m[Reasoning] Agent Thought: The next step is to click on the address bar. Based on the desktop state, the address bar's coordinates are (990,63).[0m
 2025-10-13 23:17:22 | INFO | [33m[Executing] Type Tool: Step 14/30[0m
+2025-10-13 23:58:30 | INFO | ================================================================================
+2025-10-13 23:58:30 | INFO | SESSION ENDED
+2025-10-13 23:58:30 | INFO | ================================================================================
+
+2025-10-14 21:07:36 | INFO | ================================================================================
+2025-10-14 21:07:36 | INFO | NEW SESSION STARTED
+2025-10-14 21:07:36 | INFO | ================================================================================
+2025-10-14 23:18:53 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-14 23:18:54 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-14 23:18:54 | WARNING | sounddevice not available for microphone check
+2025-10-14 23:18:54 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-14 23:18:54 | INFO | Started listening for speech...
+2025-10-14 23:19:03 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-14 23:19:03 | WARNING | sounddevice not available for microphone check
+2025-10-14 23:19:03 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-14 23:19:03 | INFO | Started listening for speech...
+2025-10-14 23:19:09 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-14 23:19:09 | WARNING | sounddevice not available for microphone check
+2025-10-14 23:19:09 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-14 23:19:09 | INFO | Started listening for speech...
+2025-10-14 23:19:13 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-14 23:19:13 | WARNING | sounddevice not available for microphone check
+2025-10-14 23:19:13 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-14 23:19:13 | INFO | Started listening for speech...
+2025-10-14 23:23:35 | WARNING | No Deepgram API key provided. STT will be disabled.
+2025-10-14 23:24:26 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-14 23:24:27 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-14 23:25:10 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-14 23:25:11 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-14 23:25:37 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-14 23:25:37 | INFO | Started listening for speech...
+2025-10-14 23:33:06 | INFO | ================================================================================
+2025-10-14 23:33:06 | INFO | SESSION ENDED
+2025-10-14 23:33:06 | INFO | ================================================================================
+
+2025-10-14 23:33:24 | INFO | ================================================================================
+2025-10-14 23:33:24 | INFO | NEW SESSION STARTED
+2025-10-14 23:33:24 | INFO | ================================================================================
+2025-10-14 23:33:32 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-14 23:33:32 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-14 23:33:33 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-14 23:33:33 | INFO | Started listening for speech...
+2025-10-14 23:33:36 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-14 23:33:36 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-14 23:33:36 | INFO | Started listening for speech...
+2025-10-14 23:34:12 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-14 23:34:12 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-14 23:34:12 | INFO | Started listening for speech...

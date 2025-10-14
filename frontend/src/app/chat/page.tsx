@@ -184,6 +184,11 @@ function ChatContent() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // Utility function to generate unique session IDs
+  const generateUniqueSessionId = () => {
+    return `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${performance.now()}`
+  }
+
   const currentSession = chatSessions.find(s => s.id === currentSessionId)
   const messages = useMemo(() => currentSession?.messages || [], [currentSession?.messages])
 
@@ -197,9 +202,10 @@ function ChatContent() {
         
         if (saved) {
           const parsed = JSON.parse(saved)
-          // Convert date strings back to Date objects
-          existingSessions = parsed.map((session: any) => ({
+          // Convert date strings back to Date objects and ensure unique IDs
+          existingSessions = parsed.map((session: any, index: number) => ({
             ...session,
+            id: session.id || `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`, // Ensure ID exists
             createdAt: new Date(session.createdAt),
             messages: session.messages.map((msg: any) => ({
               ...msg,
@@ -212,17 +218,38 @@ function ChatContent() {
           }))
         }
 
-        // Create a new chat session
-        const newSession: ChatSession = {
-          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          title: "New Chat",
-          messages: [],
-          createdAt: new Date()
+        // Only create a new session if we don't have any existing sessions or if we're starting fresh
+        if (existingSessions.length === 0) {
+          // Create a new chat session with a unique ID
+          const newSession: ChatSession = {
+            id: generateUniqueSessionId(),
+            title: "New Chat",
+            messages: [],
+            createdAt: new Date()
+          }
+          
+          setChatSessions([newSession])
+          setCurrentSessionId(newSession.id)
+        } else {
+          // Use existing sessions, ensure they have unique IDs and no duplicates
+          const existingIds = new Set<string>()
+          const sessionsWithUniqueIds = existingSessions.map((session, index) => {
+            let uniqueId = session.id
+            if (!uniqueId || existingIds.has(uniqueId)) {
+              // Generate a new unique ID if missing or duplicate
+              uniqueId = generateUniqueSessionId()
+            }
+            existingIds.add(uniqueId)
+            
+            return {
+              ...session,
+              id: uniqueId
+            }
+          })
+          
+          setChatSessions(sessionsWithUniqueIds)
+          setCurrentSessionId(sessionsWithUniqueIds[0].id)
         }
-        
-        // Set all sessions: new session first, then existing ones
-        setChatSessions([newSession, ...existingSessions])
-        setCurrentSessionId(newSession.id)
         
         // Focus the input field after a short delay to ensure it's rendered
         setTimeout(() => {
@@ -233,9 +260,9 @@ function ChatContent() {
         
       } catch (error) {
         console.error('Failed to initialize chat:', error)
-        // Create initial session on error
+        // Create initial session on error with unique ID
         const initialSession: ChatSession = {
-          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          id: generateUniqueSessionId(),
           title: "New Chat",
           messages: [],
           createdAt: new Date()
@@ -251,9 +278,12 @@ function ChatContent() {
       }
     }
 
-    initializeChat()
-    setIsInitialized(true)
-  }, [])
+    // Only initialize if not already initialized
+    if (!isInitialized) {
+      initializeChat()
+      setIsInitialized(true)
+    }
+  }, [isInitialized])
 
   // Save chat sessions to localStorage whenever they change
   // Only save sessions that have actual conversations (messages)
@@ -467,7 +497,7 @@ function ChatContent() {
 
   const createNewChat = () => {
     const newSession: ChatSession = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: generateUniqueSessionId(),
       title: "New Chat",
       messages: [],
       createdAt: new Date()
