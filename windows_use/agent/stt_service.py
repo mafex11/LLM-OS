@@ -139,8 +139,20 @@ class STTService:
             )
             self.listening_thread.start()
             
-            logger.info("Started listening for speech...")
-            return True
+            # Wait briefly for microphone to open and streaming to begin
+            # so callers can know if listening truly started
+            start_deadline = time.time() + 5.0  # 5s timeout
+            while time.time() < start_deadline:
+                if self.is_listening:
+                    logger.info("Started listening for speech...")
+                    return True
+                # If thread died early, abort
+                if self.listening_thread and not self.listening_thread.is_alive():
+                    logger.error("Listening thread exited before start; microphone/connection failed")
+                    return False
+                time.sleep(0.05)
+            logger.error("Timed out waiting for microphone to start streaming")
+            return False
             
         except Exception as e:
             logger.error(f"Failed to start listening: {e}")

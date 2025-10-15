@@ -434,6 +434,79 @@ ENABLE_TTS=true
    - **User Experience**: Voice mode now starts gracefully without crashing the backend process
    - **Reliability**: Backend remains stable even when microphone access fails or is unavailable
 
+### Files Modified (Jan 11, 2025 - Frontend Voice Recording Stack Overflow Fix)
+12. **Frontend Voice Recording Maximum Call Stack Fix** - Fixed "Maximum call stack size exceeded" error in voice recording
+   - **Files Updated**:
+     - `frontend/src/hooks/use-voice.ts` - Fixed base64 conversion for large audio blobs
+   - **Issues Fixed**:
+     - **Stack Overflow Error**: Fixed "Maximum call stack size exceeded" when converting large audio blobs to base64
+     - **Audio Processing Failure**: Voice recording would crash when processing audio files larger than call stack limit
+     - **User Experience**: Voice mode was unusable for longer recordings due to conversion errors
+   - **Technical Improvements**:
+     - **Chunked Processing**: Replaced `String.fromCharCode(...new Uint8Array(arrayBuffer))` with chunked processing
+     - **Memory Efficiency**: Process audio data in 8KB chunks to avoid call stack overflow
+     - **Robust Conversion**: Implemented safe base64 conversion that works with any audio file size
+     - **Performance**: Maintained conversion speed while preventing memory issues
+   - **Implementation Details**:
+     - **Chunk Size**: 8192 bytes per chunk for optimal performance and safety
+     - **Loop Processing**: Iterate through Uint8Array in chunks instead of spreading entire array
+     - **String Building**: Build binary string incrementally to prevent call stack issues
+     - **Error Prevention**: Eliminates "Maximum call stack size exceeded" errors for all audio file sizes
+   - **User Experience**: Voice recording now works reliably regardless of recording duration or audio file size
+   - **Reliability**: Frontend voice processing is now stable and can handle any length of voice input
+
+### Files Modified (Jan 11, 2025 - Continuous Voice Conversation Integration)
+13. **Continuous Voice Conversation Mode** - Fixed voice mode to provide continuous conversation instead of single-shot recording
+   - **Files Updated**:
+     - `frontend/src/app/chat/page.tsx` - Replaced client-side voice recording with backend voice mode integration
+   - **Issues Fixed**:
+     - **Single-Shot Recording**: Voice mode was turning off after each interaction instead of maintaining continuous conversation
+     - **Client-Side Limitation**: Frontend was using client-side recording instead of backend STT/TTS for continuous listening
+     - **User Experience**: Users had to manually restart voice mode after each command instead of having natural conversation flow
+   - **Technical Improvements**:
+     - **Backend Integration**: Replaced `use-voice.ts` hook with direct backend API calls to `/api/voice/start` and `/api/voice/stop`
+     - **Status Polling**: Added real-time voice status polling to sync frontend UI with backend voice state
+     - **Continuous Listening**: Voice mode now uses backend STT service for continuous listening with trigger word detection
+     - **Conversation Flow**: Maintains voice mode active until user explicitly stops it, enabling natural back-and-forth conversation
+   - **Implementation Details**:
+     - **API Integration**: `handleMicClick` now calls backend voice APIs instead of client-side recording functions
+     - **Status Synchronization**: Frontend polls `/api/voice/status` every second to update UI state (listening/speaking indicators)
+     - **Trigger Word Support**: Backend voice mode includes "yuki" trigger word detection for command activation
+     - **TTS Integration**: Backend TTS automatically speaks AI responses during voice conversations
+   - **User Experience**: 
+     - **Continuous Conversation**: Users can now have extended voice conversations without manually restarting voice mode
+     - **Natural Flow**: Say "yuki" + command → AI responds with speech → continues listening for next command
+     - **Visual Feedback**: Real-time status indicators show when listening vs speaking
+     - **Manual Control**: Users can still manually stop voice mode when conversation is complete
+   - **Conversation Pattern**: 
+     - User clicks mic → Voice mode starts → Say "yuki, open notepad" → AI responds with speech → Continues listening
+     - User says "yuki, what's the weather?" → AI responds with speech → Continues listening
+     - User clicks mic again → Voice mode stops → Conversation ends
+
+### Files Modified (Jan 11, 2025 - Voice API Integration Fix)
+14. **Voice API Integration Fix** - Fixed frontend-backend communication issues for voice mode
+   - **Files Updated**:
+     - `frontend/src/app/chat/page.tsx` - Fixed API request parameters and error handling
+   - **Issues Fixed**:
+     - **Missing API Key**: Frontend was not sending required `api_key` parameter to `/api/voice/start` endpoint
+     - **Failed to Fetch Errors**: Network requests were failing due to missing request parameters
+     - **Poor Error Handling**: Network errors were causing console spam and poor user experience
+   - **Technical Improvements**:
+     - **API Key Integration**: Frontend now sends actual API key value using `getApiKey('google_api_key')` function
+     - **Request Headers**: Added proper Content-Type headers to all API requests
+     - **Error Handling**: Improved error handling with graceful fallbacks and user-friendly messages
+     - **Polling Optimization**: Reduced voice status polling frequency from 1s to 2s to reduce server load
+   - **Implementation Details**:
+     - **Voice Start Request**: Now includes `api_key` field required by backend `VoiceModeRequest` model
+     - **Error Recovery**: Network failures are handled gracefully without disrupting user experience
+     - **Debug Logging**: Changed error logging to debug level to reduce console noise when backend is offline
+     - **Status Synchronization**: Voice status polling continues even if backend is temporarily unavailable
+   - **User Experience**: 
+     - **Reliable Connection**: Voice mode now properly connects to backend when available
+     - **Clear Error Messages**: Users get helpful error messages when voice mode fails to start
+     - **Graceful Degradation**: Frontend continues working even if backend is temporarily unavailable
+     - **Reduced Console Noise**: Network errors no longer spam the console when backend is offline
+
 ### Files Modified (Jan 11, 2025 - Clean Question Formatting)
 12. **Human Tool Question Formatting** - Fixed verbose question formatting in AI responses
    - **Files Updated**:

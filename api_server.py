@@ -13,8 +13,6 @@ import json
 import os
 import sys
 import time
-import base64
-import io
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -126,16 +124,8 @@ class ApiKeysResponse(BaseModel):
     deepgram_api_key: str
 
 class VoiceModeRequest(BaseModel):
-    api_key: str
-
-class TranscriptionRequest(BaseModel):
-    audio_data: str  # Base64 encoded audio
-    mime_type: str   # MIME type of the audio
-
-class TranscriptionResponse(BaseModel):
-    transcript: str
-    success: bool
-    error: Optional[str] = None
+    # Frontend may omit this; backend uses server-side env keys for voice mode
+    api_key: Optional[str] = None
 
 # Initialize agent on startup
 @app.on_event("startup")
@@ -962,66 +952,6 @@ async def get_api_keys():
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching API keys: {str(e)}")
-
-@app.post("/api/voice/transcribe", response_model=TranscriptionResponse)
-async def transcribe_audio(request: TranscriptionRequest):
-    """Transcribe audio using Deepgram"""
-    try:
-        # Check if Deepgram is available
-        try:
-            from deepgram import DeepgramClient, DeepgramClientOptions
-            import os
-            deepgram_key = os.getenv("DEEPGRAM_API_KEY")
-            if not deepgram_key:
-                raise HTTPException(status_code=400, detail="DEEPGRAM_API_KEY not configured")
-        except ImportError:
-            raise HTTPException(status_code=400, detail="Deepgram SDK not available")
-        
-        # Decode base64 audio
-        try:
-            audio_data = base64.b64decode(request.audio_data)
-        except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Invalid audio data: {str(e)}")
-        
-        # Initialize Deepgram client
-        config = DeepgramClientOptions(options={"keepalive": "true"})
-        deepgram = DeepgramClient(deepgram_key, config)
-        
-        # Configure options for transcription
-        options = {
-            "model": "nova-2",
-            "language": "en-US",
-            "smart_format": True,
-            "punctuate": True,
-            "diarize": False
-        }
-        
-        # Transcribe the audio
-        response = deepgram.listen.prerecorded.v("1").transcribe_file(
-            {"buffer": audio_data, "mimetype": request.mime_type},
-            options
-        )
-        
-        # Extract transcript
-        transcript = ""
-        if response.results and response.results.channels:
-            channel = response.results.channels[0]
-            if channel.alternatives:
-                transcript = channel.alternatives[0].transcript
-        
-        return TranscriptionResponse(
-            transcript=transcript,
-            success=True,
-            error=None
-        )
-        
-    except Exception as e:
-        print(f"Transcription error: {e}")
-        return TranscriptionResponse(
-            transcript="",
-            success=False,
-            error=str(e)
-        )
 
 @app.post("/api/config/keys")
 async def save_api_keys(keys: ApiKeysRequest):
