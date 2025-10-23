@@ -63,7 +63,7 @@ app = FastAPI(
 # Add CORS middleware for Next.js frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],  # Next.js default ports
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001"],  # Next.js default ports
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -216,6 +216,16 @@ async def health_check():
         "status": "healthy",
         "agent_ready": agent_initialized,
         "timestamp": datetime.now().isoformat()
+    }
+
+# Simple connectivity test endpoint
+@app.get("/api/test")
+async def test_connection():
+    """Simple test endpoint for frontend connectivity"""
+    return {
+        "message": "API server is reachable",
+        "timestamp": datetime.now().isoformat(),
+        "server_host": "127.0.0.1:8000"
     }
 
 # System status endpoint
@@ -729,7 +739,6 @@ async def start_voice_mode(request: VoiceModeRequest):
             tts_service = TTSService(enable_tts=True)
             if tts_service.enabled:
                 agent.tts_service = tts_service
-                print("TTS enabled for voice mode")
         
         # Set up transcription callback to handle voice input with trigger word detection
         def on_transcription(transcript: str):
@@ -834,11 +843,9 @@ async def start_voice_mode(request: VoiceModeRequest):
                     voice_agent.show_status = original_show_status
                 
                 if response and hasattr(response, 'content') and response.content:
-                    print(f"AI Response: {response.content}")
-                    
                     # Store assistant response with workflow steps
                     voice_conversation.append({
-                        "role": "assistant", 
+                        "role": "assistant",
                         "content": response.content,
                         "timestamp": time.time(),
                         "workflowSteps": workflow_steps
@@ -847,7 +854,7 @@ async def start_voice_mode(request: VoiceModeRequest):
                     # Speak the response if TTS is available
                     if hasattr(agent, 'tts_service') and agent.tts_service and agent.tts_service.enabled:
                         agent.tts_service.speak_async(response.content)
-                        
+                
             except Exception as e:
                 print(f"Error processing voice input: {e}")
             finally:
@@ -862,12 +869,14 @@ async def start_voice_mode(request: VoiceModeRequest):
             # If already listening, treat as idempotent success
             if getattr(voice_stt_service, 'is_listening', False):
                 return {"success": True, "message": "Voice mode already started"}
-            if voice_stt_service.start_listening():
+            
+            listening_result = voice_stt_service.start_listening()
+            
+            if listening_result:
                 return {"success": True, "message": "Voice mode started"}
             else:
                 raise HTTPException(status_code=500, detail="Failed to start listening")
         except Exception as mic_error:
-            print(f"Microphone initialization error: {mic_error}")
             # Clean up the STT service if it was created
             if hasattr(voice_stt_service, 'cleanup'):
                 voice_stt_service.cleanup()
@@ -925,6 +934,7 @@ async def get_voice_status():
             stt_available = DEEPGRAM_AVAILABLE and bool(os.getenv("DEEPGRAM_API_KEY"))
         except ImportError:
             stt_available = False
+        
         tts_available = hasattr(agent, 'tts_service') and agent.tts_service and agent.tts_service.enabled
         
         return {
@@ -1019,4 +1029,4 @@ async def save_api_keys(keys: ApiKeysRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)

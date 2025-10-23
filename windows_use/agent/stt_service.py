@@ -10,6 +10,7 @@ import time
 from typing import Optional, Callable
 import logging
 from pathlib import Path
+import traceback
 
 try:
     from deepgram import (
@@ -91,7 +92,7 @@ class STTService:
                 options={"keepalive": "true"}
             )
             self.deepgram = DeepgramClient(api_key_to_use, config)
-            logger.info(f"Deepgram STT Service initialized successfully (latency_mode={self.latency_mode}, silence_threshold={self.silence_threshold}s)")
+            logger.debug(f"Deepgram STT Service initialized successfully (latency_mode={self.latency_mode}, silence_threshold={self.silence_threshold}s)")
         except Exception as e:
             logger.error(f"Failed to initialize Deepgram client: {e}")
             self.enabled = False
@@ -185,7 +186,7 @@ class STTService:
                         service.current_transcript = service.current_transcript.strip()
                         service.last_speech_time = time.time()
                         
-                        logger.info(f"Final transcript: {sentence}")
+                        logger.debug(f"Final transcript: {sentence}")
                         
                         # Check for silence to finalize
                         service._check_and_finalize_transcript()
@@ -260,6 +261,7 @@ class STTService:
                         self.microphone.start()
                         mic_started.set()
                     except Exception as e:
+                        logger.error(f"Microphone start failed: {e}")
                         mic_error[0] = e
                         mic_started.set()
                 
@@ -303,7 +305,7 @@ class STTService:
                 self.deepgram_connection.finish()
             
             self.is_listening = False
-            logger.info("Stopped listening")
+            logger.debug("Stopped listening")
             
         except Exception as e:
             logger.error(f"Error in listening loop: {e}")
@@ -323,7 +325,7 @@ class STTService:
         
         transcript = self.current_transcript.strip()
         if transcript:
-            logger.info(f"Finalized transcript: {transcript}")
+            logger.debug(f"Finalized transcript: {transcript}")
             
             # Check for trigger word detection
             transcript_lower = transcript.lower()
@@ -332,7 +334,7 @@ class STTService:
             if self.waiting_for_command:
                 # Any speech after trigger word is considered a command
                 command = transcript
-                logger.info(f"Command detected: {command}")
+                logger.debug(f"Command detected: {command}")
                 
                 # Reset trigger word state
                 self.waiting_for_command = False
@@ -367,7 +369,7 @@ class STTService:
                         command = " ".join(command_words)
                         
                         if command.strip():
-                            logger.info(f"Trigger word '{self.trigger_word}' detected with command: {command}")
+                            logger.debug(f"Trigger word '{self.trigger_word}' detected with command: {command}")
                             
                             # Put command in queue
                             self.transcription_queue.put(command)
@@ -380,17 +382,17 @@ class STTService:
                                     logger.error(f"Error in transcription callback: {e}")
                         else:
                             # Trigger word detected but no command yet - wait for next utterance
-                            logger.info(f"Trigger word '{self.trigger_word}' detected, waiting for command...")
+                            logger.debug(f"Trigger word '{self.trigger_word}' detected, waiting for command...")
                             self.trigger_word_detected = True
                             self.waiting_for_command = True
                     else:
                         # Only trigger word detected - wait for next utterance
-                        logger.info(f"Trigger word '{self.trigger_word}' detected, waiting for command...")
+                        logger.debug(f"Trigger word '{self.trigger_word}' detected, waiting for command...")
                         self.trigger_word_detected = True
                         self.waiting_for_command = True
             else:
                 # No trigger word detected - ignore the transcript
-                logger.info(f"No trigger word detected, ignoring: {transcript}")
+                logger.debug(f"No trigger word detected, ignoring: {transcript}")
         
         # Reset for next utterance
         self.current_transcript = ""
@@ -400,7 +402,7 @@ class STTService:
         if not self.is_listening:
             return
         
-        logger.info("Stopping listening...")
+        logger.debug("Stopping listening...")
         self.stop_event.set()
         
         # Wait for thread to finish

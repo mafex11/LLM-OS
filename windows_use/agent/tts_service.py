@@ -106,7 +106,7 @@ class TTSService:
             audio_filename = f"tts_audio_{timestamp}.mp3"
             audio_path = os.path.join(tempfile.gettempdir(), audio_filename)
             
-            logger.info(f"Generating speech for: {text[:50]}...")
+            logger.debug(f"Generating speech for: {text[:50]}...")
             
             # Generate audio using ElevenLabs
             audio = self.client.text_to_speech.convert(
@@ -125,7 +125,7 @@ class TTSService:
             save(audio, audio_path)
             
             self.current_audio_file = audio_path
-            logger.info(f"Speech generated successfully: {audio_path}")
+            logger.debug(f"Speech generated successfully: {audio_path}")
             return audio_path
             
         except Exception as e:

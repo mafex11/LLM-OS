@@ -18956,3 +18956,667 @@ Hello there![0m
 2025-10-15 22:46:07 | INFO | TTS Service initialized - Enabled: True, Audio: True
 2025-10-15 22:46:08 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
 2025-10-15 22:46:08 | INFO | Started listening for speech...
+2025-10-23 16:33:54 | INFO | ================================================================================
+2025-10-23 16:33:54 | INFO | NEW SESSION STARTED
+2025-10-23 16:33:54 | INFO | ================================================================================
+2025-10-23 18:20:46 | INFO | ================================================================================
+2025-10-23 18:20:46 | INFO | NEW SESSION STARTED
+2025-10-23 18:20:46 | INFO | ================================================================================
+2025-10-23 18:20:48 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-23 18:20:55 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-23 18:20:55 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-23 18:20:55 | ERROR | Listening thread exited before start; microphone/connection failed
+2025-10-23 18:22:49 | INFO | ================================================================================
+2025-10-23 18:22:49 | INFO | SESSION ENDED
+2025-10-23 18:22:49 | INFO | ================================================================================
+
+2025-10-23 21:23:20 | INFO | USER QUERY: hi
+2025-10-23 21:23:21 | INFO | [33m[Starting] Task Analysis: Processing: 'hi'[0m
+2025-10-23 21:23:22 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-23 21:23:24 | INFO | --- ITERATION 1/30 ---
+2025-10-23 21:23:24 | INFO | EVALUATE: Neutral
+2025-10-23 21:23:24 | INFO | PLAN: The user has sent a greeting. I should respond in a friendly manner.
+2025-10-23 21:23:24 | INFO | THOUGHT: The user has said "hi". I should respond to acknowledge their greeting.
+2025-10-23 21:23:24 | INFO | [95mThe user has said "hi". I should respond to acknowledge their greeting.[0m
+2025-10-23 21:23:24 | INFO | [33m[Reasoning] Agent Thought: The user has said "hi". I should respond to acknowledge their greeting.[0m
+2025-10-23 21:23:24 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-23 21:23:24 | INFO | FINAL ANSWER: Hello there!
+2025-10-23 21:23:24 | INFO | [36m
+Hello there![0m
+2025-10-23 21:25:57 | WARNING | No Deepgram API key provided. STT will be disabled.
+2025-10-23 21:26:24 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-23 21:26:58 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-23 21:26:59 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-23 21:26:59 | ERROR | Listening thread exited before start; microphone/connection failed
+2025-10-23 21:27:23 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-23 21:27:23 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-23 21:27:23 | ERROR | Listening thread exited before start; microphone/connection failed
+2025-10-23 21:28:29 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-23 21:28:29 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-23 21:28:29 | ERROR | Listening thread exited before start; microphone/connection failed
+2025-10-23 21:28:51 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-23 21:28:52 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-23 21:28:52 | ERROR | Listening thread exited before start; microphone/connection failed
+2025-10-23 21:29:18 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-23 21:29:19 | INFO | Microphone opened and streaming...
+2025-10-23 21:29:19 | INFO | Started listening for speech...
+2025-10-23 21:29:19 | INFO | Stopping listening...
+2025-10-23 21:29:20 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-23 21:30:29 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-23 21:30:30 | INFO | Microphone opened and streaming...
+2025-10-23 21:30:30 | INFO | Started listening for speech...
+2025-10-23 21:30:30 | INFO | Stopping listening...
+2025-10-23 21:30:30 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-23 21:41:48 | INFO | ================================================================================
+2025-10-23 21:41:48 | INFO | SESSION ENDED
+2025-10-23 21:41:48 | INFO | ================================================================================
+
+2025-10-23 21:42:06 | INFO | ================================================================================
+2025-10-23 21:42:06 | INFO | NEW SESSION STARTED
+2025-10-23 21:42:06 | INFO | ================================================================================
+2025-10-23 21:42:08 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-23 21:42:15 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-23 21:42:16 | INFO | Microphone opened and streaming...
+2025-10-23 21:42:16 | INFO | Started listening for speech...
+2025-10-23 21:42:45 | INFO | Stopping listening...
+2025-10-23 21:42:46 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-23 21:42:46 | INFO | ================================================================================
+2025-10-23 21:42:46 | INFO | SESSION ENDED
+2025-10-23 21:42:46 | INFO | ================================================================================
+
+2025-10-23 21:44:08 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-23 21:44:09 | INFO | Microphone opened and streaming...
+2025-10-23 21:44:09 | INFO | Started listening for speech...
+2025-10-23 21:44:40 | INFO | Stopping listening...
+2025-10-23 21:44:40 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-23 21:47:40 | INFO | ================================================================================
+2025-10-23 21:47:40 | INFO | NEW SESSION STARTED
+2025-10-23 21:47:40 | INFO | ================================================================================
+2025-10-23 21:47:41 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=1.0s)
+2025-10-23 21:47:49 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=1.0s)
+2025-10-23 21:47:50 | INFO | Microphone opened and streaming...
+2025-10-23 21:47:50 | INFO | Started listening for speech...
+2025-10-23 21:48:17 | INFO | Stopping listening...
+2025-10-23 21:48:18 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-23 21:51:25 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=1.0s)
+2025-10-23 21:51:26 | INFO | Microphone opened and streaming...
+2025-10-23 21:51:26 | INFO | Started listening for speech...
+2025-10-23 21:51:28 | INFO | Stopping listening...
+2025-10-23 21:51:28 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-23 21:53:43 | INFO | ================================================================================
+2025-10-23 21:53:43 | INFO | SESSION ENDED
+2025-10-23 21:53:43 | INFO | ================================================================================
+
+2025-10-23 21:53:58 | INFO | ================================================================================
+2025-10-23 21:53:58 | INFO | NEW SESSION STARTED
+2025-10-23 21:53:58 | INFO | ================================================================================
+2025-10-23 21:54:00 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=1.0s)
+2025-10-23 21:54:01 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=1.0s)
+2025-10-23 21:54:02 | INFO | Microphone opened and streaming...
+2025-10-23 21:54:02 | INFO | Started listening for speech...
+2025-10-23 21:54:03 | DEBUG | Speech started
+2025-10-23 21:54:04 | DEBUG | Interim: Hello.
+2025-10-23 21:54:04 | INFO | Final transcript: Hello.
+2025-10-23 21:54:05 | INFO | Finalized transcript: Hello.
+2025-10-23 21:54:05 | INFO | No trigger word detected, ignoring: Hello.
+2025-10-23 21:54:06 | DEBUG | Utterance end
+2025-10-23 21:54:11 | DEBUG | Speech started
+2025-10-23 21:54:12 | DEBUG | Speech started
+2025-10-23 21:54:13 | DEBUG | Speech started
+2025-10-23 21:54:14 | DEBUG | Speech started
+2025-10-23 21:54:15 | INFO | Stopping listening...
+2025-10-23 21:54:15 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-23 21:54:15 | INFO | ================================================================================
+2025-10-23 21:54:15 | INFO | SESSION ENDED
+2025-10-23 21:54:15 | INFO | ================================================================================
+
+2025-10-23 21:54:33 | INFO | ================================================================================
+2025-10-23 21:54:33 | INFO | NEW SESSION STARTED
+2025-10-23 21:54:33 | INFO | ================================================================================
+2025-10-23 21:54:34 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-23 21:54:38 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-23 21:54:39 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-23 21:54:39 | ERROR | Listening thread exited before start; microphone/connection failed
+2025-10-23 21:54:49 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-23 21:54:49 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-23 21:54:49 | ERROR | Listening thread exited before start; microphone/connection failed
+2025-10-23 21:54:52 | INFO | ================================================================================
+2025-10-23 21:54:52 | INFO | SESSION ENDED
+2025-10-23 21:54:52 | INFO | ================================================================================
+
+2025-10-23 21:55:07 | INFO | ================================================================================
+2025-10-23 21:55:07 | INFO | NEW SESSION STARTED
+2025-10-23 21:55:07 | INFO | ================================================================================
+2025-10-23 21:55:09 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-23 21:55:11 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-23 21:55:11 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-23 21:55:11 | ERROR | Listening thread exited before start; microphone/connection failed
+2025-10-23 22:01:37 | INFO | ================================================================================
+2025-10-23 22:01:37 | INFO | SESSION ENDED
+2025-10-23 22:01:37 | INFO | ================================================================================
+
+2025-10-23 22:01:48 | INFO | ================================================================================
+2025-10-23 22:01:48 | INFO | NEW SESSION STARTED
+2025-10-23 22:01:48 | INFO | ================================================================================
+2025-10-23 22:01:50 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-23 22:01:56 | INFO | Deepgram STT Service initialized successfully (latency_mode=fast, silence_threshold=0.5s)
+2025-10-23 22:01:56 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-23 22:01:56 | ERROR | Listening thread exited before start; microphone/connection failed
+2025-10-23 22:03:21 | INFO | ================================================================================
+2025-10-23 22:03:21 | INFO | SESSION ENDED
+2025-10-23 22:03:21 | INFO | ================================================================================
+
+2025-10-23 22:03:32 | INFO | ================================================================================
+2025-10-23 22:03:32 | INFO | NEW SESSION STARTED
+2025-10-23 22:03:32 | INFO | ================================================================================
+2025-10-23 22:03:34 | INFO | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-23 22:03:35 | INFO | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-23 22:03:35 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-23 22:03:35 | ERROR | Listening thread exited before start; microphone/connection failed
+2025-10-23 22:04:04 | INFO | ================================================================================
+2025-10-23 22:04:04 | INFO | SESSION ENDED
+2025-10-23 22:04:04 | INFO | ================================================================================
+
+2025-10-23 22:04:15 | INFO | ================================================================================
+2025-10-23 22:04:15 | INFO | NEW SESSION STARTED
+2025-10-23 22:04:15 | INFO | ================================================================================
+2025-10-23 22:04:17 | INFO | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-23 22:04:17 | INFO | ================================================================================
+2025-10-23 22:04:17 | INFO | SESSION ENDED
+2025-10-23 22:04:17 | INFO | ================================================================================
+
+2025-10-23 22:04:33 | INFO | ================================================================================
+2025-10-23 22:04:33 | INFO | NEW SESSION STARTED
+2025-10-23 22:04:33 | INFO | ================================================================================
+2025-10-23 22:04:34 | INFO | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-23 22:04:37 | INFO | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-23 22:04:37 | INFO | Starting STT listening process...
+2025-10-23 22:04:37 | INFO | Checking microphone availability...
+2025-10-23 22:04:37 | INFO | Found 19 audio input devices
+2025-10-23 22:04:37 | INFO | Resetting stop event and transcript tracking...
+2025-10-23 22:04:37 | INFO | Starting listening thread...
+2025-10-23 22:04:37 | INFO | Starting _listen_loop...
+2025-10-23 22:04:37 | INFO | Listening thread started
+2025-10-23 22:04:37 | INFO | Creating Deepgram websocket connection...
+2025-10-23 22:04:37 | INFO | Waiting for microphone initialization (5s timeout)...
+2025-10-23 22:04:37 | INFO | Deepgram websocket connection created
+2025-10-23 22:04:37 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-23 22:04:37 | ERROR | Listening thread exited before start; microphone/connection failed
+2025-10-23 22:07:00 | INFO | ================================================================================
+2025-10-23 22:07:00 | INFO | SESSION ENDED
+2025-10-23 22:07:00 | INFO | ================================================================================
+
+2025-10-23 22:09:00 | INFO | ================================================================================
+2025-10-23 22:09:00 | INFO | NEW SESSION STARTED
+2025-10-23 22:09:00 | INFO | ================================================================================
+2025-10-23 22:09:02 | INFO | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-23 22:09:04 | INFO | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-23 22:09:04 | INFO | Starting STT listening process...
+2025-10-23 22:09:04 | INFO | Checking microphone availability...
+2025-10-23 22:09:04 | INFO | Found 19 audio input devices
+2025-10-23 22:09:04 | INFO | Resetting stop event and transcript tracking...
+2025-10-23 22:09:04 | INFO | Starting listening thread...
+2025-10-23 22:09:04 | INFO | Starting _listen_loop...
+2025-10-23 22:09:04 | INFO | Listening thread started
+2025-10-23 22:09:04 | INFO | Creating Deepgram websocket connection...
+2025-10-23 22:09:04 | INFO | Waiting for microphone initialization (5s timeout)...
+2025-10-23 22:09:04 | INFO | Deepgram websocket connection created
+2025-10-23 22:09:04 | ERROR | Error in listening loop: cannot access local variable 'time' where it is not associated with a value
+2025-10-23 22:09:05 | ERROR | Listening thread exited before start; microphone/connection failed
+2025-10-23 22:09:41 | INFO | ================================================================================
+2025-10-23 22:09:41 | INFO | SESSION ENDED
+2025-10-23 22:09:41 | INFO | ================================================================================
+
+2025-10-23 22:11:33 | INFO | ================================================================================
+2025-10-23 22:11:33 | INFO | NEW SESSION STARTED
+2025-10-23 22:11:33 | INFO | ================================================================================
+2025-10-23 22:11:35 | INFO | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-23 22:11:37 | INFO | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-23 22:11:37 | INFO | Starting STT listening process...
+2025-10-23 22:11:37 | INFO | Checking microphone availability...
+2025-10-23 22:11:37 | INFO | Found 19 audio input devices
+2025-10-23 22:11:37 | INFO | Resetting stop event and transcript tracking...
+2025-10-23 22:11:37 | INFO | Starting listening thread...
+2025-10-23 22:11:37 | INFO | Starting _listen_loop...
+2025-10-23 22:11:37 | INFO | Listening thread started
+2025-10-23 22:11:37 | INFO | Creating Deepgram websocket connection...
+2025-10-23 22:11:37 | INFO | Waiting for microphone initialization (5s timeout)...
+2025-10-23 22:11:37 | INFO | Deepgram websocket connection created
+2025-10-23 22:11:37 | INFO | Starting Deepgram connection...
+2025-10-23 22:11:38 | INFO | Deepgram connection started successfully
+2025-10-23 22:11:38 | INFO | Creating microphone...
+2025-10-23 22:11:38 | INFO | Microphone object created
+2025-10-23 22:11:38 | INFO | Starting microphone thread...
+2025-10-23 22:11:38 | INFO | Starting microphone in thread...
+2025-10-23 22:11:38 | INFO | Microphone thread started
+2025-10-23 22:11:38 | INFO | Waiting for microphone to start (5s timeout)...
+2025-10-23 22:11:38 | INFO | Microphone started successfully in thread
+2025-10-23 22:11:38 | INFO | Microphone initialization completed successfully
+2025-10-23 22:11:38 | INFO | Microphone opened and streaming...
+2025-10-23 22:11:38 | INFO | Started listening for speech...
+2025-10-23 22:11:41 | INFO | Final transcript: Hello.
+2025-10-23 22:11:42 | INFO | Finalized transcript: Hello.
+2025-10-23 22:11:42 | INFO | No trigger word detected, ignoring: Hello.
+2025-10-23 22:11:48 | INFO | Final transcript: Yuki, hello.
+2025-10-23 22:11:49 | INFO | Finalized transcript: Yuki, hello.
+2025-10-23 22:11:49 | INFO | Trigger word 'yuki' detected with command: hello.
+2025-10-23 22:11:49 | DEBUG | STT: hello.
+2025-10-23 22:11:49 | INFO | USER QUERY: hello.
+2025-10-23 22:11:49 | INFO | [33m[Starting] Task Analysis: Processing: 'hello.'[0m
+2025-10-23 22:11:50 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-23 22:11:55 | INFO | --- ITERATION 1/30 ---
+2025-10-23 22:11:55 | INFO | EVALUATE: Neutral
+2025-10-23 22:11:55 | INFO | PLAN: The user has provided the input "hello". Since there is no explicit action requested, I will respond directly.
+2025-10-23 22:11:55 | INFO | THOUGHT: The user has provided the input "hello". I will respond with a greeting.
+2025-10-23 22:11:55 | INFO | [95mThe user has provided the input "hello". I will respond with a greeting.[0m
+2025-10-23 22:11:55 | INFO | [33m[Reasoning] Agent Thought: The user has provided the input "hello". I will respond with a greeting.[0m
+2025-10-23 22:11:55 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-23 22:11:55 | INFO | FINAL ANSWER: Hello there!
+2025-10-23 22:11:55 | INFO | [36m
+Hello there![0m
+2025-10-23 22:12:01 | INFO | Final transcript: Hi.
+2025-10-23 22:12:03 | INFO | Final transcript: Yuki Hi.
+2025-10-23 22:12:04 | INFO | Finalized transcript: Yuki Hi.
+2025-10-23 22:12:04 | INFO | Trigger word 'yuki' detected with command: hi.
+2025-10-23 22:12:04 | DEBUG | STT: hi.
+2025-10-23 22:12:04 | INFO | USER QUERY: hi.
+2025-10-23 22:12:04 | INFO | [33m[Starting] Task Analysis: Processing: 'hi.'[0m
+2025-10-23 22:12:05 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-23 22:12:09 | INFO | --- ITERATION 1/30 ---
+2025-10-23 22:12:09 | INFO | EVALUATE: Neutral - The agent is responding to the user's greeting.
+2025-10-23 22:12:09 | INFO | PLAN: The user said "hi", so I should respond in a friendly manner.
+2025-10-23 22:12:09 | INFO | THOUGHT: The user has said "hi" after I said "Hello there!". I will respond to their greeting.
+2025-10-23 22:12:09 | INFO | [95mThe user has said "hi" after I said "Hello there!". I will respond to their greeting.[0m
+2025-10-23 22:12:09 | INFO | [33m[Reasoning] Agent Thought: The user has said "hi" after I said "Hello there!". I will respond to their greeting.[0m
+2025-10-23 22:12:09 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-23 22:12:09 | INFO | FINAL ANSWER: Hi there!
+2025-10-23 22:12:09 | INFO | [36m
+Hi there![0m
+2025-10-23 22:12:11 | INFO | Stopping listening...
+2025-10-23 22:12:11 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-23 22:14:27 | INFO | ================================================================================
+2025-10-23 22:14:27 | INFO | SESSION ENDED
+2025-10-23 22:14:27 | INFO | ================================================================================
+
+2025-10-23 22:15:30 | INFO | ================================================================================
+2025-10-23 22:15:30 | INFO | NEW SESSION STARTED
+2025-10-23 22:15:30 | INFO | ================================================================================
+2025-10-23 22:22:54 | INFO | ================================================================================
+2025-10-23 22:22:54 | INFO | SESSION ENDED
+2025-10-23 22:22:54 | INFO | ================================================================================
+
+2025-10-23 22:24:41 | INFO | ================================================================================
+2025-10-23 22:24:41 | INFO | NEW SESSION STARTED
+2025-10-23 22:24:41 | INFO | ================================================================================
+2025-10-23 22:24:56 | INFO | USER QUERY: hi
+2025-10-23 22:24:56 | INFO | [33m[Starting] Task Analysis: Processing: 'hi'[0m
+2025-10-23 22:24:57 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-23 22:25:00 | INFO | --- ITERATION 1/30 ---
+2025-10-23 22:25:00 | INFO | EVALUATE: Neutral - The user just said hi.
+2025-10-23 22:25:00 | INFO | PLAN: Respond to the user's greeting.
+2025-10-23 22:25:00 | INFO | THOUGHT: The user said hi, so I should respond in a friendly manner.
+2025-10-23 22:25:00 | INFO | [95mThe user said hi, so I should respond in a friendly manner.[0m
+2025-10-23 22:25:00 | INFO | [33m[Reasoning] Agent Thought: The user said hi, so I should respond in a friendly manner.[0m
+2025-10-23 22:25:00 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-23 22:25:00 | INFO | FINAL ANSWER: Hello! How can I help you today?
+2025-10-23 22:25:00 | INFO | [36m
+Hello! How can I help you today?[0m
+2025-10-23 22:25:50 | INFO | ================================================================================
+2025-10-23 22:25:50 | INFO | SESSION ENDED
+2025-10-23 22:25:50 | INFO | ================================================================================
+
+2025-10-23 22:34:28 | INFO | ================================================================================
+2025-10-23 22:34:28 | INFO | NEW SESSION STARTED
+2025-10-23 22:34:28 | INFO | ================================================================================
+2025-10-23 22:35:43 | INFO | ================================================================================
+2025-10-23 22:35:43 | INFO | SESSION ENDED
+2025-10-23 22:35:43 | INFO | ================================================================================
+
+2025-10-23 22:36:22 | INFO | ================================================================================
+2025-10-23 22:36:22 | INFO | NEW SESSION STARTED
+2025-10-23 22:36:22 | INFO | ================================================================================
+2025-10-23 22:39:58 | INFO | STTService.__init__ called with enable_stt=True, trigger_word='yuki', latency_mode='balanced'
+2025-10-23 22:39:58 | INFO | STTService initialized - enabled=True, DEEPGRAM_AVAILABLE=True
+2025-10-23 22:39:58 | INFO | API key check - provided: False, env: True
+2025-10-23 22:39:58 | INFO | Initializing Deepgram client...
+2025-10-23 22:39:58 | INFO | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-23 22:39:58 | INFO | TTSService.__init__ called with enable_tts=True, voice_id='21m00Tcm4TlvDq8ikWAM', model_id='eleven_monolingual_v1'
+2025-10-23 22:39:58 | INFO | TTSService initialized - enabled=True, ELEVENLABS_AVAILABLE=True
+2025-10-23 22:39:58 | INFO | API key check - provided: False, env: True
+2025-10-23 22:39:58 | INFO | Initializing ElevenLabs client...
+2025-10-23 22:39:58 | INFO | ElevenLabs client initialized successfully
+2025-10-23 22:39:58 | INFO | Initializing pygame mixer...
+2025-10-23 22:39:59 | INFO | Pygame mixer initialized successfully
+2025-10-23 22:39:59 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-23 22:39:59 | INFO | STTService.start_listening() called
+2025-10-23 22:39:59 | INFO | Checking microphone availability...
+2025-10-23 22:39:59 | INFO | Found 19 input devices
+2025-10-23 22:39:59 | INFO | Input devices: ['Microsoft Sound Mapper - Input', 'Line 1/2 (M-Audio AIR 192 4)', 'Microphone (High Definition Aud', 'Headset (WH-XB900N)', 'Primary Sound Capture Driver', 'Line 1/2 (M-Audio AIR 192 4)', 'Microphone (High Definition Audio Device)', 'Headset (WH-XB900N)', 'Line 1/2 (M-Audio AIR 192 4)', 'Microphone (High Definition Audio Device)', 'Headset (WH-XB900N)', 'Microphone (HD Audio Microphone)', 'Line In /Microphone (SG Wave)', 'Line 1/2 (M-Audio AIR 192 4 Stereo In 1-2)', 'Input ()', 'Headset (@System32\\drivers\\bthhfenum.sys,#2;%1 Hands-Free%0\r\n;(WH-XB900N))', 'Microphone (Camo)', "Input (@System32\\drivers\\bthhfenum.sys,#4;%1 Hands-Free HF Audio%0\r\n;(Mafex's iPhone 16))", 'Headset (@System32\\drivers\\bthhfenum.sys,#2;%1 Hands-Free%0\r\n;(AirPods Pro - Find My))']
+2025-10-23 22:39:59 | INFO | Starting listening process...
+2025-10-23 22:39:59 | INFO | Creating listening thread...
+2025-10-23 22:39:59 | INFO | STTService._listen_loop() started
+2025-10-23 22:39:59 | INFO | Listening thread started
+2025-10-23 22:39:59 | INFO | Creating Deepgram websocket connection...
+2025-10-23 22:39:59 | INFO | Waiting for microphone to start streaming...
+2025-10-23 22:39:59 | INFO | Deepgram websocket connection created
+2025-10-23 22:39:59 | INFO | Starting Deepgram connection...
+2025-10-23 22:39:59 | INFO | Deepgram connection started successfully
+2025-10-23 22:39:59 | INFO | Creating microphone...
+2025-10-23 22:40:00 | INFO | Microphone created successfully
+2025-10-23 22:40:00 | INFO | Starting microphone...
+2025-10-23 22:40:00 | INFO | Microphone start() called
+2025-10-23 22:40:00 | INFO | Waiting for microphone to start...
+2025-10-23 22:40:00 | INFO | Microphone started successfully
+2025-10-23 22:40:00 | INFO | Microphone initialization completed successfully
+2025-10-23 22:40:00 | INFO | STT listening is now active!
+2025-10-23 22:40:00 | INFO | Microphone started successfully!
+2025-10-23 22:40:01 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:02 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:03 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:04 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:05 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:40:05 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:06 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:07 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:08 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:09 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:40:09 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:10 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:11 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:12 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:40:12 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:13 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:14 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:15 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:40:15 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:16 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:17 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:18 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:40:18 | INFO | Speech started event received
+2025-10-23 22:40:18 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:19 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:40:20 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:21 | INFO | Speech started event received
+2025-10-23 22:40:21 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:40:22 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:23 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:24 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:25 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:26 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:40:26 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:27 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:28 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:29 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:40:30 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:31 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:32 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:33 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:34 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:40:34 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:34 | INFO | Speech started event received
+2025-10-23 22:40:34 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:40:35 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:36 | INFO | Speech started event received
+2025-10-23 22:40:36 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:40:36 | INFO | Speech started event received
+2025-10-23 22:40:37 | INFO | Speech started event received
+2025-10-23 22:40:38 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:40:39 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:40:39 | INFO | Speech started event received
+2025-10-23 22:40:40 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:40:40 | INFO | Speech started event received
+2025-10-23 22:40:41 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:40:42 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:43 | INFO | Speech started event received
+2025-10-23 22:40:44 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:40:45 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:45 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:46 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:47 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:48 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:40:48 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:49 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:50 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:51 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:52 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:40:52 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:52 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:53 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:54 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:55 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:40:56 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:57 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:58 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:40:59 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:41:00 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:41:01 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:41:01 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:41:02 | INFO | Speech started event received
+2025-10-23 22:41:02 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:41:03 | INFO | Speech started event received
+2025-10-23 22:41:03 | DEBUG | Received transcript: 'No.' (final: False)
+2025-10-23 22:41:03 | DEBUG | Interim: No.
+2025-10-23 22:41:04 | DEBUG | Received transcript: 'No.' (final: True)
+2025-10-23 22:41:04 | INFO | Final transcript: No.
+2025-10-23 22:41:05 | INFO | Speech started event received
+2025-10-23 22:41:05 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:41:05 | INFO | Utterance end event received
+2025-10-23 22:41:06 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:41:07 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:41:07 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 22:41:08 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:41:09 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 22:41:10 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:43:00 | INFO | ================================================================================
+2025-10-23 23:43:00 | INFO | NEW SESSION STARTED
+2025-10-23 23:43:00 | INFO | ================================================================================
+2025-10-23 23:43:18 | INFO | USER QUERY: hi
+2025-10-23 23:43:18 | INFO | [33m[Starting] Task Analysis: Processing: 'hi'[0m
+2025-10-23 23:43:19 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-23 23:43:22 | INFO | --- ITERATION 1/30 ---
+2025-10-23 23:43:22 | INFO | EVALUATE: Neutral - The agent is ready to receive instructions.
+2025-10-23 23:43:22 | INFO | PLAN: The user has said "hi". I will respond to the user.
+2025-10-23 23:43:22 | INFO | THOUGHT: The user has initiated a conversation. I will respond to the greeting using the Done Tool.
+2025-10-23 23:43:22 | INFO | [95mThe user has initiated a conversation. I will respond to the greeting using the Done Tool.[0m
+2025-10-23 23:43:22 | INFO | [33m[Reasoning] Agent Thought: The user has initiated a conversation. I will respond to the greeting using the Done Tool.[0m
+2025-10-23 23:43:22 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-23 23:43:22 | INFO | FINAL ANSWER: Hello! How can I help you today?
+2025-10-23 23:43:22 | INFO | [36m
+Hello! How can I help you today?[0m
+2025-10-23 23:43:25 | INFO | STTService.__init__ called with enable_stt=True, trigger_word='yuki', latency_mode='balanced'
+2025-10-23 23:43:25 | INFO | STTService initialized - enabled=True, DEEPGRAM_AVAILABLE=True
+2025-10-23 23:43:25 | INFO | API key check - provided: False, env: True
+2025-10-23 23:43:25 | INFO | Initializing Deepgram client...
+2025-10-23 23:43:25 | INFO | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-23 23:43:26 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-23 23:43:26 | INFO | STTService.start_listening() called
+2025-10-23 23:43:26 | INFO | Checking microphone availability...
+2025-10-23 23:43:26 | INFO | Found 19 input devices
+2025-10-23 23:43:26 | INFO | Input devices: ['Microsoft Sound Mapper - Input', 'Line 1/2 (M-Audio AIR 192 4)', 'Microphone (High Definition Aud', 'Headset (WH-XB900N)', 'Primary Sound Capture Driver', 'Line 1/2 (M-Audio AIR 192 4)', 'Microphone (High Definition Audio Device)', 'Headset (WH-XB900N)', 'Line 1/2 (M-Audio AIR 192 4)', 'Microphone (High Definition Audio Device)', 'Headset (WH-XB900N)', 'Microphone (HD Audio Microphone)', 'Line In /Microphone (SG Wave)', 'Line 1/2 (M-Audio AIR 192 4 Stereo In 1-2)', 'Input ()', 'Headset (@System32\\drivers\\bthhfenum.sys,#2;%1 Hands-Free%0\r\n;(WH-XB900N))', 'Microphone (Camo)', "Input (@System32\\drivers\\bthhfenum.sys,#4;%1 Hands-Free HF Audio%0\r\n;(Mafex's iPhone 16))", 'Headset (@System32\\drivers\\bthhfenum.sys,#2;%1 Hands-Free%0\r\n;(AirPods Pro - Find My))']
+2025-10-23 23:43:26 | INFO | Starting listening process...
+2025-10-23 23:43:26 | INFO | Creating listening thread...
+2025-10-23 23:43:26 | INFO | STTService._listen_loop() started
+2025-10-23 23:43:26 | INFO | Listening thread started
+2025-10-23 23:43:26 | INFO | Creating Deepgram websocket connection...
+2025-10-23 23:43:26 | INFO | Waiting for microphone to start streaming...
+2025-10-23 23:43:26 | INFO | Deepgram websocket connection created
+2025-10-23 23:43:26 | INFO | Starting Deepgram connection...
+2025-10-23 23:43:27 | INFO | Deepgram connection started successfully
+2025-10-23 23:43:27 | INFO | Creating microphone...
+2025-10-23 23:43:27 | INFO | Microphone created successfully
+2025-10-23 23:43:27 | INFO | Starting microphone...
+2025-10-23 23:43:27 | INFO | Microphone start() called
+2025-10-23 23:43:27 | INFO | Waiting for microphone to start...
+2025-10-23 23:43:27 | INFO | Microphone started successfully
+2025-10-23 23:43:27 | INFO | Microphone initialization completed successfully
+2025-10-23 23:43:27 | INFO | STT listening is now active!
+2025-10-23 23:43:27 | INFO | Microphone started successfully!
+2025-10-23 23:43:29 | INFO | Speech started event received
+2025-10-23 23:43:29 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:43:30 | INFO | Speech started event received
+2025-10-23 23:43:30 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 23:43:30 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:43:30 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:43:32 | DEBUG | Received transcript: 'Hello.' (final: False)
+2025-10-23 23:43:32 | DEBUG | Interim: Hello.
+2025-10-23 23:43:33 | INFO | Speech started event received
+2025-10-23 23:43:33 | DEBUG | Received transcript: 'Hello.' (final: True)
+2025-10-23 23:43:33 | INFO | Final transcript: Hello.
+2025-10-23 23:43:34 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:43:34 | INFO | Utterance end event received
+2025-10-23 23:43:34 | INFO | Finalized transcript: 'Hello.'
+2025-10-23 23:43:34 | DEBUG | Checking for trigger word 'yuki' in transcript: 'hello.'
+2025-10-23 23:43:34 | INFO | No trigger word detected, ignoring: 'Hello.'
+2025-10-23 23:43:35 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 23:43:36 | INFO | Speech started event received
+2025-10-23 23:43:36 | DEBUG | Received transcript: 'Yuki, hello?' (final: False)
+2025-10-23 23:43:36 | DEBUG | Interim: Yuki, hello?
+2025-10-23 23:43:37 | DEBUG | Received transcript: 'Yuki, hello?' (final: True)
+2025-10-23 23:43:37 | INFO | Final transcript: Yuki, hello?
+2025-10-23 23:43:38 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:43:38 | INFO | Utterance end event received
+2025-10-23 23:43:38 | INFO | Finalized transcript: 'Yuki, hello?'
+2025-10-23 23:43:38 | DEBUG | Checking for trigger word 'yuki' in transcript: 'yuki, hello?'
+2025-10-23 23:43:38 | INFO | Trigger word 'yuki' detected with command: 'hello?'
+2025-10-23 23:43:38 | INFO | Calling transcription callback with command: 'hello?'
+2025-10-23 23:43:38 | INFO | USER QUERY: hello?
+2025-10-23 23:43:38 | INFO | [33m[Starting] Task Analysis: Processing: 'hello?'[0m
+2025-10-23 23:43:38 | INFO | Finalized transcript: 'Yuki, hello?'
+2025-10-23 23:43:38 | DEBUG | Checking for trigger word 'yuki' in transcript: 'yuki, hello?'
+2025-10-23 23:43:38 | INFO | Trigger word 'yuki' detected with command: 'hello?'
+2025-10-23 23:43:38 | INFO | Calling transcription callback with command: 'hello?'
+2025-10-23 23:43:38 | INFO | Transcription callback completed successfully
+2025-10-23 23:43:39 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-23 23:43:42 | INFO | --- ITERATION 1/30 ---
+2025-10-23 23:43:42 | INFO | EVALUATE: Neutral - The agent is ready to receive instructions.
+2025-10-23 23:43:42 | INFO | PLAN: The user has sent a greeting "hello?". The agent should respond in a conversational manner.
+2025-10-23 23:43:42 | INFO | THOUGHT: The user sent a greeting. I should respond to acknowledge the greeting.
+2025-10-23 23:43:42 | INFO | [95mThe user sent a greeting. I should respond to acknowledge the greeting.[0m
+2025-10-23 23:43:42 | INFO | [33m[Reasoning] Agent Thought: The user sent a greeting. I should respond to acknowledge the greeting.[0m
+2025-10-23 23:43:42 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-23 23:43:42 | INFO | FINAL ANSWER: Hello there! How can I help you today?
+2025-10-23 23:43:42 | INFO | [36m
+Hello there! How can I help you today?[0m
+2025-10-23 23:43:42 | INFO | Generating speech for: Hello there! How can I help you today?...
+2025-10-23 23:43:44 | INFO | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1761243222520.mp3
+2025-10-23 23:43:44 | INFO | Transcription callback completed successfully
+2025-10-23 23:43:44 | INFO | Speech started event received
+2025-10-23 23:43:44 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:43:44 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:43:44 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 23:43:44 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:43:44 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:43:44 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:43:44 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:43:45 | INFO | Speech started event received
+2025-10-23 23:43:46 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 23:43:46 | INFO | Speech started event received
+2025-10-23 23:43:46 | DEBUG | Received transcript: 'Hi.' (final: False)
+2025-10-23 23:43:46 | DEBUG | Interim: Hi.
+2025-10-23 23:43:47 | DEBUG | Received transcript: 'Hi.' (final: True)
+2025-10-23 23:43:47 | INFO | Final transcript: Hi.
+2025-10-23 23:43:48 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:43:48 | INFO | Utterance end event received
+2025-10-23 23:43:48 | INFO | Finalized transcript: 'Hi.'
+2025-10-23 23:43:48 | DEBUG | Checking for trigger word 'yuki' in transcript: 'hi.'
+2025-10-23 23:43:48 | INFO | No trigger word detected, ignoring: 'Hi.'
+2025-10-23 23:43:49 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:43:50 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:43:51 | INFO | Speech started event received
+2025-10-23 23:43:51 | DEBUG | Received transcript: 'Yuki,' (final: False)
+2025-10-23 23:43:51 | DEBUG | Interim: Yuki,
+2025-10-23 23:43:52 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 23:43:53 | DEBUG | Received transcript: 'Yuki high.' (final: False)
+2025-10-23 23:43:53 | DEBUG | Interim: Yuki high.
+2025-10-23 23:43:54 | INFO | Speech started event received
+2025-10-23 23:43:55 | DEBUG | Received transcript: 'Yuki high.' (final: False)
+2025-10-23 23:43:55 | DEBUG | Interim: Yuki high.
+2025-10-23 23:43:56 | DEBUG | Received transcript: 'Yuki high.' (final: False)
+2025-10-23 23:43:56 | DEBUG | Interim: Yuki high.
+2025-10-23 23:43:57 | DEBUG | Received transcript: 'Yuki high.' (final: False)
+2025-10-23 23:43:57 | DEBUG | Interim: Yuki high.
+2025-10-23 23:43:58 | DEBUG | Received transcript: 'Yuki high.' (final: False)
+2025-10-23 23:43:58 | DEBUG | Interim: Yuki high.
+2025-10-23 23:43:59 | INFO | Speech started event received
+2025-10-23 23:43:59 | DEBUG | Received transcript: 'Yuki high.' (final: True)
+2025-10-23 23:43:59 | INFO | Final transcript: Yuki high.
+2025-10-23 23:43:59 | DEBUG | Received transcript: 'You' (final: False)
+2025-10-23 23:43:59 | DEBUG | Interim: You
+2025-10-23 23:43:59 | INFO | Utterance end event received
+2025-10-23 23:43:59 | INFO | Finalized transcript: 'Yuki high.'
+2025-10-23 23:43:59 | DEBUG | Checking for trigger word 'yuki' in transcript: 'yuki high.'
+2025-10-23 23:43:59 | INFO | Trigger word 'yuki' detected with command: 'high.'
+2025-10-23 23:43:59 | INFO | Calling transcription callback with command: 'high.'
+2025-10-23 23:43:59 | INFO | USER QUERY: high.
+2025-10-23 23:43:59 | INFO | [33m[Starting] Task Analysis: Processing: 'high.'[0m
+2025-10-23 23:44:00 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-23 23:44:01 | INFO | Finalized transcript: 'Yuki high.'
+2025-10-23 23:44:01 | DEBUG | Checking for trigger word 'yuki' in transcript: 'yuki high.'
+2025-10-23 23:44:01 | INFO | Trigger word 'yuki' detected with command: 'high.'
+2025-10-23 23:44:01 | INFO | Calling transcription callback with command: 'high.'
+2025-10-23 23:44:01 | INFO | Transcription callback completed successfully
+2025-10-23 23:44:04 | INFO | --- ITERATION 1/30 ---
+2025-10-23 23:44:04 | INFO | EVALUATE: Neutral - The desktop state is loaded.
+2025-10-23 23:44:04 | INFO | PLAN: The user query "high" is incomplete. I need to ask the user for clarification to understand what they want me to do.
+2025-10-23 23:44:04 | INFO | THOUGHT: The user query is ambiguous. I need to ask the user what they want me to do with "high".
+2025-10-23 23:44:04 | INFO | [95mThe user query is ambiguous. I need to ask the user what they want me to do with "high".[0m
+2025-10-23 23:44:04 | INFO | [33m[Reasoning] Agent Thought: The user query is ambiguous. I need to ask the user what they want me to do with "high".[0m
+2025-10-23 23:44:04 | INFO | [33m[Finalizing] Human Tool: Preparing response[0m
+2025-10-23 23:44:04 | INFO | FINAL ANSWER: What do you want me to do with "high"?
+2025-10-23 23:44:04 | INFO | Generating speech for: What do you want me to do with "high"?...
+2025-10-23 23:44:05 | INFO | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1761243244830.mp3
+2025-10-23 23:44:05 | INFO | Transcription callback completed successfully
+2025-10-23 23:44:05 | DEBUG | Received transcript: 'Yuki High.' (final: False)
+2025-10-23 23:44:05 | DEBUG | Interim: Yuki High.
+2025-10-23 23:44:05 | DEBUG | Received transcript: 'Yuki high.' (final: True)
+2025-10-23 23:44:05 | INFO | Final transcript: Yuki high.
+2025-10-23 23:44:05 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:44:05 | INFO | Utterance end event received
+2025-10-23 23:44:05 | INFO | Finalized transcript: 'Yuki high.'
+2025-10-23 23:44:05 | DEBUG | Checking for trigger word 'yuki' in transcript: 'yuki high.'
+2025-10-23 23:44:05 | INFO | Trigger word 'yuki' detected with command: 'high.'
+2025-10-23 23:44:05 | INFO | Calling transcription callback with command: 'high.'
+2025-10-23 23:44:05 | INFO | USER QUERY: high.
+2025-10-23 23:44:05 | INFO | [33m[Starting] Task Analysis: Processing: 'high.'[0m
+2025-10-23 23:44:06 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-23 23:44:07 | INFO | Finalized transcript: 'Yuki high.'
+2025-10-23 23:44:07 | DEBUG | Checking for trigger word 'yuki' in transcript: 'yuki high.'
+2025-10-23 23:44:07 | INFO | Trigger word 'yuki' detected with command: 'high.'
+2025-10-23 23:44:07 | INFO | Calling transcription callback with command: 'high.'
+2025-10-23 23:44:07 | INFO | Transcription callback completed successfully
+2025-10-23 23:44:09 | INFO | STTService.stop_listening() called
+2025-10-23 23:44:09 | INFO | Stopping listening...
+2025-10-23 23:44:09 | INFO | Waiting for listening thread to finish...
+2025-10-23 23:44:09 | INFO | Cleaning up STT resources...
+2025-10-23 23:44:10 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-23 23:44:10 | ERROR | Listening loop error traceback: Traceback (most recent call last):
+  File "H:\AIOS\Windows-Use\windows_use\agent\stt_service.py", line 353, in _listen_loop
+    self.microphone.finish()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "H:\AIOS\Windows-Use\venv\Lib\site-packages\deepgram\audio\microphone\microphone.py", line 264, in finish
+    self._asyncio_thread
+AttributeError: 'Microphone' object has no attribute '_asyncio_thread'
+
+2025-10-23 23:44:10 | INFO | Listening thread finished successfully
+2025-10-23 23:44:10 | INFO | STT listening stopped
+2025-10-23 23:44:10 | INFO | --- ITERATION 1/30 ---
+2025-10-23 23:44:10 | INFO | EVALUATE: Neutral - The user query "high" is incomplete and doesn't specify an action. It's unclear what the user wants me to do.
+2025-10-23 23:44:10 | INFO | PLAN: The user query "high" is ambiguous. I need to ask the user for clarification to understand their intent.
+2025-10-23 23:44:10 | INFO | THOUGHT: The user's query "high" is not actionable. I need to ask the user what they want me to do with "high".
+2025-10-23 23:44:10 | INFO | [95mThe user's query "high" is not actionable. I need to ask the user what they want me to do with "high".[0m
+2025-10-23 23:44:10 | INFO | [33m[Reasoning] Agent Thought: The user's query "high" is not actionable. I need to ask the user what they want me to do with "high".[0m
+2025-10-23 23:44:10 | INFO | [33m[Finalizing] Human Tool: Preparing response[0m
+2025-10-23 23:44:10 | INFO | FINAL ANSWER: What do you want me to do with "high"? Please provide more context or instructions.
+2025-10-23 23:44:10 | INFO | Generating speech for: What do you want me to do with "high"? Please prov...
+2025-10-23 23:44:10 | ERROR | Failed to generate speech: headers: {'date': 'Thu, 23 Oct 2025 18:14:11 GMT', 'server': 'uvicorn', 'content-length': '170', 'content-type': 'application/json', 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'POST, PATCH, OPTIONS, DELETE, GET, PUT', 'access-control-max-age': '600', 'strict-transport-security': 'max-age=31536000; includeSubDomains', 'x-trace-id': 'eba539c340f820b64bada6a0b2343430', 'x-region': 'us-central1', 'via': '1.1 google, 1.1 google', 'alt-svc': 'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000'}, status_code: 401, body: {'detail': {'status': 'quota_exceeded', 'message': 'This request exceeds your quota of 10000. You have 0 credits remaining, while 83 credits are required for this request.'}}
+2025-10-23 23:44:10 | INFO | Transcription callback completed successfully
+2025-10-23 23:44:10 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:44:10 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:44:10 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:44:10 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 23:44:10 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:44:10 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:44:10 | INFO | Speech started event received
+2025-10-23 23:44:10 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:44:10 | DEBUG | Received transcript: '' (final: True)
+2025-10-23 23:44:10 | DEBUG | Received transcript: '' (final: False)
