@@ -33,7 +33,7 @@ class STTService:
     
     def __init__(self, api_key: Optional[str] = None, enable_stt: bool = True, 
                  on_transcription: Optional[Callable[[str], None]] = None,
-                 latency_mode: str = "fast", trigger_word: str = "yuki"):
+                 latency_mode: str = "balanced", trigger_word: str = "yuki"):
         """
         Initialize STT service
         
@@ -144,7 +144,6 @@ class STTService:
             start_deadline = time.time() + 5.0  # 5s timeout
             while time.time() < start_deadline:
                 if self.is_listening:
-                    logger.info("Started listening for speech...")
                     return True
                 # If thread died early, abort
                 if self.listening_thread and not self.listening_thread.is_alive():
@@ -160,9 +159,12 @@ class STTService:
     
     def _listen_loop(self):
         """Main listening loop that handles Deepgram streaming"""
+        logger.info("Starting _listen_loop...")
         try:
             # Create a websocket connection to Deepgram
+            logger.info("Creating Deepgram websocket connection...")
             self.deepgram_connection = self.deepgram.listen.websocket.v("1")
+            logger.info("Deepgram websocket connection created")
             
             # Buffer to accumulate partial transcripts
             self.current_transcript = ""
@@ -243,49 +245,64 @@ class STTService:
             )
             
             # Start the connection
+            logger.info("Starting Deepgram connection...")
             if not self.deepgram_connection.start(options):
                 logger.error("Failed to start Deepgram connection")
+                self.is_listening = False
                 return
+            logger.info("Deepgram connection started successfully")
             
             # Create and start microphone with error handling
+            logger.info("Creating microphone...")
             try:
                 self.microphone = Microphone(self.deepgram_connection.send)
+                logger.info("Microphone object created")
                 
                 # Start microphone with timeout
-                import threading
-                import time
                 
                 mic_started = threading.Event()
                 mic_error = [None]
                 
                 def start_mic():
                     try:
+                        logger.info("Starting microphone in thread...")
                         self.microphone.start()
+                        logger.info("Microphone started successfully in thread")
                         mic_started.set()
                     except Exception as e:
+                        logger.error(f"Microphone start failed in thread: {e}")
                         mic_error[0] = e
                         mic_started.set()
                 
                 # Start microphone in a separate thread with timeout
+                logger.info("Starting microphone thread...")
                 mic_thread = threading.Thread(target=start_mic, daemon=True)
                 mic_thread.start()
+                logger.info("Microphone thread started")
                 
                 # Wait for microphone to start or timeout after 5 seconds
+                logger.info("Waiting for microphone to start (5s timeout)...")
                 if not mic_started.wait(timeout=5.0):
+                    logger.error("Microphone initialization timed out")
                     raise Exception("Microphone initialization timed out")
                 
                 if mic_error[0]:
+                    logger.error(f"Microphone initialization failed: {mic_error[0]}")
                     raise mic_error[0]
+                    
+                logger.info("Microphone initialization completed successfully")
                     
             except Exception as mic_error:
                 logger.error(f"Failed to initialize microphone: {mic_error}")
                 # Clean up the connection
                 if self.deepgram_connection:
                     try:
+                        logger.info("Cleaning up Deepgram connection...")
                         self.deepgram_connection.finish()
                     except:
                         pass
-                raise mic_error
+                self.is_listening = False
+                return
             
             self.is_listening = True
             logger.info("Microphone opened and streaming...")

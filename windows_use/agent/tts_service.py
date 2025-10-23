@@ -51,18 +51,23 @@ class TTSService:
         self.playback_thread = None
         self.stop_playback = threading.Event()
         
+        logger.info("Initializing TTS service...")
+        
         if not self.enabled:
             logger.warning("TTS is disabled or ElevenLabs not available")
             return
             
         # Initialize ElevenLabs
+        logger.info("Checking ElevenLabs API key...")
         api_key_to_use = api_key or os.getenv("ELEVENLABS_API_KEY")
         if not api_key_to_use:
             logger.warning("No ElevenLabs API key provided. TTS will be disabled.")
             self.enabled = False
             return
             
+        logger.info("Creating ElevenLabs client...")
         self.client = ElevenLabs(api_key=api_key_to_use)
+        logger.info("ElevenLabs client created successfully")
         
         # Initialize pygame for audio playback
         if PYGAME_AVAILABLE:
@@ -196,14 +201,18 @@ class TTSService:
         Returns:
             True if successful, False otherwise
         """
+        logger.info(f"TTS speak called with text: '{text[:50]}{'...' if len(text) > 50 else ''}'")
+        
         if not self.enabled:
             logger.debug("TTS is disabled")
             return False
             
         if not text or not text.strip():
+            logger.warning("Empty text provided to TTS")
             return False
             
         # Stop any current speech
+        logger.info("Stopping current speech...")
         self.stop_current_speech()
         
         # Generate audio

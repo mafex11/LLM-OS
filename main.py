@@ -186,6 +186,7 @@ def run_voice_mode(agent):
         return False
     
     print("STT Status: Enabled and ready")
+    print("STT Service initialized with balanced latency mode")
     print("\n🎤 Voice Commands with Trigger Word:")
     print("  - Say 'yuki' followed by your command (e.g., 'yuki, open my calendar')")
     print("  - Only commands preceded by 'yuki' will be processed")
