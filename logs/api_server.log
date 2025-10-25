@@ -1,0 +1,129 @@
+2025-10-24 19:19:41,424 - __main__ - INFO - Loading environment from: H:\AIOS\Windows-Use\.env
+2025-10-24 19:19:41,549 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'H:\\AIOS\\Windows-Use\\venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-10-24 19:19:41,549 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'H:\AIOS\Windows-Use\venv\Lib\site-packages\comtypes\gen'
+2025-10-24 19:36:41,503 - __main__ - INFO - Loading environment from: H:\AIOS\Windows-Use\.env
+2025-10-24 19:36:41,690 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'H:\\AIOS\\Windows-Use\\venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-10-24 19:36:41,691 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'H:\AIOS\Windows-Use\venv\Lib\site-packages\comtypes\gen'
+2025-10-24 19:36:46,649 - __main__ - INFO - Starting agent initialization...
+2025-10-24 19:36:46,649 - windows_use - INFO - ================================================================================
+2025-10-24 19:36:46,650 - windows_use - INFO - NEW SESSION STARTED
+2025-10-24 19:36:46,650 - windows_use - INFO - ================================================================================
+2025-10-24 19:36:46,650 - __main__ - INFO - Session logging started
+2025-10-24 19:36:46,651 - __main__ - INFO - Looking for API keys in config file: H:\AIOS\Windows-Use\config\api_keys.json
+2025-10-24 19:36:46,651 - __main__ - WARNING - Config file not found: H:\AIOS\Windows-Use\config\api_keys.json
+2025-10-24 19:36:46,652 - __main__ - INFO - Creating default API keys file...
+2025-10-24 19:36:46,654 - __main__ - INFO - Default API keys file created at: H:\AIOS\Windows-Use\config\api_keys.json
+2025-10-24 19:36:46,655 - __main__ - ERROR - Google API key is not set. Please configure it in the settings page.
+2025-10-24 19:36:46,655 - __main__ - ERROR - Failed to initialize agent: Google API key is not set. Please configure it in the settings page.
+2025-10-24 19:36:48,756 - __main__ - INFO - System status requested - agent_initialized: False, agent: False
+2025-10-24 19:36:48,757 - __main__ - ERROR - System status requested but agent not initialized
+2025-10-24 19:36:53,452 - __main__ - INFO - System status requested - agent_initialized: False, agent: False
+2025-10-24 19:36:53,452 - __main__ - ERROR - System status requested but agent not initialized
+2025-10-24 19:36:58,452 - __main__ - INFO - System status requested - agent_initialized: False, agent: False
+2025-10-24 19:36:58,453 - __main__ - ERROR - System status requested but agent not initialized
+2025-10-24 19:37:03,452 - __main__ - INFO - System status requested - agent_initialized: False, agent: False
+2025-10-24 19:37:03,453 - __main__ - ERROR - System status requested but agent not initialized
+2025-10-24 19:37:08,454 - __main__ - INFO - System status requested - agent_initialized: False, agent: False
+2025-10-24 19:37:08,455 - __main__ - ERROR - System status requested but agent not initialized
+2025-10-24 19:37:13,757 - __main__ - INFO - System status requested - agent_initialized: False, agent: False
+2025-10-24 19:37:13,757 - __main__ - ERROR - System status requested but agent not initialized
+2025-10-25 15:25:52,459 - __main__ - INFO - Loading environment from: H:\AIOS\Windows-Use\.env
+2025-10-25 15:25:52,575 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'H:\\AIOS\\Windows-Use\\venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-10-25 15:25:52,575 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'H:\AIOS\Windows-Use\venv\Lib\site-packages\comtypes\gen'
+2025-10-25 15:25:59,693 - __main__ - INFO - Starting agent initialization...
+2025-10-25 15:25:59,694 - windows_use - INFO - ================================================================================
+2025-10-25 15:25:59,695 - windows_use - INFO - NEW SESSION STARTED
+2025-10-25 15:25:59,695 - windows_use - INFO - ================================================================================
+2025-10-25 15:25:59,695 - __main__ - INFO - Session logging started
+2025-10-25 15:25:59,695 - __main__ - INFO - Looking for API keys in config file: H:\AIOS\Windows-Use\config\api_keys.json
+2025-10-25 15:25:59,696 - __main__ - INFO - Found Google API key: No
+2025-10-25 15:25:59,697 - __main__ - INFO - Creating default API keys file...
+2025-10-25 15:25:59,698 - __main__ - INFO - Default API keys file created at: H:\AIOS\Windows-Use\config\api_keys.json
+2025-10-25 15:25:59,698 - __main__ - ERROR - Google API key is not set. Please configure it in the settings page.
+2025-10-25 15:25:59,699 - __main__ - ERROR - Failed to initialize agent: Google API key is not set. Please configure it in the settings page.
+2025-10-25 15:55:25,760 - __main__ - INFO - System status requested - agent_initialized: False, agent: False
+2025-10-25 15:55:25,761 - __main__ - ERROR - System status requested but agent not initialized
+2025-10-25 15:55:25,767 - __main__ - INFO - System status requested - agent_initialized: False, agent: False
+2025-10-25 15:55:25,767 - __main__ - ERROR - System status requested but agent not initialized
+2025-10-25 15:55:30,463 - __main__ - INFO - System status requested - agent_initialized: False, agent: False
+2025-10-25 15:55:30,463 - __main__ - ERROR - System status requested but agent not initialized
+2025-10-25 15:55:35,463 - __main__ - INFO - System status requested - agent_initialized: False, agent: False
+2025-10-25 15:55:35,464 - __main__ - ERROR - System status requested but agent not initialized
+2025-10-25 15:55:40,463 - __main__ - INFO - System status requested - agent_initialized: False, agent: False
+2025-10-25 15:55:40,463 - __main__ - ERROR - System status requested but agent not initialized
+2025-10-25 15:55:45,463 - __main__ - INFO - System status requested - agent_initialized: False, agent: False
+2025-10-25 15:55:45,463 - __main__ - ERROR - System status requested but agent not initialized
+2025-10-25 15:55:50,463 - __main__ - INFO - System status requested - agent_initialized: False, agent: False
+2025-10-25 15:55:50,463 - __main__ - ERROR - System status requested but agent not initialized
+2025-10-25 15:55:55,462 - __main__ - INFO - System status requested - agent_initialized: False, agent: False
+2025-10-25 15:55:55,463 - __main__ - ERROR - System status requested but agent not initialized
+2025-10-25 15:56:00,463 - __main__ - INFO - System status requested - agent_initialized: False, agent: False
+2025-10-25 15:56:00,463 - __main__ - ERROR - System status requested but agent not initialized
+2025-10-25 15:56:09,779 - __main__ - INFO - Server shutdown initiated
+2025-10-25 15:56:09,780 - windows_use - INFO - ================================================================================
+2025-10-25 15:56:09,780 - windows_use - INFO - SESSION ENDED
+2025-10-25 15:56:09,780 - windows_use - INFO - ================================================================================
+
+2025-10-25 15:56:09,780 - __main__ - INFO - Session logged successfully on shutdown
+2025-10-25 17:07:15,904 - __main__ - INFO - Loading environment from: H:\AIOS\Windows-Use\.env
+2025-10-25 17:07:16,011 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'H:\\AIOS\\Windows-Use\\venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-10-25 17:07:16,012 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'H:\AIOS\Windows-Use\venv\Lib\site-packages\comtypes\gen'
+2025-10-25 17:07:20,709 - __main__ - INFO - Starting agent initialization...
+2025-10-25 17:07:20,709 - windows_use - INFO - ================================================================================
+2025-10-25 17:07:20,710 - windows_use - INFO - NEW SESSION STARTED
+2025-10-25 17:07:20,710 - windows_use - INFO - ================================================================================
+2025-10-25 17:07:20,710 - __main__ - INFO - Session logging started
+2025-10-25 17:07:20,710 - __main__ - INFO - Looking for API keys in config file: H:\AIOS\Windows-Use\config\api_keys.json
+2025-10-25 17:07:20,711 - __main__ - INFO - Found Google API key: Yes
+2025-10-25 17:07:20,711 - __main__ - INFO - Initializing ChatGoogleGenerativeAI...
+2025-10-25 17:07:20,754 - __main__ - INFO - ChatGoogleGenerativeAI initialized successfully
+2025-10-25 17:07:20,754 - __main__ - INFO - Checking TTS configuration...
+2025-10-25 17:07:20,755 - __main__ - INFO - ElevenLabs API key found, TTS enabled
+2025-10-25 17:07:20,755 - __main__ - INFO - Initializing Agent with parameters...
+2025-10-25 17:07:21,669 - windows_use.agent.tts_service - INFO - TTS Service initialized - Enabled: True, Audio: True
+2025-10-25 17:07:21,670 - __main__ - INFO - Agent initialized successfully
+2025-10-25 17:07:21,670 - __main__ - INFO - Getting running programs...
+2025-10-25 17:07:22,191 - __main__ - INFO - Found 5 running programs
+2025-10-25 17:07:22,191 - __main__ - INFO - Pre-warming system for faster response...
+2025-10-25 17:07:23,436 - __main__ - INFO - System pre-warmed successfully
+2025-10-25 17:07:23,794 - windows_use.agent.tts_service - INFO - TTS Service initialized - Enabled: True, Audio: True
+2025-10-25 17:07:23,794 - __main__ - INFO - TTS Status: Enabled
+2025-10-25 17:07:23,795 - __main__ - INFO - Creating streaming wrapper...
+2025-10-25 17:07:23,795 - __main__ - INFO - Streaming wrapper created
+2025-10-25 17:07:23,795 - __main__ - INFO - Agent initialization completed successfully
+2025-10-25 17:07:37,852 - __main__ - INFO - System status requested - agent_initialized: True, agent: True
+2025-10-25 17:07:37,852 - __main__ - INFO - Getting running programs...
+2025-10-25 17:07:38,538 - __main__ - INFO - Found 5 running programs
+2025-10-25 17:07:38,538 - __main__ - INFO - Memory stats retrieved successfully
+2025-10-25 17:07:38,539 - __main__ - INFO - Performance stats retrieved successfully
+2025-10-25 17:07:38,539 - __main__ - INFO - System status retrieved successfully
+2025-10-25 17:07:42,547 - __main__ - INFO - System status requested - agent_initialized: True, agent: True
+2025-10-25 17:07:42,547 - __main__ - INFO - Getting running programs...
+2025-10-25 17:07:43,018 - __main__ - INFO - Found 5 running programs
+2025-10-25 17:07:43,018 - __main__ - INFO - Memory stats retrieved successfully
+2025-10-25 17:07:43,018 - __main__ - INFO - Performance stats retrieved successfully
+2025-10-25 17:07:43,018 - __main__ - INFO - System status retrieved successfully
+2025-10-25 17:07:47,547 - __main__ - INFO - System status requested - agent_initialized: True, agent: True
+2025-10-25 17:07:47,547 - __main__ - INFO - Getting running programs...
+2025-10-25 17:07:47,992 - __main__ - INFO - Found 5 running programs
+2025-10-25 17:07:47,992 - __main__ - INFO - Memory stats retrieved successfully
+2025-10-25 17:07:47,993 - __main__ - INFO - Performance stats retrieved successfully
+2025-10-25 17:07:47,993 - __main__ - INFO - System status retrieved successfully
+2025-10-25 17:07:52,551 - __main__ - INFO - System status requested - agent_initialized: True, agent: True
+2025-10-25 17:07:52,552 - __main__ - INFO - Getting running programs...
+2025-10-25 17:07:53,012 - __main__ - INFO - Found 5 running programs
+2025-10-25 17:07:53,013 - __main__ - INFO - Memory stats retrieved successfully
+2025-10-25 17:07:53,013 - __main__ - INFO - Performance stats retrieved successfully
+2025-10-25 17:07:53,013 - __main__ - INFO - System status retrieved successfully
+2025-10-25 17:07:57,546 - __main__ - INFO - System status requested - agent_initialized: True, agent: True
+2025-10-25 17:07:57,547 - __main__ - INFO - Getting running programs...
+2025-10-25 17:07:58,012 - __main__ - INFO - Found 5 running programs
+2025-10-25 17:07:58,012 - __main__ - INFO - Memory stats retrieved successfully
+2025-10-25 17:07:58,013 - __main__ - INFO - Performance stats retrieved successfully
+2025-10-25 17:07:58,013 - __main__ - INFO - System status retrieved successfully
+2025-10-25 17:08:00,021 - __main__ - INFO - Server shutdown initiated
+2025-10-25 17:08:00,021 - windows_use - INFO - ================================================================================
+2025-10-25 17:08:00,022 - windows_use - INFO - SESSION ENDED
+2025-10-25 17:08:00,022 - windows_use - INFO - ================================================================================
+
+2025-10-25 17:08:00,022 - __main__ - INFO - Session logged successfully on shutdown

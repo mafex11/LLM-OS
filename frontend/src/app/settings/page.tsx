@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { 
   BotIcon, 
   Key01Icon, 
@@ -21,13 +23,15 @@ import {
   Sun01Icon, 
   Moon02Icon, 
   PaintBrush01Icon,
-  Home01Icon
+  Home01Icon,
+  Cancel01Icon
 } from "hugeicons-react"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
-import { useApiKeys } from "@/contexts/ApiKeyContext"
+import { useAudioDevices } from "@/hooks/useAudioDevices"
+// Removed useApiKeys import - using config file only
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 
@@ -48,7 +52,8 @@ export default function SettingsPage() {
   const router = useRouter()
   const { toast } = useToast()
   const { theme, setTheme } = useTheme()
-  const { apiKeys, updateApiKey, hasApiKey } = useApiKeys()
+  const audioDevices = useAudioDevices()
+  // Removed context dependency - using config file only
   const [showSidebar, setShowSidebar] = useState(true)
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null)
   const [showApiKeys, setShowApiKeys] = useState({
@@ -57,9 +62,11 @@ export default function SettingsPage() {
     deepgram_api_key: false
   })
   const [savingKeys, setSavingKeys] = useState(false)
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
-  const [pendingApiKey, setPendingApiKey] = useState("")
-  const [pendingApiKeyType, setPendingApiKeyType] = useState<keyof ApiKeys | null>(null)
+  const [apiKeyInputs, setApiKeyInputs] = useState<ApiKeys>({
+    google_api_key: "",
+    elevenlabs_api_key: "",
+    deepgram_api_key: ""
+  })
 
   const fetchSystemStatus = async () => {
     try {
@@ -70,87 +77,110 @@ export default function SettingsPage() {
       }
     } catch (error) {
       console.error("Failed to fetch system status:", error)
+      // Set a default status when backend is not available
+      setSystemStatus({
+        agent_ready: false,
+        running_programs: [],
+        memory_stats: null,
+        performance_stats: null
+      })
     }
   }
 
-  const fetchApiKeys = useCallback(async () => {
+  const loadApiKeys = useCallback(async () => {
     try {
       const response = await fetch("http://localhost:8000/api/config/keys")
       if (response.ok) {
         const data = await response.json()
-        // Update context with fetched API keys
-        updateApiKey('google_api_key', data.google_api_key || "")
-        updateApiKey('elevenlabs_api_key', data.elevenlabs_api_key || "")
-        updateApiKey('deepgram_api_key', data.deepgram_api_key || "")
+        // Load API keys into input fields
+        setApiKeyInputs({
+          google_api_key: data.google_api_key || "",
+          elevenlabs_api_key: data.elevenlabs_api_key || "",
+          deepgram_api_key: data.deepgram_api_key || ""
+        })
       }
     } catch (error) {
       console.error("Failed to fetch API keys:", error)
+      // Keep existing values when backend is not available
     }
-  }, [updateApiKey])
+  }, [])
 
   useEffect(() => {
     fetchSystemStatus()
-    fetchApiKeys()
+    loadApiKeys()
     const interval = setInterval(fetchSystemStatus, 5000)
     return () => clearInterval(interval)
-  }, [fetchApiKeys])
+  }, [loadApiKeys])
 
   const handleApiKeyChange = (keyType: keyof ApiKeys, value: string) => {
-    setPendingApiKey(value)
-    setPendingApiKeyType(keyType)
-    setShowConfirmDialog(true)
+    // Update input field state
+    setApiKeyInputs(prev => ({
+      ...prev,
+      [keyType]: value
+    }))
   }
 
-  const confirmApiKeyChange = async () => {
-    if (!pendingApiKeyType) return
-    
-    updateApiKey(pendingApiKeyType, pendingApiKey)
-    setShowConfirmDialog(false)
-    
-    // Save to backend for backup (optional)
+  const saveApiKeys = async () => {
     setSavingKeys(true)
+    
     try {
-      const updatedKeys = {
-        ...apiKeys,
-        [pendingApiKeyType]: pendingApiKey
-      }
-      
+      // Save to backend config file only
       const response = await fetch("http://localhost:8000/api/config/keys", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(updatedKeys),
+        body: JSON.stringify(apiKeyInputs),
       })
 
       if (response.ok) {
         toast({
-          title: "Success",
-          description: `${pendingApiKeyType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} API key saved!`,
+          title: "API Keys Saved",
+          description: "All API keys have been saved successfully!",
         })
       } else {
-        // Even if backend save fails, the frontend key is still saved
         toast({
-          title: "Success",
-          description: `${pendingApiKeyType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} API key saved!`,
+          title: "Error",
+          description: "Failed to save API keys to config file.",
+          variant: "destructive"
         })
       }
     } catch (error) {
-      // Even if backend save fails, the frontend key is still saved
+      console.error("Failed to save API keys:", error)
       toast({
-        title: "Success",
-        description: `${pendingApiKeyType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} API key saved!`,
+        title: "Backend Unavailable",
+        description: "Cannot connect to backend server. Please ensure the server is running.",
+        variant: "destructive"
       })
     } finally {
       setSavingKeys(false)
     }
   }
 
-  const cancelApiKeyChange = () => {
-    setShowConfirmDialog(false)
-    setPendingApiKey("")
-    setPendingApiKeyType(null)
+  const resetApiKeys = () => {
+    // Clear all input fields
+    setApiKeyInputs({
+      google_api_key: "",
+      elevenlabs_api_key: "",
+      deepgram_api_key: ""
+    })
+    toast({
+      title: "API Keys Cleared",
+      description: "All API key fields have been cleared.",
+    })
   }
+
+  const clearApiKey = (keyType: keyof ApiKeys) => {
+    setApiKeyInputs(prev => ({
+      ...prev,
+      [keyType]: ""
+    }))
+    toast({
+      title: "API Key Cleared",
+      description: `${keyType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} field has been cleared.`,
+    })
+  }
+
 
   return (
     <div className="flex h-screen relative">
@@ -280,21 +310,50 @@ export default function SettingsPage() {
                         <Input
                           id="google_api_key"
                           type={showApiKeys.google_api_key ? "text" : "password"}
-                          value={apiKeys.google_api_key}
+                          value={apiKeyInputs.google_api_key}
                           onChange={(e) => handleApiKeyChange('google_api_key', e.target.value)}
                           placeholder="Enter your Google API key"
                           className="pr-10 bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white placeholder:text-gray-500"
                         />
+                        <div className="absolute right-0 top-0 h-full flex">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-full px-2"
+                            onClick={() => clearApiKey('google_api_key')}
+                            disabled={!apiKeyInputs.google_api_key}
+                          >
+                            <Cancel01Icon size={14} />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-full px-2"
+                            onClick={() => {
+                              navigator.clipboard.writeText(apiKeyInputs.google_api_key)
+                              toast({
+                                title: "Copied!",
+                                description: "Google API key copied to clipboard",
+                              })
+                            }}
+                            disabled={!apiKeyInputs.google_api_key}
+                          >
+                            <FloppyDiskIcon size={14} />
+                          </Button>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="absolute right-0 top-0 h-full px-3"
+                            className="h-full px-2"
                           onClick={() => setShowApiKeys({ ...showApiKeys, google_api_key: !showApiKeys.google_api_key })}
                         >
                           {showApiKeys.google_api_key ? <ViewOffIcon size={16} /> : <ViewIcon size={16} />}
                         </Button>
                       </div>
+                      </div>
+                      <div className="flex items-center justify-between">
                       <p className="text-xs text-muted-foreground">
                         Required for Gemini AI. Get your key from{" "}
                         <a 
@@ -306,6 +365,12 @@ export default function SettingsPage() {
                           Google AI Studio
                         </a>
                       </p>
+                        {apiKeyInputs.google_api_key && (
+                          <Badge variant="secondary" className="text-xs">
+                            ✓ Configured
+                          </Badge>
+                        )}
+                      </div>
                     </div>
 
                     <Separator />
@@ -318,21 +383,50 @@ export default function SettingsPage() {
                         <Input
                           id="elevenlabs_api_key"
                           type={showApiKeys.elevenlabs_api_key ? "text" : "password"}
-                          value={apiKeys.elevenlabs_api_key}
+                          value={apiKeyInputs.elevenlabs_api_key}
                           onChange={(e) => handleApiKeyChange('elevenlabs_api_key', e.target.value)}
                           placeholder="Enter your ElevenLabs API key (optional)"
                           className="pr-10 bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white placeholder:text-gray-500"
                         />
+                        <div className="absolute right-0 top-0 h-full flex">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-full px-2"
+                            onClick={() => clearApiKey('elevenlabs_api_key')}
+                            disabled={!apiKeyInputs.elevenlabs_api_key}
+                          >
+                            <Cancel01Icon size={14} />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-full px-2"
+                            onClick={() => {
+                              navigator.clipboard.writeText(apiKeyInputs.elevenlabs_api_key)
+                              toast({
+                                title: "Copied!",
+                                description: "ElevenLabs API key copied to clipboard",
+                              })
+                            }}
+                            disabled={!apiKeyInputs.elevenlabs_api_key}
+                          >
+                            <FloppyDiskIcon size={14} />
+                          </Button>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="absolute right-0 top-0 h-full px-3"
+                            className="h-full px-2"
                           onClick={() => setShowApiKeys({ ...showApiKeys, elevenlabs_api_key: !showApiKeys.elevenlabs_api_key })}
                         >
                           {showApiKeys.elevenlabs_api_key ? <ViewOffIcon size={16} /> : <ViewIcon size={16} />}
                         </Button>
                       </div>
+                      </div>
+                      <div className="flex items-center justify-between">
                       <p className="text-xs text-muted-foreground">
                         Optional for text-to-speech. Get your key from{" "}
                         <a 
@@ -344,6 +438,12 @@ export default function SettingsPage() {
                           ElevenLabs
                         </a>
                       </p>
+                        {apiKeyInputs.elevenlabs_api_key && (
+                          <Badge variant="secondary" className="text-xs">
+                            ✓ Configured
+                          </Badge>
+                        )}
+                      </div>
                     </div>
 
                     <Separator />
@@ -356,21 +456,50 @@ export default function SettingsPage() {
                         <Input
                           id="deepgram_api_key"
                           type={showApiKeys.deepgram_api_key ? "text" : "password"}
-                          value={apiKeys.deepgram_api_key}
+                          value={apiKeyInputs.deepgram_api_key}
                           onChange={(e) => handleApiKeyChange('deepgram_api_key', e.target.value)}
                           placeholder="Enter your Deepgram API key (optional)"
                           className="pr-10 bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white placeholder:text-gray-500"
                         />
+                        <div className="absolute right-0 top-0 h-full flex">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-full px-2"
+                            onClick={() => clearApiKey('deepgram_api_key')}
+                            disabled={!apiKeyInputs.deepgram_api_key}
+                          >
+                            <Cancel01Icon size={14} />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-full px-2"
+                            onClick={() => {
+                              navigator.clipboard.writeText(apiKeyInputs.deepgram_api_key)
+                              toast({
+                                title: "Copied!",
+                                description: "Deepgram API key copied to clipboard",
+                              })
+                            }}
+                            disabled={!apiKeyInputs.deepgram_api_key}
+                          >
+                            <FloppyDiskIcon size={14} />
+                          </Button>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="absolute right-0 top-0 h-full px-3"
+                            className="h-full px-2"
                           onClick={() => setShowApiKeys({ ...showApiKeys, deepgram_api_key: !showApiKeys.deepgram_api_key })}
                         >
                           {showApiKeys.deepgram_api_key ? <ViewOffIcon size={16} /> : <ViewIcon size={16} />}
                         </Button>
                       </div>
+                      </div>
+                      <div className="flex items-center justify-between">
                       <p className="text-xs text-muted-foreground">
                         Optional for voice control. Get your key from{" "}
                         <a 
@@ -382,10 +511,293 @@ export default function SettingsPage() {
                           Deepgram
                         </a>
                       </p>
+                        {apiKeyInputs.deepgram_api_key && (
+                          <Badge variant="secondary" className="text-xs">
+                            ✓ Configured
+                          </Badge>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="text-xs text-muted-foreground text-center">
-                      API key will be saved automatically when you confirm the change
+                    <div className="flex items-center justify-between pt-4">
+                      <div className="text-xs text-muted-foreground">
+                        Edit API keys above, then click Save to apply changes
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            toast({
+                              title: "API Keys Status",
+                              description: `Google: ${apiKeyInputs.google_api_key ? '✓' : '✗'}, ElevenLabs: ${apiKeyInputs.elevenlabs_api_key ? '✓' : '✗'}, Deepgram: ${apiKeyInputs.deepgram_api_key ? '✓' : '✗'}`,
+                            })
+                          }}
+                          className="text-xs"
+                        >
+                          Test Keys
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={resetApiKeys}
+                          className="text-xs"
+                        >
+                          Reset
+                        </Button>
+                        <Button
+                          onClick={saveApiKeys}
+                          disabled={savingKeys}
+                          size="sm"
+                          className="text-xs"
+                        >
+                          {savingKeys ? (
+                            <>
+                              <Loading01Icon size={14} className="mr-1 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <FloppyDiskIcon size={14} className="mr-1" />
+                              Save Keys
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              </motion.div>
+
+              {/* Audio Settings Card */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.3 }}
+              >
+                <Card className="bg-transparent border border-white/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BotIcon size={20} />
+                      Audio Settings
+                    </CardTitle>
+                    <CardDescription>
+                      Configure microphone and speaker settings for voice interactions
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      {/* Microphone Permission */}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-normal">
+                          Microphone Permission
+                        </Label>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Settings01Icon size={16} />
+                            <span className="text-sm">
+                              {audioDevices.hasPermission ? "Granted" : "Not Granted"}
+                            </span>
+                          </div>
+                          <div className="flex gap-2">
+                            {!audioDevices.hasPermission && (
+                              <Button
+                                onClick={async () => {
+                                  const granted = await audioDevices.requestPermission()
+                                  if (granted) {
+                                    toast({
+                                      title: "Permission Granted",
+                                      description: "Microphone access has been granted",
+                                    })
+                                  } else {
+                                    toast({
+                                      title: "Permission Denied",
+                                      description: "Microphone access was denied",
+                                      variant: "destructive"
+                                    })
+                                  }
+                                }}
+                                disabled={audioDevices.isLoading}
+                                size="sm"
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                {audioDevices.isLoading ? (
+                                  <>
+                                    <Loading01Icon size={14} className="mr-1 animate-spin" />
+                                    Requesting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <BotIcon size={14} className="mr-1" />
+                                    Grant Permission
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                            <Button
+                              onClick={audioDevices.refreshDevices}
+                              disabled={audioDevices.isLoading}
+                              size="sm"
+                              variant="outline"
+                              className="text-xs"
+                            >
+                              <Loading01Icon size={14} className="mr-1" />
+                              Refresh
+                            </Button>
+                          </div>
+                        </div>
+                        {audioDevices.error && (
+                          <p className="text-xs text-red-400">{audioDevices.error}</p>
+                        )}
+                      </div>
+
+                      <Separator />
+
+                      {/* Microphone Input Selector */}
+                      <div className="space-y-2">
+                        <Label htmlFor="microphone-input" className="text-sm font-normal">
+                          Microphone Input
+                        </Label>
+                        <Select
+                          value={audioDevices.selectedInputDevice || ""}
+                          onValueChange={audioDevices.setSelectedInputDevice}
+                          disabled={!audioDevices.hasPermission || audioDevices.isLoading}
+                        >
+                          <SelectTrigger 
+                            id="microphone-input"
+                            className="bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white"
+                          >
+                            <SelectValue placeholder="Select microphone..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-black/90 border border-white/20">
+                            {audioDevices.inputDevices.map((device) => (
+                              <SelectItem 
+                                key={device.deviceId} 
+                                value={device.deviceId}
+                                className="text-white hover:bg-white/10"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <BotIcon size={14} />
+                                  {device.label}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          {audioDevices.inputDevices.length} microphone(s) detected
+                        </p>
+                      </div>
+
+                      <Separator />
+
+                      {/* Audio Output Selector */}
+                      <div className="space-y-2">
+                        <Label htmlFor="audio-output" className="text-sm font-normal">
+                          Audio Output
+                        </Label>
+                        <Select
+                          value={audioDevices.selectedOutputDevice || ""}
+                          onValueChange={audioDevices.setSelectedOutputDevice}
+                          disabled={audioDevices.isLoading}
+                        >
+                          <SelectTrigger 
+                            id="audio-output"
+                            className="bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white"
+                          >
+                            <SelectValue placeholder="Select speaker..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-black/90 border border-white/20">
+                            {audioDevices.outputDevices.map((device) => (
+                              <SelectItem 
+                                key={device.deviceId} 
+                                value={device.deviceId}
+                                className="text-white hover:bg-white/10"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <ComputerIcon size={14} />
+                                  {device.label}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          {audioDevices.outputDevices.length} speaker(s) detected
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-4">
+                        <div className="text-xs text-muted-foreground">
+                          Audio settings are automatically saved
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              toast({
+                                title: "Audio Test",
+                                description: `Input: ${audioDevices.inputDevices.find(d => d.deviceId === audioDevices.selectedInputDevice)?.label || 'None'}, Output: ${audioDevices.outputDevices.find(d => d.deviceId === audioDevices.selectedOutputDevice)?.label || 'None'}`,
+                              })
+                            }}
+                            className="text-xs"
+                          >
+                            Test Audio
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* System Status Card */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.4 }}
+              >
+                <Card className="bg-transparent border border-white/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ComputerIcon size={20} />
+                      System Status
+                    </CardTitle>
+                    <CardDescription>
+                      Current status of Netra services
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Agent Status</span>
+                        <Badge variant={systemStatus?.agent_ready ? "default" : "destructive"}>
+                          {systemStatus?.agent_ready ? "✓ Ready" : "✗ Not Ready"}
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Running Programs</span>
+                        <Badge variant="secondary">
+                          {systemStatus?.running_programs?.length || 0} active
+                        </Badge>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Voice Mode</span>
+                        <Badge variant={apiKeyInputs.deepgram_api_key ? "default" : "secondary"}>
+                          {apiKeyInputs.deepgram_api_key ? "✓ Available" : "⚠ No API Key"}
+                        </Badge>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Text-to-Speech</span>
+                        <Badge variant={apiKeyInputs.elevenlabs_api_key ? "default" : "secondary"}>
+                          {apiKeyInputs.elevenlabs_api_key ? "✓ Available" : "⚠ No API Key"}
+                        </Badge>
                     </div>
                   </div>
                 </CardContent>
@@ -398,40 +810,6 @@ export default function SettingsPage() {
       </div>
 
       <Toaster />
-
-      {/* Confirm Dialog */}
-      {showConfirmDialog && pendingApiKeyType && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-background border rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-2">Confirm API Key Change</h3>
-            <p className="text-muted-foreground mb-4">
-              Are you sure you want to update your {pendingApiKeyType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} API key? This will take effect immediately.
-            </p>
-            <div className="flex gap-3 justify-end">
-              <Button
-                variant="outline"
-                onClick={cancelApiKeyChange}
-                disabled={savingKeys}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={confirmApiKeyChange}
-                disabled={savingKeys}
-              >
-                {savingKeys ? (
-                  <>
-                    <Loading01Icon size={16} className="mr-2 animate-spin" />
-                    Updating...
-                  </>
-                ) : (
-                  "Confirm"
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

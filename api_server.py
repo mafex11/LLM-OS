@@ -8,11 +8,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
+from contextlib import asynccontextmanager
 import asyncio
 import json
 import os
 import sys
 import time
+import logging
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -26,6 +28,18 @@ CACHE_PATH = os.getenv('WINDOWS_USE_CACHE_PATH', os.path.join(os.getcwd(), 'cach
 for path in [DATA_PATH, LOGS_PATH, CONFIG_PATH, CACHE_PATH]:
     os.makedirs(path, exist_ok=True)
 
+# Configure logging
+log_file = os.path.join(LOGS_PATH, 'api_server.log')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(log_file),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
+
 # Load environment variables from .env file
 # First try config directory (for desktop app), then current directory
 env_file_paths = [
@@ -35,10 +49,11 @@ env_file_paths = [
 
 for env_path in env_file_paths:
     if os.path.exists(env_path):
-        print(f"Loading environment from: {env_path}")
+        logger.info(f"Loading environment from: {env_path}")
         load_dotenv(env_path)
         break
 else:
+    logger.info("No .env file found, using system environment variables")
     load_dotenv()
 
 # Add the project root to the path
@@ -53,11 +68,181 @@ from main import get_running_programs
 import threading
 import uuid
 
-# Initialize FastAPI app
+# Lifespan context manager for startup/shutdown
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Handle application startup and shutdown"""
+    # Startup
+    global agent, streaming_wrapper, agent_initialized
+    
+    try:
+        logger.info("Starting agent initialization...")
+        print("Initializing Windows-Use Agent...")
+        
+        # Log session start (matching CLI behavior)
+        agent_logger.log_session_start()
+        logger.info("Session logging started")
+        
+        # Initialize LLM with API key
+        # Get Google API key from config file
+        config_file = os.path.join(CONFIG_PATH, "api_keys.json")
+        google_api_key = ""
+        
+        logger.info(f"Looking for API keys in config file: {config_file}")
+        print(f"🔍 Looking for API keys in: {config_file}")
+        if os.path.exists(config_file):
+            try:
+                with open(config_file, "r", encoding="utf-8") as f:
+                    config_data = json.load(f)
+                    google_api_key = config_data.get("google_api_key", "")
+                    logger.info(f"Found Google API key: {'Yes' if google_api_key else 'No'}")
+                    print(f"✅ Config file found - Google API key: {'Yes' if google_api_key else 'No'}")
+            except Exception as e:
+                logger.error(f"Error reading config file: {e}")
+                print(f"❌ Error reading config file: {e}")
+        else:
+            logger.warning(f"Config file not found: {config_file}")
+            print(f"⚠️  Config file not found: {config_file}")
+            print(f"📁 Directory exists: {os.path.exists(os.path.dirname(config_file))}")
+            print(f"📂 Directory contents: {os.listdir(os.path.dirname(config_file)) if os.path.exists(os.path.dirname(config_file)) else 'Directory does not exist'}")
+            
+        if not google_api_key:
+            # Try to create a default API keys file
+            logger.info("Creating default API keys file...")
+            print("🔧 Creating default API keys file...")
+            try:
+                default_config = {
+                    "google_api_key": "",
+                    "elevenlabs_api_key": "",
+                    "deepgram_api_key": "",
+                    "last_updated": datetime.now().isoformat(),
+                    "version": "1.0"
+                }
+                
+                # Ensure config directory exists
+                os.makedirs(CONFIG_PATH, exist_ok=True)
+                
+                with open(config_file, "w", encoding="utf-8") as f:
+                    json.dump(default_config, f, indent=2, ensure_ascii=False)
+                
+                logger.info(f"Default API keys file created at: {config_file}")
+                print(f"✅ Default API keys file created at: {config_file}")
+                print("📝 Please configure your API keys in the settings page")
+                
+            except Exception as e:
+                logger.error(f"Failed to create default API keys file: {e}")
+                print(f"❌ Failed to create default API keys file: {e}")
+            
+            error_msg = "Google API key is not set. Please configure it in the settings page."
+            logger.error(error_msg)
+            print(f"🚨 {error_msg}")
+            raise ValueError(error_msg)
+        
+        logger.info("Initializing ChatGoogleGenerativeAI...")
+        llm = ChatGoogleGenerativeAI(
+            model="gemini-2.0-flash", 
+            temperature=0.3,
+            google_api_key=google_api_key
+        )
+        logger.info("ChatGoogleGenerativeAI initialized successfully")
+        
+        # TTS configuration - check if ElevenLabs API key is available
+        enable_tts = False
+        tts_voice_id = "21m00Tcm4TlvDq8ikWAM"
+        
+        logger.info("Checking TTS configuration...")
+        # Check if ElevenLabs API key is available in config file
+        if os.path.exists(config_file):
+            try:
+                with open(config_file, "r", encoding="utf-8") as f:
+                    config_data = json.load(f)
+                    elevenlabs_key = config_data.get("elevenlabs_api_key", "")
+                    if elevenlabs_key and elevenlabs_key.strip():
+                        enable_tts = True
+                        logger.info("ElevenLabs API key found, TTS enabled")
+                    else:
+                        logger.info("No ElevenLabs API key found, TTS disabled")
+            except Exception as e:
+                logger.error(f"Error reading ElevenLabs API key: {e}")
+        else:
+            logger.info("No config file for TTS check")
+        
+        # Initialize agent (SAME PARAMS AS main.py line 364!)
+        logger.info("Initializing Agent with parameters...")
+        agent = Agent(
+            llm=llm,
+            browser='chrome',
+            use_vision=False,
+            enable_conversation=True,
+            literal_mode=True,
+            max_steps=30,
+            enable_tts=enable_tts,
+            tts_voice_id=tts_voice_id
+        )
+        logger.info("Agent initialized successfully")
+        
+        # Get running programs (SAME AS main.py line 354!)
+        logger.info("Getting running programs...")
+        running_programs = get_running_programs()
+        agent.running_programs = running_programs
+        logger.info(f"Found {len(running_programs)} running programs")
+        
+        # Pre-warm the system (SAME AS main.py line 383!)
+        logger.info("Pre-warming system for faster response...")
+        print("Pre-warming system for faster response...")
+        try:
+            agent.desktop.get_state(use_vision=False)
+            logger.info("System pre-warmed successfully")
+            print("System pre-warmed successfully!")
+        except Exception as e:
+            logger.warning(f"Pre-warming failed: {e}")
+            print(f"Pre-warming failed: {e}")
+            print("System will still work, but first response may be slower.")
+        
+        # Show TTS status (matching CLI behavior)
+        if enable_tts:
+            from windows_use.agent.tts_service import is_tts_available
+            tts_available = is_tts_available()
+            tts_status = 'Enabled' if tts_available else 'Disabled (API key not configured)'
+            logger.info(f"TTS Status: {tts_status}")
+            print(f"TTS Status: {tts_status}")
+        else:
+            logger.info("TTS Status: Disabled")
+            print("TTS Status: Disabled")
+        
+        # Create streaming wrapper to capture status updates
+        logger.info("Creating streaming wrapper...")
+        streaming_wrapper = StreamingAgentWrapper(agent)
+        logger.info("Streaming wrapper created")
+        
+        agent_initialized = True
+        logger.info("Agent initialization completed successfully")
+        print("Agent initialized successfully!")
+        
+    except Exception as e:
+        logger.error(f"Failed to initialize agent: {e}")
+        print(f"Failed to initialize agent: {e}")
+        agent_initialized = False
+    
+    yield  # Application is running
+    
+    # Shutdown
+    try:
+        logger.info("Server shutdown initiated")
+        # Log session end (matching CLI behavior)
+        agent_logger.log_session_end()
+        logger.info("Session logged successfully on shutdown")
+        print("Session logged successfully on shutdown.")
+    except Exception as e:
+        logger.error(f"Error logging session end: {e}")
+        print(f"Error logging session end: {e}")
+
+# Initialize FastAPI app with lifespan
 app = FastAPI(
     title="Windows-Use Agent API",
     description="REST API for Windows automation agent",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # Add CORS middleware for Next.js frontend
@@ -127,91 +312,12 @@ class VoiceModeRequest(BaseModel):
     # Frontend may omit this; backend uses server-side env keys for voice mode
     api_key: Optional[str] = None
 
-# Initialize agent on startup
-@app.on_event("startup")
-async def startup_event():
-    """Initialize the agent on server startup - SAME AS main.py"""
-    global agent, streaming_wrapper, agent_initialized
-    
-    try:
-        print("Initializing Windows-Use Agent...")
-        
-        # Log session start (matching CLI behavior)
-        agent_logger.log_session_start()
-        
-        # Initialize LLM with API key
-        google_api_key = os.getenv("GOOGLE_API_KEY")
-        if not google_api_key:
-            raise ValueError("GOOGLE_API_KEY environment variable is not set. Please set it in your .env file.")
-        
-        llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash", 
-            temperature=0.3,
-            google_api_key=google_api_key
-        )
-        
-        # TTS configuration (matching CLI behavior)
-        enable_tts = os.getenv("ENABLE_TTS", "false").lower() == "true"
-        tts_voice_id = os.getenv("TTS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
-        
-        # Initialize agent (SAME PARAMS AS main.py line 364!)
-        agent = Agent(
-            llm=llm,
-            browser='chrome',
-            use_vision=False,
-            enable_conversation=True,
-            literal_mode=True,
-            max_steps=30,
-            enable_tts=enable_tts,
-            tts_voice_id=tts_voice_id
-        )
-        
-        # Get running programs (SAME AS main.py line 354!)
-        running_programs = get_running_programs()
-        agent.running_programs = running_programs
-        
-        # Pre-warm the system (SAME AS main.py line 383!)
-        print("Pre-warming system for faster response...")
-        try:
-            agent.desktop.get_state(use_vision=False)
-            print("System pre-warmed successfully!")
-        except Exception as e:
-            print(f"Pre-warming failed: {e}")
-            print("System will still work, but first response may be slower.")
-        
-        # Show TTS status (matching CLI behavior)
-        if enable_tts:
-            from windows_use.agent.tts_service import is_tts_available
-            tts_available = is_tts_available()
-            print(f"TTS Status: {'Enabled' if tts_available else 'Disabled (API key not configured)'}")
-        else:
-            print("TTS Status: Disabled")
-        
-        # Create streaming wrapper to capture status updates
-        streaming_wrapper = StreamingAgentWrapper(agent)
-        
-        agent_initialized = True
-        print("Agent initialized successfully!")
-        
-    except Exception as e:
-        print(f"Failed to initialize agent: {e}")
-        agent_initialized = False
-
-# Shutdown event handler
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Handle server shutdown"""
-    try:
-        # Log session end (matching CLI behavior)
-        agent_logger.log_session_end()
-        print("Session logged successfully on shutdown.")
-    except Exception as e:
-        print(f"Error logging session end: {e}")
 
 # Health check endpoint
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
+    logger.info(f"Health check requested - agent_ready: {agent_initialized}")
     return {
         "status": "healthy",
         "agent_ready": agent_initialized,
@@ -232,27 +338,40 @@ async def test_connection():
 @app.get("/api/status", response_model=SystemStatus)
 async def get_system_status():
     """Get current system status"""
+    logger.info(f"System status requested - agent_initialized: {agent_initialized}, agent: {agent is not None}")
     if not agent_initialized or not agent:
+        logger.error("System status requested but agent not initialized")
         raise HTTPException(status_code=503, detail="Agent not initialized")
     
     try:
+        logger.info("Getting running programs...")
         # Get running programs
         running_programs = get_running_programs()
         apps = [
             AppInfo(name=prog['name'], title=prog['title'], id=str(prog['id']))
             for prog in running_programs
         ]
+        logger.info(f"Found {len(apps)} running programs")
         
         # Get memory stats
         memory_stats = {}
-        if hasattr(agent, 'get_memory_stats'):
-            memory_stats = agent.get_memory_stats()
+        try:
+            if hasattr(agent, 'get_memory_stats'):
+                memory_stats = agent.get_memory_stats()
+                logger.info("Memory stats retrieved successfully")
+        except Exception as e:
+            logger.warning(f"Failed to get memory stats: {e}")
         
         # Get performance stats
         performance_stats = {}
-        if hasattr(agent, 'performance_monitor'):
-            performance_stats = agent.performance_monitor.get_stats()
+        try:
+            if hasattr(agent, 'performance_monitor'):
+                performance_stats = agent.performance_monitor.get_stats()
+                logger.info("Performance stats retrieved successfully")
+        except Exception as e:
+            logger.warning(f"Failed to get performance stats: {e}")
         
+        logger.info("System status retrieved successfully")
         return SystemStatus(
             agent_ready=True,
             running_programs=apps,
@@ -260,17 +379,21 @@ async def get_system_status():
             performance_stats=performance_stats
         )
     except Exception as e:
+        logger.error(f"Error getting system status: {e}")
         raise HTTPException(status_code=500, detail=f"Error getting status: {str(e)}")
 
 # Query endpoint
 @app.post("/api/query", response_model=QueryResponse)
 async def process_query(request: QueryRequest, background_tasks: BackgroundTasks):
     """Process a query through the agent"""
+    logger.info(f"Query request received: {request.query[:100]}...")
     if not agent_initialized or not agent:
+        logger.error("Query requested but agent not initialized")
         raise HTTPException(status_code=503, detail="Agent not initialized")
     
     try:
         # Process the query (matching CLI behavior)
+        logger.info(f"Processing query: {request.query}")
         print(f"Processing query: {request.query}")
         response = agent.invoke(request.query)
         
@@ -280,6 +403,7 @@ async def process_query(request: QueryRequest, background_tasks: BackgroundTasks
         else:
             response_text = str(response)
         
+        logger.info(f"Query processed successfully, response length: {len(response_text)}")
         print(f"Response: {response_text[:100]}...")  # Log first 100 chars
         
         return QueryResponse(
@@ -290,6 +414,7 @@ async def process_query(request: QueryRequest, background_tasks: BackgroundTasks
         )
         
     except Exception as e:
+        logger.error(f"Query processing error: {e}")
         print(f"Query processing error: {e}")
         return QueryResponse(
             response="",
@@ -309,17 +434,33 @@ async def process_query_stream(request: QueryRequest):
         try:
             print(f"Streaming query: {request.query}")
             
-            # Validate API key from frontend
-            if not request.api_key or request.api_key.strip() == "":
+            # Get API key from config file or frontend
+            config_file = os.path.join(CONFIG_PATH, "api_keys.json")
+            google_api_key = ""
+            
+            if os.path.exists(config_file):
+                try:
+                    with open(config_file, "r", encoding="utf-8") as f:
+                        config_data = json.load(f)
+                        google_api_key = config_data.get("google_api_key", "")
+                except:
+                    pass
+            
+            # Use frontend API key if provided, otherwise use config file
+            if request.api_key and request.api_key.strip():
+                google_api_key = request.api_key.strip()
+                print("Using API key from frontend")
+            elif google_api_key:
+                print("Using API key from config file")
+            else:
                 yield f"data: {json.dumps({'type': 'error', 'timestamp': datetime.now().isoformat(), 'data': {'message': 'API key is required. Please set it in settings.'}})}\n\n"
                 return
             
-            # Create new agent instance with frontend API key
-            print("Using API key from frontend")
+            # Create new agent instance with API key
             llm = ChatGoogleGenerativeAI(
                 model="gemini-2.0-flash", 
                 temperature=0.3,
-                google_api_key=request.api_key.strip()
+                google_api_key=google_api_key
             )
             
             # Create a new agent instance with the frontend API key
@@ -330,8 +471,8 @@ async def process_query_stream(request: QueryRequest):
                 enable_conversation=True,
                 literal_mode=True,
                 max_steps=30,
-                enable_tts=os.getenv("ENABLE_TTS", "false").lower() == "true",
-                tts_voice_id=os.getenv("TTS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
+                enable_tts=False,  # We'll handle TTS separately
+                tts_voice_id="21m00Tcm4TlvDq8ikWAM"
             )
             
             # Copy running programs from the original agent
@@ -359,6 +500,10 @@ async def process_query_stream(request: QueryRequest):
 
             # Assign or generate request_id and register inflight request
             req_id = request.request_id or str(uuid.uuid4())
+            
+            # Store session conversation for future reference
+            if req_id:
+                session_conversations[req_id] = request.conversation_history
             inflight_requests[req_id] = {
                 "agent": frontend_agent,
                 "thread": None,
@@ -685,6 +830,9 @@ async def stop_speaking():
 # Voice conversation storage
 voice_conversation = []
 
+# Session-based conversation storage
+session_conversations: Dict[str, List[Dict[str, Any]]] = {}
+
 # Global flags to prevent duplicate voice processing/starts
 _voice_processing_lock = False
 _voice_starting = False
@@ -693,6 +841,27 @@ _voice_starting = False
 async def get_voice_conversation():
     """Get the latest voice conversation"""
     return {"conversation": voice_conversation}
+
+# Session-based conversation endpoints
+@app.get("/api/conversation/{session_id}")
+async def get_session_conversation(session_id: str):
+    """Get conversation for a specific session"""
+    if session_id not in session_conversations:
+        return {"conversation": []}
+    return {"conversation": session_conversations[session_id]}
+
+@app.post("/api/conversation/{session_id}")
+async def save_session_conversation(session_id: str, conversation: List[Dict[str, Any]]):
+    """Save conversation for a specific session"""
+    session_conversations[session_id] = conversation
+    return {"success": True, "message": "Conversation saved"}
+
+@app.delete("/api/conversation/{session_id}")
+async def clear_session_conversation(session_id: str):
+    """Clear conversation for a specific session"""
+    if session_id in session_conversations:
+        del session_conversations[session_id]
+    return {"success": True, "message": "Conversation cleared"}
 
 # Voice mode control endpoints
 @app.post("/api/voice/start")
@@ -713,11 +882,20 @@ async def start_voice_mode(request: VoiceModeRequest):
             if not DEEPGRAM_AVAILABLE:
                 raise HTTPException(status_code=400, detail="Deepgram SDK not available. Install with: pip install deepgram-sdk")
             
-            # Check for API key without creating STT service
-            import os
-            deepgram_key = os.getenv("DEEPGRAM_API_KEY")
+            # Check for API key from config file
+            config_file = os.path.join(CONFIG_PATH, "api_keys.json")
+            deepgram_key = ""
+            
+            if os.path.exists(config_file):
+                try:
+                    with open(config_file, "r", encoding="utf-8") as f:
+                        config_data = json.load(f)
+                        deepgram_key = config_data.get("deepgram_api_key", "")
+                except:
+                    pass
+            
             if not deepgram_key or deepgram_key.strip() == "":
-                raise HTTPException(status_code=400, detail="DEEPGRAM_API_KEY not set in environment. Please set it in your .env file.")
+                raise HTTPException(status_code=400, detail="Deepgram API key not configured. Please set it in the settings page.")
         except ImportError as e:
             raise HTTPException(status_code=400, detail=f"STT service import error: {str(e)}")
         
@@ -769,10 +947,22 @@ async def start_voice_mode(request: VoiceModeRequest):
                 # Process the transcript through the agent with workflow step capture
                 # Create a new agent instance for voice processing (isolated from global agent)
                 from langchain_google_genai.chat_models import ChatGoogleGenerativeAI
+                # Get Google API key from config file
+                config_file = os.path.join(CONFIG_PATH, "api_keys.json")
+                google_api_key = ""
+                
+                if os.path.exists(config_file):
+                    try:
+                        with open(config_file, "r", encoding="utf-8") as f:
+                            config_data = json.load(f)
+                            google_api_key = config_data.get("google_api_key", "")
+                    except:
+                        pass
+                
                 llm = ChatGoogleGenerativeAI(
                     model="gemini-2.0-flash", 
                     temperature=0.3,
-                    google_api_key=os.getenv("GOOGLE_API_KEY")
+                    google_api_key=google_api_key
                 )
                 
                 voice_agent = Agent(
@@ -853,7 +1043,66 @@ async def start_voice_mode(request: VoiceModeRequest):
                     
                     # Speak the response if TTS is available
                     if hasattr(agent, 'tts_service') and agent.tts_service and agent.tts_service.enabled:
-                        agent.tts_service.speak_async(response.content)
+                        print(f"TTS: Speaking response: {response.content[:50]}...")
+                        success = agent.tts_service.speak_async(response.content)
+                        if not success:
+                            print("TTS: Failed to speak, trying fallback...")
+                            # Try to create a fallback TTS service with config file API key
+                            try:
+                                from windows_use.agent.tts_service import TTSService
+                                # Get ElevenLabs API key from config file
+                                config_file = os.path.join(CONFIG_PATH, "api_keys.json")
+                                elevenlabs_key = ""
+                                
+                                if os.path.exists(config_file):
+                                    try:
+                                        with open(config_file, "r", encoding="utf-8") as f:
+                                            config_data = json.load(f)
+                                            elevenlabs_key = config_data.get("elevenlabs_api_key", "")
+                                    except:
+                                        pass
+                                
+                                # Set environment variable temporarily for TTS service
+                                if elevenlabs_key:
+                                    os.environ["ELEVENLABS_API_KEY"] = elevenlabs_key
+                                
+                                fallback_tts = TTSService(enable_tts=True)
+                                if fallback_tts.enabled:
+                                    print("TTS: Using fallback TTS service")
+                                    fallback_tts.speak_async(response.content)
+                                else:
+                                    print("TTS: Fallback TTS also not available")
+                            except Exception as e:
+                                print(f"TTS: Fallback TTS failed: {e}")
+                    else:
+                        print("TTS: Not available or disabled")
+                        # Try to create a fallback TTS service with config file API key
+                        try:
+                            from windows_use.agent.tts_service import TTSService
+                            # Get ElevenLabs API key from config file
+                            config_file = os.path.join(CONFIG_PATH, "api_keys.json")
+                            elevenlabs_key = ""
+                            
+                            if os.path.exists(config_file):
+                                try:
+                                    with open(config_file, "r", encoding="utf-8") as f:
+                                        config_data = json.load(f)
+                                        elevenlabs_key = config_data.get("elevenlabs_api_key", "")
+                                except:
+                                    pass
+                            
+                            # Set environment variable temporarily for TTS service
+                            if elevenlabs_key:
+                                os.environ["ELEVENLABS_API_KEY"] = elevenlabs_key
+                            
+                            fallback_tts = TTSService(enable_tts=True)
+                            if fallback_tts.enabled:
+                                print("TTS: Using fallback TTS service")
+                                fallback_tts.speak_async(response.content)
+                            else:
+                                print("TTS: Fallback TTS also not available")
+                        except Exception as e:
+                            print(f"TTS: Fallback TTS failed: {e}")
                 
             except Exception as e:
                 print(f"Error processing voice input: {e}")
@@ -931,11 +1180,36 @@ async def get_voice_status():
         try:
             from windows_use.agent.stt_service import DEEPGRAM_AVAILABLE
             import os
-            stt_available = DEEPGRAM_AVAILABLE and bool(os.getenv("DEEPGRAM_API_KEY"))
+            # Check if Deepgram API key is available in config file
+            stt_available = False
+            if DEEPGRAM_AVAILABLE:
+                config_file = os.path.join(CONFIG_PATH, "api_keys.json")
+                if os.path.exists(config_file):
+                    try:
+                        with open(config_file, "r", encoding="utf-8") as f:
+                            config_data = json.load(f)
+                            deepgram_key = config_data.get("deepgram_api_key", "")
+                            stt_available = bool(deepgram_key and deepgram_key.strip())
+                    except:
+                        pass
         except ImportError:
             stt_available = False
         
-        tts_available = hasattr(agent, 'tts_service') and agent.tts_service and agent.tts_service.enabled
+        # Check if TTS is available based on config file
+        tts_available = False
+        if hasattr(agent, 'tts_service') and agent.tts_service and agent.tts_service.enabled:
+            tts_available = True
+        else:
+            # Check if ElevenLabs API key is available in config file
+            config_file = os.path.join(CONFIG_PATH, "api_keys.json")
+            if os.path.exists(config_file):
+                try:
+                    with open(config_file, "r", encoding="utf-8") as f:
+                        config_data = json.load(f)
+                        elevenlabs_key = config_data.get("elevenlabs_api_key", "")
+                        tts_available = bool(elevenlabs_key and elevenlabs_key.strip())
+                except:
+                    pass
         
         return {
             "is_listening": is_listening,
@@ -949,80 +1223,54 @@ async def get_voice_status():
 
 @app.get("/api/config/keys", response_model=ApiKeysResponse)
 async def get_api_keys():
-    """Get current API keys from .env file"""
+    """Get current API keys from config file"""
     try:
-        google_key = os.getenv("GOOGLE_API_KEY", "")
-        elevenlabs_key = os.getenv("ELEVENLABS_API_KEY", "")
-        deepgram_key = os.getenv("DEEPGRAM_API_KEY", "")
+        config_file = os.path.join(CONFIG_PATH, "api_keys.json")
         
-        return ApiKeysResponse(
-            google_api_key=google_key,
-            elevenlabs_api_key=elevenlabs_key,
-            deepgram_api_key=deepgram_key
-        )
+        # Load from config file if it exists
+        if os.path.exists(config_file):
+            with open(config_file, "r", encoding="utf-8") as f:
+                config_data = json.load(f)
+                return ApiKeysResponse(
+                    google_api_key=config_data.get("google_api_key", ""),
+                    elevenlabs_api_key=config_data.get("elevenlabs_api_key", ""),
+                    deepgram_api_key=config_data.get("deepgram_api_key", "")
+                )
+        else:
+            # Return empty keys if config file doesn't exist
+            return ApiKeysResponse(
+                google_api_key="",
+                elevenlabs_api_key="",
+                deepgram_api_key=""
+            )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching API keys: {str(e)}")
 
 @app.post("/api/config/keys")
 async def save_api_keys(keys: ApiKeysRequest):
-    """Save API keys to .env file (for backup purposes only - frontend uses its own API keys)"""
+    """Save API keys to config file"""
     try:
-        # Use config path if available (desktop app), otherwise use current directory
-        env_path = os.path.join(CONFIG_PATH, ".env") if CONFIG_PATH != os.path.join(os.getcwd(), 'config') else os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+        config_file = os.path.join(CONFIG_PATH, "api_keys.json")
         
-        # Read existing .env file and preserve existing variables
-        env_vars = {}
-        if os.path.exists(env_path):
-            with open(env_path, "r", encoding="utf-8") as f:
-                for line_num, line in enumerate(f, 1):
-                    line = line.strip()
-                    # Skip empty lines and comments
-                    if not line or line.startswith("#"):
-                        continue
-                    
-                    # Only process lines with valid key=value format
-                    if "=" in line and not line.startswith(" "):
-                        try:
-                            key, value = line.split("=", 1)
-                            key = key.strip()
-                            value = value.strip()
-                            # Only add if key is valid (no spaces, special chars)
-                            if key and not " " in key and not "{" in key:
-                                env_vars[key] = value
-                        except Exception as e:
-                            print(f"Warning: Skipping malformed line {line_num}: {line}")
-                            continue
+        # Create config directory if it doesn't exist
+        os.makedirs(CONFIG_PATH, exist_ok=True)
         
-        # Only update the specific API keys if they're provided and valid
-        if keys.google_api_key and keys.google_api_key.strip():
-            env_vars["GOOGLE_API_KEY"] = keys.google_api_key.strip()
+        # Prepare config data
+        config_data = {
+            "google_api_key": keys.google_api_key.strip() if keys.google_api_key else "",
+            "elevenlabs_api_key": keys.elevenlabs_api_key.strip() if keys.elevenlabs_api_key else "",
+            "deepgram_api_key": keys.deepgram_api_key.strip() if keys.deepgram_api_key else "",
+            "last_updated": datetime.now().isoformat(),
+            "version": "1.0"
+        }
         
-        if keys.elevenlabs_api_key and keys.elevenlabs_api_key.strip():
-            env_vars["ELEVENLABS_API_KEY"] = keys.elevenlabs_api_key.strip()
-        
-        if keys.deepgram_api_key and keys.deepgram_api_key.strip():
-            env_vars["DEEPGRAM_API_KEY"] = keys.deepgram_api_key.strip()
-        
-        # Write clean .env file
-        with open(env_path, "w", encoding="utf-8") as f:
-            f.write("# Windows-Use API Configuration\n")
-            f.write("# Generated by Windows-Use Frontend\n")
-            f.write("# Note: Frontend uses its own API keys, this file is for backup only\n\n")
-            
-            # Write API keys first
-            for key in ["GOOGLE_API_KEY", "ELEVENLABS_API_KEY", "DEEPGRAM_API_KEY"]:
-                if key in env_vars:
-                    f.write(f"{key}={env_vars[key]}\n")
-            
-            # Write other variables
-            f.write("\n")
-            for key, value in env_vars.items():
-                if key not in ["GOOGLE_API_KEY", "ELEVENLABS_API_KEY", "DEEPGRAM_API_KEY"]:
-                    f.write(f"{key}={value}\n")
+        # Save to config file
+        with open(config_file, "w", encoding="utf-8") as f:
+            json.dump(config_data, f, indent=2, ensure_ascii=False)
         
         return {
             "success": True,
-            "message": "API keys saved to backup file. Frontend will use its own API keys."
+            "message": "API keys saved to config file successfully."
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error saving API keys: {str(e)}")

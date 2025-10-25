@@ -42,24 +42,27 @@ export function ApiKeyProvider({ children }: { children: ReactNode }) {
     loadApiKeys()
   }, [])
 
-  // Save API keys to localStorage whenever they change
-  useEffect(() => {
+  // Save API keys to localStorage only when explicitly updated (no auto-save)
+  const saveToLocalStorage = (keys: ApiKeys) => {
     try {
-      localStorage.setItem('apiKeys', JSON.stringify(apiKeys))
+      localStorage.setItem('apiKeys', JSON.stringify(keys))
     } catch (error) {
       console.error('Failed to save API keys to localStorage:', error)
     }
-  }, [apiKeys])
+  }
 
   const setApiKeys = (keys: ApiKeys) => {
     setApiKeysState(keys)
+    saveToLocalStorage(keys)
   }
 
   const updateApiKey = (keyName: keyof ApiKeys, value: string) => {
-    setApiKeysState(prev => ({
-      ...prev,
+    const newKeys = {
+      ...apiKeys,
       [keyName]: value
-    }))
+    }
+    setApiKeysState(newKeys)
+    saveToLocalStorage(newKeys)
   }
 
   const getApiKey = (keyName: keyof ApiKeys): string => {

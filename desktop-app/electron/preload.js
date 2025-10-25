@@ -9,6 +9,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openDataFolder: () => ipcRenderer.invoke('open-data-folder'),
   openConfigFolder: () => ipcRenderer.invoke('open-config-folder'),
   openLogsFolder: () => ipcRenderer.invoke('open-logs-folder'),
-  onStatus: (callback) => ipcRenderer.on('status', (event, status) => callback(status))
+  onStatus: (callback) => ipcRenderer.on('status', (event, status) => callback(status)),
+  
+  // Audio device access for voice mode
+  requestMicrophonePermission: () => ipcRenderer.invoke('request-microphone-permission'),
+  getAudioDevices: () => ipcRenderer.invoke('get-audio-devices'),
+  onMicrophonePermissionChanged: (callback) => ipcRenderer.on('microphone-permission-changed', (event, granted) => callback(granted))
 });
 

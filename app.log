@@ -19620,3 +19620,241 @@ AttributeError: 'Microphone' object has no attribute '_asyncio_thread'
 2025-10-23 23:44:10 | DEBUG | Received transcript: '' (final: False)
 2025-10-23 23:44:10 | DEBUG | Received transcript: '' (final: True)
 2025-10-23 23:44:10 | DEBUG | Received transcript: '' (final: False)
+2025-10-23 23:51:11 | INFO | ================================================================================
+2025-10-23 23:51:11 | INFO | SESSION ENDED
+2025-10-23 23:51:11 | INFO | ================================================================================
+
+2025-10-23 23:51:29 | INFO | ================================================================================
+2025-10-23 23:51:29 | INFO | NEW SESSION STARTED
+2025-10-23 23:51:29 | INFO | ================================================================================
+2025-10-24 13:58:39 | INFO | ================================================================================
+2025-10-24 13:58:39 | INFO | NEW SESSION STARTED
+2025-10-24 13:58:39 | INFO | ================================================================================
+2025-10-24 14:00:07 | DEBUG | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-24 14:00:07 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-24 14:00:11 | DEBUG | Speech started
+2025-10-24 14:00:13 | DEBUG | Speech started
+2025-10-24 14:00:13 | DEBUG | Interim: Yuki,
+2025-10-24 14:00:14 | DEBUG | Final transcript: Yuki, hello.
+2025-10-24 14:00:15 | DEBUG | Utterance end
+2025-10-24 14:00:15 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-24 14:00:15 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-24 14:00:15 | INFO | USER QUERY: hello.
+2025-10-24 14:00:15 | INFO | [33m[Starting] Task Analysis: Processing: 'hello.'[0m
+2025-10-24 14:00:16 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-24 14:00:16 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-24 14:00:16 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-24 14:00:19 | INFO | --- ITERATION 1/30 ---
+2025-10-24 14:00:19 | INFO | EVALUATE: Neutral - The desktop state is ready.
+2025-10-24 14:00:19 | INFO | PLAN: The user query is "hello". This is a pure knowledge query and does not require any tools. I will respond to the user with a greeting.
+2025-10-24 14:00:19 | INFO | THOUGHT: The user has said hello. I will respond in a friendly manner.
+2025-10-24 14:00:19 | INFO | [95mThe user has said hello. I will respond in a friendly manner.[0m
+2025-10-24 14:00:19 | INFO | [33m[Reasoning] Agent Thought: The user has said hello. I will respond in a friendly manner.[0m
+2025-10-24 14:00:19 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-24 14:00:19 | INFO | FINAL ANSWER: Hello there! How can I help you today?
+2025-10-24 14:00:19 | INFO | [36m
+Hello there! How can I help you today?[0m
+2025-10-24 14:00:19 | DEBUG | Generating speech for: Hello there! How can I help you today?...
+2025-10-24 14:00:19 | ERROR | Failed to generate speech: headers: {'date': 'Fri, 24 Oct 2025 08:30:20 GMT', 'server': 'uvicorn', 'content-length': '170', 'content-type': 'application/json', 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'POST, PATCH, OPTIONS, DELETE, GET, PUT', 'access-control-max-age': '600', 'strict-transport-security': 'max-age=31536000; includeSubDomains', 'x-trace-id': 'ecee5fe807f51cb819201ce9d3750cd0', 'x-region': 'us-central1', 'via': '1.1 google, 1.1 google', 'alt-svc': 'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000'}, status_code: 401, body: {'detail': {'status': 'quota_exceeded', 'message': 'This request exceeds your quota of 10000. You have 0 credits remaining, while 38 credits are required for this request.'}}
+2025-10-24 14:00:19 | DEBUG | Speech started
+2025-10-24 14:00:21 | DEBUG | Speech started
+2025-10-24 14:00:24 | DEBUG | Speech started
+2025-10-24 14:00:29 | DEBUG | Stopping listening...
+2025-10-24 14:00:29 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-24 14:07:55 | INFO | USER QUERY: hi
+2025-10-24 14:07:55 | INFO | [33m[Starting] Task Analysis: Processing: 'hi'[0m
+2025-10-24 14:07:57 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-24 14:07:59 | INFO | --- ITERATION 1/30 ---
+2025-10-24 14:07:59 | INFO | EVALUATE: Neutral - The agent received a greeting.
+2025-10-24 14:07:59 | INFO | PLAN: Respond to the user's greeting.
+2025-10-24 14:07:59 | INFO | THOUGHT: The user said "hi". I should respond to the greeting.
+2025-10-24 14:07:59 | INFO | [95mThe user said "hi". I should respond to the greeting.[0m
+2025-10-24 14:07:59 | INFO | [33m[Reasoning] Agent Thought: The user said "hi". I should respond to the greeting.[0m
+2025-10-24 14:07:59 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-24 14:07:59 | INFO | FINAL ANSWER: Hello! How can I help you today?
+2025-10-24 14:07:59 | INFO | [36m
+Hello! How can I help you today?[0m
+2025-10-24 14:08:08 | DEBUG | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-24 14:08:12 | DEBUG | Speech started
+2025-10-24 14:08:12 | DEBUG | Speech started
+2025-10-24 14:08:12 | DEBUG | Interim: You
+2025-10-24 14:08:14 | DEBUG | Final transcript: Yuki, hello.
+2025-10-24 14:08:15 | DEBUG | Utterance end
+2025-10-24 14:08:15 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-24 14:08:15 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-24 14:08:15 | INFO | USER QUERY: hello.
+2025-10-24 14:08:15 | INFO | [33m[Starting] Task Analysis: Processing: 'hello.'[0m
+2025-10-24 14:08:16 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-24 14:08:16 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-24 14:08:16 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-24 14:08:18 | INFO | --- ITERATION 1/30 ---
+2025-10-24 14:08:18 | INFO | EVALUATE: Neutral - The agent received the desktop state and user query "hello."
+2025-10-24 14:08:18 | INFO | PLAN: The user query is "hello". This is a pure knowledge query, so I should respond directly using the Done Tool.
+2025-10-24 14:08:18 | INFO | THOUGHT: The user said hello, so I will respond with a greeting.
+2025-10-24 14:08:18 | INFO | [95mThe user said hello, so I will respond with a greeting.[0m
+2025-10-24 14:08:18 | INFO | [33m[Reasoning] Agent Thought: The user said hello, so I will respond with a greeting.[0m
+2025-10-24 14:08:18 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-24 14:08:18 | INFO | FINAL ANSWER: Hello there!
+2025-10-24 14:08:18 | INFO | [36m
+Hello there![0m
+2025-10-24 14:08:18 | DEBUG | Generating speech for: Hello there!...
+2025-10-24 14:08:18 | ERROR | Failed to generate speech: headers: {'date': 'Fri, 24 Oct 2025 08:38:19 GMT', 'server': 'uvicorn', 'content-length': '170', 'content-type': 'application/json', 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'POST, PATCH, OPTIONS, DELETE, GET, PUT', 'access-control-max-age': '600', 'strict-transport-security': 'max-age=31536000; includeSubDomains', 'x-trace-id': 'b85237d474bb3b196c4aec7512e68773', 'x-region': 'us-central1', 'via': '1.1 google, 1.1 google', 'alt-svc': 'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000'}, status_code: 401, body: {'detail': {'status': 'quota_exceeded', 'message': 'This request exceeds your quota of 10000. You have 0 credits remaining, while 12 credits are required for this request.'}}
+2025-10-24 14:08:25 | DEBUG | Speech started
+2025-10-24 14:08:25 | DEBUG | Stopping listening...
+2025-10-24 14:08:26 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-24 14:12:26 | WARNING | No ElevenLabs API key provided. TTS will be disabled.
+2025-10-24 14:14:17 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-24 14:14:17 | DEBUG | Generating speech for: Hello, this is a test of the text to speech system...
+2025-10-24 14:14:18 | ERROR | Failed to generate speech: headers: {'date': 'Fri, 24 Oct 2025 08:44:18 GMT', 'server': 'uvicorn', 'content-length': '170', 'content-type': 'application/json', 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'POST, PATCH, OPTIONS, DELETE, GET, PUT', 'access-control-max-age': '600', 'strict-transport-security': 'max-age=31536000; includeSubDomains', 'x-trace-id': 'd391a5b9058196e7f8ce3d8bf23587b9', 'x-region': 'us-central1', 'via': '1.1 google, 1.1 google', 'alt-svc': 'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000'}, status_code: 401, body: {'detail': {'status': 'quota_exceeded', 'message': 'This request exceeds your quota of 10000. You have 0 credits remaining, while 51 credits are required for this request.'}}
+2025-10-24 14:15:17 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-24 14:15:17 | DEBUG | Generating speech for: Hello, this is a test....
+2025-10-24 14:15:18 | ERROR | Failed to generate speech: headers: {'date': 'Fri, 24 Oct 2025 08:45:18 GMT', 'server': 'uvicorn', 'content-length': '170', 'content-type': 'application/json', 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'POST, PATCH, OPTIONS, DELETE, GET, PUT', 'access-control-max-age': '600', 'strict-transport-security': 'max-age=31536000; includeSubDomains', 'x-trace-id': 'cc88ed628bc9501689897c8445ea7c35', 'x-region': 'us-central1', 'via': '1.1 google, 1.1 google', 'alt-svc': 'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000'}, status_code: 401, body: {'detail': {'status': 'quota_exceeded', 'message': 'This request exceeds your quota of 10000. You have 0 credits remaining, while 22 credits are required for this request.'}}
+2025-10-24 14:15:51 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-24 14:15:51 | DEBUG | Generating speech for: Hello, this is a test....
+2025-10-24 14:15:51 | ERROR | Failed to generate speech: headers: {'date': 'Fri, 24 Oct 2025 08:45:52 GMT', 'server': 'uvicorn', 'content-length': '170', 'content-type': 'application/json', 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'POST, PATCH, OPTIONS, DELETE, GET, PUT', 'access-control-max-age': '600', 'strict-transport-security': 'max-age=31536000; includeSubDomains', 'x-trace-id': '1d594c2241efb1b5fc817f6ddf9fba2f', 'x-region': 'us-central1', 'via': '1.1 google, 1.1 google', 'alt-svc': 'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000'}, status_code: 401, body: {'detail': {'status': 'quota_exceeded', 'message': 'This request exceeds your quota of 10000. You have 0 credits remaining, while 22 credits are required for this request.'}}
+2025-10-24 15:00:39 | DEBUG | Metadata: MetadataResponse(type='Metadata', transaction_key='deprecated', request_id='980909b2-7653-436a-b497-54300aa7653b', sha256='incomplete', created='2025-10-24T08:30:13.839Z', duration=19.972876, channels=1, models=['1dbdfb4d-85b2-4659-9831-16b3c76229aa'], model_info={'1dbdfb4d-85b2-4659-9831-16b3c76229aa': ModelInfo(name='2-general-nova', version='2024-01-11.36317', arch='nova-2')}, extra=None)
+2025-10-24 15:07:32 | INFO | ================================================================================
+2025-10-24 15:07:32 | INFO | NEW SESSION STARTED
+2025-10-24 15:07:32 | INFO | ================================================================================
+2025-10-24 15:10:18 | INFO | ================================================================================
+2025-10-24 15:10:18 | INFO | NEW SESSION STARTED
+2025-10-24 15:10:18 | INFO | ================================================================================
+2025-10-24 15:13:07 | INFO | ================================================================================
+2025-10-24 15:13:07 | INFO | NEW SESSION STARTED
+2025-10-24 15:13:07 | INFO | ================================================================================
+2025-10-24 15:13:11 | INFO | ================================================================================
+2025-10-24 15:13:11 | INFO | SESSION ENDED
+2025-10-24 15:13:11 | INFO | ================================================================================
+
+2025-10-24 15:13:50 | INFO | ================================================================================
+2025-10-24 15:13:50 | INFO | NEW SESSION STARTED
+2025-10-24 15:13:50 | INFO | ================================================================================
+2025-10-24 15:13:52 | INFO | ================================================================================
+2025-10-24 15:13:52 | INFO | SESSION ENDED
+2025-10-24 15:13:52 | INFO | ================================================================================
+
+2025-10-24 15:15:27 | INFO | ================================================================================
+2025-10-24 15:15:27 | INFO | NEW SESSION STARTED
+2025-10-24 15:15:27 | INFO | ================================================================================
+2025-10-24 15:15:37 | INFO | ================================================================================
+2025-10-24 15:15:37 | INFO | SESSION ENDED
+2025-10-24 15:15:37 | INFO | ================================================================================
+
+2025-10-24 15:20:48 | INFO | ================================================================================
+2025-10-24 15:20:48 | INFO | NEW SESSION STARTED
+2025-10-24 15:20:48 | INFO | ================================================================================
+2025-10-24 15:41:23 | INFO | ================================================================================
+2025-10-24 15:41:23 | INFO | NEW SESSION STARTED
+2025-10-24 15:41:23 | INFO | ================================================================================
+2025-10-24 17:05:28 | INFO | ================================================================================
+2025-10-24 17:05:28 | INFO | NEW SESSION STARTED
+2025-10-24 17:05:28 | INFO | ================================================================================
+2025-10-24 19:18:45 | INFO | ================================================================================
+2025-10-24 19:18:45 | INFO | NEW SESSION STARTED
+2025-10-24 19:18:45 | INFO | ================================================================================
+2025-10-24 19:18:46 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-24 19:18:50 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-24 19:20:07 | INFO | ================================================================================
+2025-10-24 19:20:07 | INFO | NEW SESSION STARTED
+2025-10-24 19:20:07 | INFO | ================================================================================
+2025-10-24 19:20:08 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-24 19:20:12 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-24 19:32:41 | INFO | ================================================================================
+2025-10-24 19:32:41 | INFO | NEW SESSION STARTED
+2025-10-24 19:32:41 | INFO | ================================================================================
+2025-10-24 19:32:41 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-24 19:32:51 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-24 19:34:26 | INFO | ================================================================================
+2025-10-24 19:34:26 | INFO | NEW SESSION STARTED
+2025-10-24 19:34:26 | INFO | ================================================================================
+2025-10-24 19:34:27 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-24 19:34:35 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-24 19:36:46 | INFO | ================================================================================
+2025-10-24 19:36:46 | INFO | NEW SESSION STARTED
+2025-10-24 19:36:46 | INFO | ================================================================================
+2025-10-25 15:25:59 | INFO | ================================================================================
+2025-10-25 15:25:59 | INFO | NEW SESSION STARTED
+2025-10-25 15:25:59 | INFO | ================================================================================
+2025-10-25 15:54:52 | INFO | ================================================================================
+2025-10-25 15:54:52 | INFO | NEW SESSION STARTED
+2025-10-25 15:54:52 | INFO | ================================================================================
+2025-10-25 15:54:53 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-25 15:54:56 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-25 15:54:56 | INFO | ================================================================================
+2025-10-25 15:54:56 | INFO | SESSION ENDED
+2025-10-25 15:54:56 | INFO | ================================================================================
+
+2025-10-25 15:56:09 | INFO | ================================================================================
+2025-10-25 15:56:09 | INFO | SESSION ENDED
+2025-10-25 15:56:09 | INFO | ================================================================================
+
+2025-10-25 15:56:33 | INFO | ================================================================================
+2025-10-25 15:56:33 | INFO | NEW SESSION STARTED
+2025-10-25 15:56:33 | INFO | ================================================================================
+2025-10-25 15:56:34 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-25 15:56:36 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-25 15:58:24 | INFO | ================================================================================
+2025-10-25 15:58:24 | INFO | NEW SESSION STARTED
+2025-10-25 15:58:24 | INFO | ================================================================================
+2025-10-25 15:58:25 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-25 15:58:26 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-25 15:59:47 | INFO | ================================================================================
+2025-10-25 15:59:47 | INFO | NEW SESSION STARTED
+2025-10-25 15:59:47 | INFO | ================================================================================
+2025-10-25 15:59:48 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-25 15:59:50 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-25 16:00:35 | INFO | ================================================================================
+2025-10-25 16:00:35 | INFO | NEW SESSION STARTED
+2025-10-25 16:00:35 | INFO | ================================================================================
+2025-10-25 16:00:36 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-25 16:00:38 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-25 16:01:55 | INFO | ================================================================================
+2025-10-25 16:01:55 | INFO | NEW SESSION STARTED
+2025-10-25 16:01:55 | INFO | ================================================================================
+2025-10-25 16:01:56 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-25 16:01:58 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-25 16:03:20 | INFO | ================================================================================
+2025-10-25 16:03:20 | INFO | NEW SESSION STARTED
+2025-10-25 16:03:20 | INFO | ================================================================================
+2025-10-25 16:03:21 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-25 16:03:23 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-25 16:03:59 | INFO | USER QUERY: hi
+2025-10-25 16:03:59 | INFO | [Starting] Task Analysis: Processing: 'hi'
+2025-10-25 16:04:01 | INFO | [Thinking] Planning Next Action: Step 1/30
+2025-10-25 16:04:04 | INFO | --- ITERATION 1/30 ---
+2025-10-25 16:04:04 | INFO | EVALUATE: Neutral - The agent is ready to receive instructions.
+2025-10-25 16:04:04 | INFO | PLAN: The user has just said "hi". I will respond to greet the user.
+2025-10-25 16:04:04 | INFO | THOUGHT: The user has greeted me. I will respond in a friendly manner.
+2025-10-25 16:04:04 | INFO | The user has greeted me. I will respond in a friendly manner.
+2025-10-25 16:04:04 | INFO | [Reasoning] Agent Thought: The user has greeted me. I will respond in a friendly manner.
+2025-10-25 16:04:04 | INFO | [Finalizing] Done Tool: Preparing response
+2025-10-25 16:04:04 | INFO | FINAL ANSWER: Hello! How can I help you today?
+2025-10-25 16:04:04 | INFO | 
+Hello! How can I help you today?
+2025-10-25 17:07:20 | INFO | ================================================================================
+2025-10-25 17:07:20 | INFO | NEW SESSION STARTED
+2025-10-25 17:07:20 | INFO | ================================================================================
+2025-10-25 17:07:21 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-25 17:07:23 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-25 17:08:00 | INFO | ================================================================================
+2025-10-25 17:08:00 | INFO | SESSION ENDED
+2025-10-25 17:08:00 | INFO | ================================================================================
+
+2025-10-25 17:08:13 | INFO | ================================================================================
+2025-10-25 17:08:13 | INFO | NEW SESSION STARTED
+2025-10-25 17:08:13 | INFO | ================================================================================
+2025-10-25 17:08:14 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-25 17:08:16 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-25 17:11:13 | INFO | USER QUERY: hi
+2025-10-25 17:11:13 | INFO | [Starting] Task Analysis: Processing: 'hi'
+2025-10-25 17:11:15 | INFO | [Thinking] Planning Next Action: Step 1/30
+2025-10-25 17:11:21 | INFO | --- ITERATION 1/30 ---
+2025-10-25 17:11:21 | INFO | EVALUATE: Neutral - The agent is ready to receive instructions.
+2025-10-25 17:11:21 | INFO | PLAN: The user has said "hi". Respond to the greeting.
+2025-10-25 17:11:21 | INFO | THOUGHT: The user has greeted me. I should respond in a friendly manner.
+2025-10-25 17:11:21 | INFO | The user has greeted me. I should respond in a friendly manner.
+2025-10-25 17:11:21 | INFO | [Reasoning] Agent Thought: The user has greeted me. I should respond in a friendly manner.
+2025-10-25 17:11:21 | INFO | [Finalizing] Done Tool: Preparing response
+2025-10-25 17:11:21 | INFO | FINAL ANSWER: Hello! How can I help you today?
+2025-10-25 17:11:21 | INFO | 
+Hello! How can I help you today?

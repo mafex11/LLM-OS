@@ -1,0 +1,5 @@
+2025-10-24 15:26:46,798 - __main__ - INFO - Testing logging functionality...
+2025-10-24 15:26:46,799 - __main__ - INFO - This is an info message
+2025-10-24 15:26:46,799 - __main__ - WARNING - This is a warning message
+2025-10-24 15:26:46,799 - __main__ - ERROR - This is an error message
+2025-10-24 15:26:46,799 - __main__ - INFO - Test data
