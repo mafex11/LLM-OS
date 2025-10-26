@@ -205,7 +205,7 @@ export default function SettingsPage() {
             <div className="p-4 border-b border-white/10 mx-2 space-y-4">
               <div className="flex items-center gap-2 px-2">
                 <Image src="/logo.svg" alt="Logo" width={30} height={30} className="flex-shrink-0 rounded-full" />
-                <span className="text-sm font-semibold">Netra</span>
+                <span className="text-sm font-semibold">Yuki AI</span>
               </div>
               <Button 
                 onClick={() => router.push("/chat")} 
@@ -297,7 +297,7 @@ export default function SettingsPage() {
                     API Keys
                   </CardTitle>
                   <CardDescription>
-                    Configure your API keys for Netra services
+                    Configure your API keys for Yuki AI services
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -767,7 +767,7 @@ export default function SettingsPage() {
                       System Status
                     </CardTitle>
                     <CardDescription>
-                      Current status of Netra services
+                      Current status of Yuki AI services
                     </CardDescription>
                   </CardHeader>
                   <CardContent>

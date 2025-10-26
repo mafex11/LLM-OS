@@ -11,7 +11,7 @@ const montserrat = Montserrat({
 })
 
 export const metadata: Metadata = {
-  title: "Netra Agent",
+  title: "Yuki AI",
   description: "AI-powered Windows automation assistant",
 }
 

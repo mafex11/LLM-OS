@@ -48,7 +48,7 @@ const response = await fetch("http://localhost:8000/api/voice/status")
 **Problem**: Frontend package.json has wrong name
 ```json
 // frontend/package.json
-"name": "netra-frontend"  // Should be "yuki-ai-frontend"
+"name": "yuki-ai-frontend"  // Should be "yuki-ai-frontend"
 ```
 
 ### 4. **Missing Frontend Build Configuration (MEDIUM PRIORITY)**

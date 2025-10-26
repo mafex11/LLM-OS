@@ -74,9 +74,24 @@ if not exist "..\desktop-app\frontend-build" (
 echo.
 echo Step 6: Building Electron installer...
 cd ..\desktop-app
-call npm run electron:build
+echo DEBUG: Current directory: %CD%
+echo DEBUG: Checking NSIS installer script...
+if exist "installer-script.nsh" (
+    echo DEBUG: installer-script.nsh exists
+    echo DEBUG: First 10 lines of installer-script.nsh:
+    type "installer-script.nsh" | more +0 | head -10
+) else (
+    echo ERROR: installer-script.nsh not found!
+    pause
+    exit /b 1
+)
+echo DEBUG: Running electron-builder with verbose logging...
+call npm run electron:build:debug
 if %ERRORLEVEL% NEQ 0 (
     echo ERROR: Failed to build Electron installer
+    echo DEBUG: Checking for NSIS errors...
+    echo DEBUG: Looking for makensis.exe in cache...
+    dir "C:\Users\%USERNAME%\AppData\Local\electron-builder\Cache\nsis" /s /b | findstr makensis
     pause
     exit /b 1
 )

@@ -8,6 +8,7 @@
   "scripts": {
     "electron:dev": "set NODE_ENV=development && electron .",
     "electron:build": "electron-builder",
+    "electron:build:debug": "electron-builder --verbose --debug",
     "build:backend": "python build_backend.py",
     "build:frontend": "cd ../frontend && npm run build",
     "build:all": "npm run build:backend && npm run build:frontend && npm run electron:build",
@@ -19,8 +20,15 @@
     "files": [
       "electron/**/*",
       "backend/**/*",
+      "backend/api_server.exe",
       "frontend-build/**/*",
       "resources/**/*"
+    ],
+    "extraFiles": [
+      {
+        "from": "backend/api_server.exe",
+        "to": "backend/api_server.exe"
+      }
     ],
     "win": {
       "target": [

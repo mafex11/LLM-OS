@@ -17,3 +17,34 @@ __pycache__
 
 **/node_modules/
 **/package-lock.json
+
+# Frontend build artifacts
+**/frontend-build/
+desktop-app/frontend-build/
+frontend/.next/
+frontend/out/
+frontend/.swc/
+frontend/build/
+frontend/dist/
+frontend/.cache/
+frontend/.nuxt/
+frontend/.turbo/
+frontend/.vercel/
+frontend/.svelte-kit/
+
+# Logs
+*.log
+logs/
+app.log
+
+# API Keys (should never be committed)
+config/api_keys.json
+
+# Cache directories
+cache/
+.cache/
+
+# Electron build artifacts
+desktop-app/dist/
+desktop-app/build/
+desktop-app/.cache/
