@@ -20131,3 +20131,20 @@ Hello there!
 2025-10-27 00:37:31 | INFO | ================================================================================
 2025-10-27 00:37:32 | INFO | TTS Service initialized - Enabled: True, Audio: True
 2025-10-27 00:37:34 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-27 19:22:31 | INFO | ================================================================================
+2025-10-27 19:22:31 | INFO | NEW SESSION STARTED
+2025-10-27 19:22:31 | INFO | ================================================================================
+2025-10-27 19:22:33 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-27 19:22:41 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-27 19:22:55 | DEBUG | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-27 19:23:01 | DEBUG | Speech started
+2025-10-27 19:23:01 | DEBUG | Interim: Okay.
+2025-10-27 19:23:03 | DEBUG | Speech started
+2025-10-27 19:23:04 | DEBUG | Speech started
+2025-10-27 19:23:09 | DEBUG | Speech started
+2025-10-27 19:23:11 | DEBUG | Speech started
+2025-10-27 19:23:11 | DEBUG | Interim: I
+2025-10-27 19:23:15 | DEBUG | Speech started
+2025-10-27 19:23:16 | DEBUG | Interim: Interviewer.
+2025-10-27 19:23:18 | DEBUG | Interim: Interviewer
+2025-10-27 19:23:19 | DEBUG | Speech started

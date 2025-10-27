@@ -65,11 +65,28 @@ if %ERRORLEVEL% NEQ 0 (
 REM Copy frontend build to desktop-app
 echo.
 echo Step 5: Copying frontend build...
-xcopy /E /I /Y "out" "..\desktop-app\frontend-build"
-if not exist "..\desktop-app\frontend-build" (
-    mkdir "..\desktop-app\frontend-build"
-    xcopy /E /I /Y ".next\*" "..\desktop-app\frontend-build"
+cd ..\desktop-app
+
+REM Remove old build if exists
+if exist "frontend-build" (
+    rmdir /S /Q "frontend-build"
 )
+
+REM Create frontend-build directory
+mkdir "frontend-build"
+
+REM Copy the entire .next folder from frontend
+cd ..\frontend
+xcopy /E /I /Y ".next" "..\desktop-app\frontend-build\.next\"
+xcopy /E /I /Y "public" "..\desktop-app\frontend-build\public\"
+xcopy /E /I /Y "node_modules" "..\desktop-app\frontend-build\node_modules\"
+
+REM Copy standalone server files if they exist
+if exist ".next\standalone" (
+    xcopy /E /I /Y ".next\standalone\*" "..\desktop-app\frontend-build\"
+)
+
+cd ..\desktop-app
 
 echo.
 echo Step 6: Building Electron installer...

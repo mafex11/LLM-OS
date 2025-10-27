@@ -360,24 +360,60 @@ function startFrontend() {
         resolve();
       }, 10000);
     } else {
+      // Production mode - start Next.js standalone server
       const frontendPath = path.join(process.resourcesPath, 'frontend-build');
-      log('info', 'Starting production frontend', { frontendPath });
-      frontendProcess = spawn('npx.cmd', ['serve', '-s', '.', '-l', FRONTEND_PORT], {
-        cwd: frontendPath,
-        shell: true
-      });
-
-      frontendProcess.stdout.on('data', (data) => {
-        const output = data.toString();
-        log('info', 'Frontend stdout', { output: output.trim() });
-        console.log(`Frontend: ${data}`);
-      });
-
-      log('info', 'Setting 3-second timeout for production frontend');
-      setTimeout(() => {
-        log('info', 'Production frontend timeout reached, resolving');
+      // Try different possible locations for the standalone server
+      const possibleServerPaths = [
+        path.join(frontendPath, '.next', 'standalone', 'server.js'),
+        path.join(frontendPath, 'server.js'),
+        path.join(frontendPath, 'node_modules', 'next', 'dist', 'server', 'next-server.js')
+      ];
+      
+      let serverPath = null;
+      for (const testPath of possibleServerPaths) {
+        if (fs.existsSync(testPath)) {
+          serverPath = testPath;
+          break;
+        }
+      }
+      
+      log('info', 'Looking for Next.js standalone server', { serverPath: serverPath || 'not found' });
+      
+      if (serverPath) {
+        // Run the standalone Next.js server
+        const serverDir = path.dirname(serverPath);
+        log('info', 'Starting Next.js standalone server', { serverDir });
+        
+        frontendProcess = spawn('node', [path.basename(serverPath)], {
+          cwd: serverDir,
+          env: { ...process.env, PORT: FRONTEND_PORT }
+        });
+        
+        frontendProcess.stdout.on('data', (data) => {
+          const output = data.toString();
+          log('info', 'Frontend server stdout', { output: output.trim() });
+          console.log(`Frontend: ${data}`);
+          
+          if (output.includes('Ready') || output.includes('started server') || output.includes('Local:')) {
+            log('info', 'Frontend server ready');
+            resolve();
+          }
+        });
+        
+        frontendProcess.stderr.on('data', (data) => {
+          const error = data.toString();
+          log('error', 'Frontend server stderr', { error: error.trim() });
+          console.error(`Frontend: ${data}`);
+        });
+        
+        setTimeout(() => {
+          log('info', 'Frontend server timeout reached, resolving');
+          resolve();
+        }, 8000);
+      } else {
+        log('warn', 'Standalone server not found, resolving without server');
         resolve();
-      }, 3000);
+      }
     }
   });
 }
@@ -399,6 +435,7 @@ async function startApplication() {
     log('info', 'Loading application...');
     
     setTimeout(() => {
+      // Always load from localhost (works for both dev and production)
       const url = `http://localhost:${FRONTEND_PORT}`;
       log('info', 'Loading application URL', { url });
       mainWindow.loadURL(url);

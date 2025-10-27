@@ -17,26 +17,45 @@
   "build": {
     "appId": "com.yuki.ai.desktop",
     "productName": "Yuki AI",
+    "compression": "maximum",
     "files": [
       "electron/**/*",
       "backend/**/*",
-      "backend/api_server.exe",
       "frontend-build/**/*",
       "resources/**/*"
     ],
-    "extraFiles": [
+    "extraResources": [
       {
         "from": "backend/api_server.exe",
         "to": "backend/api_server.exe"
+      },
+      {
+        "from": "frontend-build",
+        "to": "frontend-build",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "node_modules",
+        "to": "node_modules",
+        "filter": ["**/*"]
       }
     ],
     "win": {
       "target": [
-        "nsis",
-        "portable"
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
       ],
       "icon": "resources/icon.ico",
-      "sign": null
+      "sign": null,
+      "compression": "maximum",
+      "files": [
+        "electron/**/*",
+        "backend/**/*",
+        "frontend-build/**/*",
+        "resources/**/*"
+      ]
     },
     "nsis": {
       "oneClick": false,
@@ -46,17 +65,23 @@
       "license": "resources/LICENSE.txt",
       "installerIcon": "resources/icon.ico",
       "uninstallerIcon": "resources/icon.ico",
-      "include": "installer-script.nsh",
-      "deleteAppDataOnUninstall": false
+      "deleteAppDataOnUninstall": false,
+      "compression": "maximum",
+      "compressor": "lzma"
     },
     "directories": {
       "output": "dist",
       "buildResources": "resources"
-    }
+    },
+    "asarUnpack": [
+      "backend/**/*",
+      "frontend-build/**/*"
+    ]
   },
   "dependencies": {
     "electron-store": "^8.1.0",
-    "find-process": "^1.4.7"
+    "find-process": "^1.4.7",
+    "serve": "^14.2.1"
   },
   "devDependencies": {
     "electron": "^28.0.0",
