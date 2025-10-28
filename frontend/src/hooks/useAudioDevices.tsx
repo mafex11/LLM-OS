@@ -107,7 +107,7 @@ export const useAudioDevices = () => {
       }
       
       const inputDevices = devices
-        .filter(device => device.kind === 'audioinput')
+          .filter(device => device.kind === 'audioinput' && device.deviceId && device.deviceId.trim() !== '')
         .map(device => ({
           deviceId: device.deviceId,
           label: device.label || `Microphone ${device.deviceId.slice(0, 8)}`,
@@ -115,7 +115,7 @@ export const useAudioDevices = () => {
         }))
       
       const outputDevices = devices
-        .filter(device => device.kind === 'audiooutput')
+        .filter(device => device.kind === 'audiooutput' && device.deviceId && device.deviceId.trim() !== '')
         .map(device => ({
           deviceId: device.deviceId,
           label: device.label || `Speaker ${device.deviceId.slice(0, 8)}`,

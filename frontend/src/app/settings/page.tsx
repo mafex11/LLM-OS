@@ -62,6 +62,7 @@ export default function SettingsPage() {
     deepgram_api_key: false
   })
   const [savingKeys, setSavingKeys] = useState(false)
+  const [showRunningPrograms, setShowRunningPrograms] = useState(false)
   const [apiKeyInputs, setApiKeyInputs] = useState<ApiKeys>({
     google_api_key: "",
     elevenlabs_api_key: "",
@@ -672,7 +673,9 @@ export default function SettingsPage() {
                             <SelectValue placeholder="Select microphone..." />
                           </SelectTrigger>
                           <SelectContent className="bg-black/90 border border-white/20">
-                            {audioDevices.inputDevices.map((device) => (
+                            {audioDevices.inputDevices
+                              .filter(device => device.deviceId && device.deviceId.trim() !== '')
+                              .map((device) => (
                               <SelectItem 
                                 key={device.deviceId} 
                                 value={device.deviceId}
@@ -710,7 +713,9 @@ export default function SettingsPage() {
                             <SelectValue placeholder="Select speaker..." />
                           </SelectTrigger>
                           <SelectContent className="bg-black/90 border border-white/20">
-                            {audioDevices.outputDevices.map((device) => (
+                            {audioDevices.outputDevices
+                              .filter(device => device.deviceId && device.deviceId.trim() !== '')
+                              .map((device) => (
                               <SelectItem 
                                 key={device.deviceId} 
                                 value={device.deviceId}
@@ -779,12 +784,69 @@ export default function SettingsPage() {
                         </Badge>
                       </div>
                       
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Running Programs</span>
-                        <Badge variant="secondary">
-                          {systemStatus?.running_programs?.length || 0} active
-                        </Badge>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Running Programs</span>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary">
+                              {systemStatus?.running_programs?.length || 0} active
+                            </Badge>
+                            {systemStatus?.running_programs && systemStatus.running_programs.length > 0 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowRunningPrograms(!showRunningPrograms)}
+                                className="h-6 w-6 p-0"
+                              >
+                                {showRunningPrograms ? (
+                                  <ViewOffIcon size={14} />
+                                ) : (
+                                  <ViewIcon size={14} />
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {showRunningPrograms && systemStatus?.running_programs && systemStatus.running_programs.length > 0 && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="space-y-2 pl-4 border-l border-white/10"
+                          >
+                            {systemStatus.running_programs.map((program, index) => (
+                              <motion.div
+                                key={program.id || index}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.2, delay: index * 0.05 }}
+                                className="flex items-center justify-between p-2 rounded-md bg-black/20 border border-white/10"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <ComputerIcon size={14} className="text-blue-400" />
+                                  <div className="flex flex-col">
+                                    <span className="text-xs font-medium text-white">
+                                      {program.title || program.name}
+                                    </span>
+                                    {program.name !== program.title && (
+                                      <span className="text-xs text-gray-400">
+                                        {program.name}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <Badge variant="outline" className="text-xs">
+                                  ID: {program.id.slice(0, 8)}...
+                                </Badge>
+                              </motion.div>
+                            ))}
+                          </motion.div>
+                        )}
                       </div>
+
+                      <Separator />
 
                       <div className="flex items-center justify-between">
                         <span className="text-sm">Voice Mode</span>
