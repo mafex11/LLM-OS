@@ -175,7 +175,7 @@ async def lifespan(app: FastAPI):
             use_vision=False,
             enable_conversation=True,
             literal_mode=True,
-            max_steps=30,
+            max_steps=100,
             enable_tts=enable_tts,
             tts_voice_id=tts_voice_id
         )
@@ -296,7 +296,7 @@ class SettingsRequest(BaseModel):
     enable_tts: bool = True
     tts_voice_id: str = "21m00Tcm4TlvDq8ikWAM"
     cache_timeout: float = 2.0
-    max_steps: int = 30
+    max_steps: int = 50
 
 class ApiKeysRequest(BaseModel):
     google_api_key: str
@@ -470,7 +470,7 @@ async def process_query_stream(request: QueryRequest):
                 use_vision=False,
                 enable_conversation=True,
                 literal_mode=True,
-                max_steps=30,
+                max_steps=50,
                 enable_tts=False,  # We'll handle TTS separately
                 tts_voice_id="21m00Tcm4TlvDq8ikWAM"
             )
@@ -1011,7 +1011,7 @@ async def start_voice_mode(request: VoiceModeRequest):
                     use_vision=False,
                     enable_conversation=True,
                     literal_mode=True,
-                    max_steps=30,
+                    max_steps=50,
                     enable_tts=False  # We'll handle TTS separately
                 )
                 
