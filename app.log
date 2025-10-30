@@ -25655,3 +25655,562 @@ I am waiting for your command.[0m
 2025-10-28 09:35:32 | INFO | SESSION ENDED
 2025-10-28 09:35:32 | INFO | ================================================================================
 
+2025-10-30 18:59:06 | INFO | ================================================================================
+2025-10-30 18:59:06 | INFO | NEW SESSION STARTED
+2025-10-30 18:59:06 | INFO | ================================================================================
+2025-10-30 18:59:08 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 18:59:13 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 19:00:33 | INFO | ================================================================================
+2025-10-30 19:00:33 | INFO | NEW SESSION STARTED
+2025-10-30 19:00:33 | INFO | ================================================================================
+2025-10-30 19:00:33 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 19:00:36 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 19:06:36 | INFO | ================================================================================
+2025-10-30 19:06:36 | INFO | SESSION ENDED
+2025-10-30 19:06:36 | INFO | ================================================================================
+
+2025-10-30 19:08:35 | INFO | ================================================================================
+2025-10-30 19:08:35 | INFO | NEW SESSION STARTED
+2025-10-30 19:08:35 | INFO | ================================================================================
+2025-10-30 19:08:37 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 19:08:41 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 19:13:18 | INFO | ================================================================================
+2025-10-30 19:13:18 | INFO | NEW SESSION STARTED
+2025-10-30 19:13:18 | INFO | ================================================================================
+2025-10-30 19:13:19 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 19:13:22 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 19:16:12 | DEBUG | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-30 19:16:20 | DEBUG | Speech started
+2025-10-30 19:16:23 | DEBUG | Interim: Yuki.
+2025-10-30 19:16:24 | DEBUG | Speech started
+2025-10-30 19:16:24 | DEBUG | Final transcript: Yuki, hello.
+2025-10-30 19:16:25 | DEBUG | Utterance end
+2025-10-30 19:16:25 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 19:16:25 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 19:16:25 | INFO | USER QUERY: hello.
+2025-10-30 19:16:25 | INFO | [33m[Starting] Task Analysis: Processing: 'hello.'[0m
+2025-10-30 19:16:26 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 19:16:26 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 19:16:27 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 19:16:29 | INFO | --- ITERATION 1/30 ---
+2025-10-30 19:16:29 | INFO | EVALUATE: Neutral - The agent received the user query "hello." and is ready to respond.
+2025-10-30 19:16:29 | INFO | PLAN: The user said hello. Respond to the user.
+2025-10-30 19:16:29 | INFO | THOUGHT: The user said hello, so I should respond in a friendly manner.
+2025-10-30 19:16:29 | INFO | [95mThe user said hello, so I should respond in a friendly manner.[0m
+2025-10-30 19:16:29 | INFO | [33m[Reasoning] Agent Thought: The user said hello, so I should respond in a friendly manner.[0m
+2025-10-30 19:16:29 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 19:16:29 | INFO | FINAL ANSWER: Hello there! How can I help you today?
+2025-10-30 19:16:29 | INFO | [36m
+Hello there! How can I help you today?[0m
+2025-10-30 19:16:29 | DEBUG | Generating speech for: Hello there! How can I help you today?...
+2025-10-30 19:16:30 | DEBUG | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1761831989957.mp3
+2025-10-30 19:16:30 | DEBUG | Speech started
+2025-10-30 19:16:30 | DEBUG | Speech started
+2025-10-30 19:16:30 | DEBUG | Speech started
+2025-10-30 19:16:31 | DEBUG | Speech started
+2025-10-30 19:16:34 | DEBUG | Speech started
+2025-10-30 19:16:35 | DEBUG | Interim: Yuki has
+2025-10-30 19:16:36 | DEBUG | Final transcript: Yuki, hello.
+2025-10-30 19:16:37 | DEBUG | Utterance end
+2025-10-30 19:16:37 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 19:16:37 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 19:16:37 | INFO | USER QUERY: hello.
+2025-10-30 19:16:37 | INFO | [33m[Starting] Task Analysis: Processing: 'hello.'[0m
+2025-10-30 19:16:37 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 19:16:37 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 19:16:38 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 19:16:41 | INFO | --- ITERATION 1/30 ---
+2025-10-30 19:16:41 | INFO | EVALUATE: Neutral - The agent received the user query "hello."
+2025-10-30 19:16:41 | INFO | PLAN: The user has said hello. I will respond to the user.
+2025-10-30 19:16:41 | INFO | THOUGHT: The user has greeted me. I will respond to the user with a greeting.
+2025-10-30 19:16:41 | INFO | [95mThe user has greeted me. I will respond to the user with a greeting.[0m
+2025-10-30 19:16:41 | INFO | [33m[Reasoning] Agent Thought: The user has greeted me. I will respond to the user with a greeting.[0m
+2025-10-30 19:16:41 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 19:16:41 | INFO | FINAL ANSWER: Hello there!
+2025-10-30 19:16:41 | INFO | [36m
+Hello there![0m
+2025-10-30 19:16:41 | DEBUG | Generating speech for: Hello there!...
+2025-10-30 19:16:41 | DEBUG | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1761832001203.mp3
+2025-10-30 19:16:42 | DEBUG | Speech started
+2025-10-30 19:16:43 | DEBUG | Speech started
+2025-10-30 19:16:58 | DEBUG | Speech started
+2025-10-30 19:16:59 | DEBUG | Speech started
+2025-10-30 19:17:01 | DEBUG | Speech started
+2025-10-30 19:17:04 | DEBUG | Speech started
+2025-10-30 19:17:08 | DEBUG | Speech started
+2025-10-30 19:17:10 | DEBUG | Speech started
+2025-10-30 19:17:13 | DEBUG | Speech started
+2025-10-30 19:17:16 | DEBUG | Speech started
+2025-10-30 19:17:58 | DEBUG | Speech started
+2025-10-30 19:18:17 | INFO | ================================================================================
+2025-10-30 19:18:17 | INFO | SESSION ENDED
+2025-10-30 19:18:17 | INFO | ================================================================================
+
+2025-10-30 19:18:45 | INFO | ================================================================================
+2025-10-30 19:18:45 | INFO | NEW SESSION STARTED
+2025-10-30 19:18:45 | INFO | ================================================================================
+2025-10-30 19:18:47 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 19:18:50 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 19:19:09 | DEBUG | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-30 19:19:13 | DEBUG | Speech started
+2025-10-30 19:19:13 | DEBUG | Interim: Yuki
+2025-10-30 19:19:14 | DEBUG | Final transcript: Yuki, hello.
+2025-10-30 19:19:15 | DEBUG | Utterance end
+2025-10-30 19:19:15 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 19:19:15 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 19:19:15 | INFO | USER QUERY: hello.
+2025-10-30 19:19:15 | INFO | [33m[Starting] Task Analysis: Processing: 'hello.'[0m
+2025-10-30 19:19:16 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 19:19:16 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 19:19:17 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 19:19:19 | INFO | --- ITERATION 1/30 ---
+2025-10-30 19:19:19 | INFO | EVALUATE: Neutral
+2025-10-30 19:19:19 | INFO | PLAN: The user said "hello". I will respond in a conversational manner.
+2025-10-30 19:19:19 | INFO | THOUGHT: The user said hello, so I will respond with a greeting.
+2025-10-30 19:19:19 | INFO | [95mThe user said hello, so I will respond with a greeting.[0m
+2025-10-30 19:19:19 | INFO | [33m[Reasoning] Agent Thought: The user said hello, so I will respond with a greeting.[0m
+2025-10-30 19:19:19 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 19:19:19 | INFO | FINAL ANSWER: Hello there!
+2025-10-30 19:19:19 | INFO | [36m
+Hello there![0m
+2025-10-30 19:19:19 | DEBUG | Generating speech for: Hello there!...
+2025-10-30 19:19:20 | DEBUG | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1761832159458.mp3
+2025-10-30 19:19:20 | DEBUG | Speech started
+2025-10-30 19:19:27 | DEBUG | Speech started
+2025-10-30 19:19:33 | DEBUG | Speech started
+2025-10-30 19:19:40 | DEBUG | Speech started
+2025-10-30 19:19:42 | DEBUG | Speech started
+2025-10-30 19:20:00 | DEBUG | Speech started
+2025-10-30 19:20:05 | DEBUG | Speech started
+2025-10-30 19:20:08 | DEBUG | Speech started
+2025-10-30 19:20:10 | DEBUG | Speech started
+2025-10-30 19:20:11 | DEBUG | Speech started
+2025-10-30 19:20:14 | DEBUG | Speech started
+2025-10-30 19:20:19 | DEBUG | Speech started
+2025-10-30 19:20:20 | DEBUG | Speech started
+2025-10-30 19:20:22 | DEBUG | Speech started
+2025-10-30 19:20:25 | DEBUG | Speech started
+2025-10-30 19:20:25 | DEBUG | Speech started
+2025-10-30 19:20:56 | DEBUG | Speech started
+2025-10-30 19:21:03 | DEBUG | Speech started
+2025-10-30 19:21:24 | DEBUG | Speech started
+2025-10-30 19:21:28 | DEBUG | Speech started
+2025-10-30 19:21:30 | DEBUG | Speech started
+2025-10-30 19:21:33 | DEBUG | Speech started
+2025-10-30 19:21:36 | DEBUG | Speech started
+2025-10-30 19:21:40 | DEBUG | Speech started
+2025-10-30 19:21:43 | DEBUG | Speech started
+2025-10-30 19:21:45 | DEBUG | Speech started
+2025-10-30 19:21:47 | DEBUG | Speech started
+2025-10-30 19:21:48 | DEBUG | Speech started
+2025-10-30 19:21:49 | DEBUG | Speech started
+2025-10-30 19:22:12 | DEBUG | Speech started
+2025-10-30 19:22:20 | DEBUG | Speech started
+2025-10-30 19:22:22 | DEBUG | Speech started
+2025-10-30 19:22:24 | DEBUG | Speech started
+2025-10-30 19:22:28 | DEBUG | Speech started
+2025-10-30 19:22:29 | DEBUG | Speech started
+2025-10-30 19:22:31 | DEBUG | Speech started
+2025-10-30 19:23:07 | DEBUG | Speech started
+2025-10-30 19:23:15 | DEBUG | Speech started
+2025-10-30 19:23:19 | DEBUG | Speech started
+2025-10-30 19:23:19 | DEBUG | Interim: You
+2025-10-30 19:23:20 | DEBUG | Final transcript: Yuki, hello.
+2025-10-30 19:23:21 | DEBUG | Utterance end
+2025-10-30 19:23:21 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 19:23:21 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 19:23:21 | INFO | USER QUERY: hello.
+2025-10-30 19:23:21 | INFO | [33m[Starting] Task Analysis: Processing: 'hello.'[0m
+2025-10-30 19:23:22 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 19:23:22 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 19:23:23 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 19:23:25 | INFO | --- ITERATION 1/30 ---
+2025-10-30 19:23:25 | INFO | EVALUATE: Neutral
+2025-10-30 19:23:25 | INFO | PLAN: The user provided "hello" as input. Since this is not a question or a command, I will respond with a greeting.
+2025-10-30 19:23:25 | INFO | THOUGHT: The user said hello, so I will respond in kind.
+2025-10-30 19:23:25 | INFO | [95mThe user said hello, so I will respond in kind.[0m
+2025-10-30 19:23:25 | INFO | [33m[Reasoning] Agent Thought: The user said hello, so I will respond in kind.[0m
+2025-10-30 19:23:25 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 19:23:25 | INFO | FINAL ANSWER: Hello there!
+2025-10-30 19:23:25 | INFO | [36m
+Hello there![0m
+2025-10-30 19:23:25 | DEBUG | Generating speech for: Hello there!...
+2025-10-30 19:23:26 | DEBUG | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1761832405672.mp3
+2025-10-30 19:23:26 | DEBUG | Speech started
+2025-10-30 19:23:29 | DEBUG | Speech started
+2025-10-30 19:23:36 | DEBUG | Speech started
+2025-10-30 19:23:36 | DEBUG | Interim: Yuki, hi.
+2025-10-30 19:23:37 | DEBUG | Final transcript: Yuki, hi.
+2025-10-30 19:23:38 | DEBUG | Utterance end
+2025-10-30 19:23:38 | DEBUG | Finalized transcript: Yuki, hi.
+2025-10-30 19:23:38 | DEBUG | Trigger word 'yuki' detected with command: hi.
+2025-10-30 19:23:38 | INFO | USER QUERY: hi.
+2025-10-30 19:23:38 | INFO | [33m[Starting] Task Analysis: Processing: 'hi.'[0m
+2025-10-30 19:23:39 | DEBUG | Finalized transcript: Yuki, hi.
+2025-10-30 19:23:39 | DEBUG | Trigger word 'yuki' detected with command: hi.
+2025-10-30 19:23:40 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 19:23:43 | INFO | --- ITERATION 1/30 ---
+2025-10-30 19:23:43 | INFO | EVALUATE: Neutral - The agent received a greeting.
+2025-10-30 19:23:43 | INFO | PLAN: Respond to the user's greeting.
+2025-10-30 19:23:43 | INFO | THOUGHT: The user has said "hi". I should respond in a friendly manner.
+2025-10-30 19:23:43 | INFO | [95mThe user has said "hi". I should respond in a friendly manner.[0m
+2025-10-30 19:23:43 | INFO | [33m[Reasoning] Agent Thought: The user has said "hi". I should respond in a friendly manner.[0m
+2025-10-30 19:23:43 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 19:23:43 | INFO | FINAL ANSWER: Hello! How can I help you today?
+2025-10-30 19:23:43 | INFO | [36m
+Hello! How can I help you today?[0m
+2025-10-30 19:23:43 | DEBUG | Generating speech for: Hello! How can I help you today?...
+2025-10-30 19:23:43 | DEBUG | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1761832423030.mp3
+2025-10-30 19:23:51 | DEBUG | Speech started
+2025-10-30 19:23:55 | DEBUG | Speech started
+2025-10-30 19:24:13 | INFO | ================================================================================
+2025-10-30 19:24:13 | INFO | NEW SESSION STARTED
+2025-10-30 19:24:13 | INFO | ================================================================================
+2025-10-30 19:24:13 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 19:24:15 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 19:24:45 | DEBUG | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-30 19:24:49 | DEBUG | Speech started
+2025-10-30 19:24:50 | DEBUG | Interim: Yuki Hill
+2025-10-30 19:24:51 | DEBUG | Final transcript: Yuki, hello.
+2025-10-30 19:24:52 | DEBUG | Utterance end
+2025-10-30 19:24:52 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 19:24:52 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 19:24:52 | INFO | USER QUERY: hello.
+2025-10-30 19:24:52 | INFO | [33m[Starting] Task Analysis: Processing: 'hello.'[0m
+2025-10-30 19:24:52 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 19:24:52 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 19:24:53 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 19:24:56 | INFO | --- ITERATION 1/30 ---
+2025-10-30 19:24:56 | INFO | EVALUATE: Neutral - The agent received the user query "hello."
+2025-10-30 19:24:56 | INFO | PLAN: The user has sent a greeting. Respond to the user with a greeting.
+2025-10-30 19:24:56 | INFO | THOUGHT: The user has sent a greeting. I should respond in a friendly manner.
+2025-10-30 19:24:56 | INFO | [95mThe user has sent a greeting. I should respond in a friendly manner.[0m
+2025-10-30 19:24:56 | INFO | [33m[Reasoning] Agent Thought: The user has sent a greeting. I should respond in a friendly manner.[0m
+2025-10-30 19:24:56 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 19:24:56 | INFO | FINAL ANSWER: Hello there! How can I help you today?
+2025-10-30 19:24:56 | INFO | [36m
+Hello there! How can I help you today?[0m
+2025-10-30 19:24:56 | DEBUG | Generating speech for: Hello there! How can I help you today?...
+2025-10-30 19:24:57 | DEBUG | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1761832496361.mp3
+2025-10-30 19:25:14 | DEBUG | Speech started
+2025-10-30 19:25:16 | DEBUG | Speech started
+2025-10-30 19:25:19 | DEBUG | Speech started
+2025-10-30 19:25:21 | DEBUG | Speech started
+2025-10-30 19:25:29 | DEBUG | Speech started
+2025-10-30 19:25:32 | DEBUG | Speech started
+2025-10-30 19:25:37 | DEBUG | Speech started
+2025-10-30 19:25:38 | DEBUG | Speech started
+2025-10-30 19:25:41 | INFO | ================================================================================
+2025-10-30 19:25:41 | INFO | SESSION ENDED
+2025-10-30 19:25:41 | INFO | ================================================================================
+
+2025-10-30 19:27:16 | INFO | ================================================================================
+2025-10-30 19:27:16 | INFO | NEW SESSION STARTED
+2025-10-30 19:27:16 | INFO | ================================================================================
+2025-10-30 19:27:17 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 19:27:20 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 19:27:26 | DEBUG | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-30 19:27:30 | DEBUG | Speech started
+2025-10-30 19:27:30 | DEBUG | Interim: Yuki,
+2025-10-30 19:27:31 | DEBUG | Final transcript: Yuki, hello.
+2025-10-30 19:27:32 | DEBUG | Utterance end
+2025-10-30 19:27:32 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 19:27:32 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 19:27:32 | INFO | USER QUERY: hello.
+2025-10-30 19:27:32 | INFO | [33m[Starting] Task Analysis: Processing: 'hello.'[0m
+2025-10-30 19:27:32 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 19:27:32 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 19:27:34 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 19:27:36 | INFO | --- ITERATION 1/30 ---
+2025-10-30 19:27:36 | INFO | EVALUATE: Neutral - The agent received the user query "hello." and is ready to respond.
+2025-10-30 19:27:36 | INFO | PLAN: The user has sent a greeting. Respond to the user with a greeting as well.
+2025-10-30 19:27:36 | INFO | THOUGHT: The user said hello, so I should respond in kind.
+2025-10-30 19:27:36 | INFO | [95mThe user said hello, so I should respond in kind.[0m
+2025-10-30 19:27:36 | INFO | [33m[Reasoning] Agent Thought: The user said hello, so I should respond in kind.[0m
+2025-10-30 19:27:36 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 19:27:36 | INFO | FINAL ANSWER: Hello there!
+2025-10-30 19:27:36 | INFO | [36m
+Hello there![0m
+2025-10-30 19:27:36 | DEBUG | Generating speech for: Hello there!...
+2025-10-30 19:27:37 | DEBUG | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1761832656637.mp3
+2025-10-30 19:27:41 | DEBUG | Speech started
+2025-10-30 19:27:41 | DEBUG | Interim: What the fuck
+2025-10-30 19:27:42 | DEBUG | Final transcript: What the fuck, bro?
+2025-10-30 19:27:43 | DEBUG | Interim: I
+2025-10-30 19:27:43 | DEBUG | Utterance end
+2025-10-30 19:27:43 | DEBUG | Finalized transcript: What the fuck, bro?
+2025-10-30 19:27:43 | DEBUG | No trigger word detected, ignoring: What the fuck, bro?
+2025-10-30 19:27:43 | DEBUG | Speech started
+2025-10-30 19:27:44 | DEBUG | Interim: Three of these
+2025-10-30 19:27:46 | DEBUG | Final transcript: Three of these. I believe
+2025-10-30 19:27:46 | DEBUG | Utterance end
+2025-10-30 19:27:46 | DEBUG | Finalized transcript: Three of these. I believe
+2025-10-30 19:27:46 | DEBUG | No trigger word detected, ignoring: Three of these. I believe
+2025-10-30 19:27:57 | DEBUG | Speech started
+2025-10-30 19:27:58 | DEBUG | Speech started
+2025-10-30 19:28:00 | DEBUG | Speech started
+2025-10-30 19:28:20 | DEBUG | Speech started
+2025-10-30 19:28:22 | DEBUG | Speech started
+2025-10-30 19:28:24 | DEBUG | Speech started
+2025-10-30 19:28:28 | DEBUG | Speech started
+2025-10-30 19:28:38 | DEBUG | Speech started
+2025-10-30 19:28:40 | DEBUG | Speech started
+2025-10-30 19:28:41 | DEBUG | Speech started
+2025-10-30 19:28:45 | DEBUG | Speech started
+2025-10-30 19:28:48 | DEBUG | Speech started
+2025-10-30 19:40:47 | INFO | ================================================================================
+2025-10-30 19:40:47 | INFO | NEW SESSION STARTED
+2025-10-30 19:40:47 | INFO | ================================================================================
+2025-10-30 19:40:48 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 19:40:51 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 19:41:01 | INFO | USER QUERY: hi
+2025-10-30 19:41:01 | INFO | [33m[Starting] Task Analysis: Processing: 'hi'[0m
+2025-10-30 19:41:03 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 19:41:06 | INFO | --- ITERATION 1/30 ---
+2025-10-30 19:41:06 | INFO | EVALUATE: Neutral - The agent is ready to receive instructions.
+2025-10-30 19:41:06 | INFO | PLAN: The user has said "hi". I should respond in a friendly manner.
+2025-10-30 19:41:06 | INFO | THOUGHT: The user has initiated a conversation. I should respond to acknowledge their greeting.
+2025-10-30 19:41:06 | INFO | [95mThe user has initiated a conversation. I should respond to acknowledge their greeting.[0m
+2025-10-30 19:41:06 | INFO | [33m[Reasoning] Agent Thought: The user has initiated a conversation. I should respond to acknowledge their greeting.[0m
+2025-10-30 19:41:06 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 19:41:06 | INFO | FINAL ANSWER: Hello! How can I help you today?
+2025-10-30 19:41:06 | INFO | [36m
+Hello! How can I help you today?[0m
+2025-10-30 19:41:52 | DEBUG | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-30 19:41:56 | DEBUG | Speech started
+2025-10-30 19:41:57 | DEBUG | Interim: UK Open
+2025-10-30 19:41:58 | DEBUG | Interim: You can open calculator.
+2025-10-30 19:41:58 | DEBUG | Final transcript: You can open calculator.
+2025-10-30 19:41:59 | DEBUG | Utterance end
+2025-10-30 19:41:59 | DEBUG | Finalized transcript: You can open calculator.
+2025-10-30 19:41:59 | DEBUG | No trigger word detected, ignoring: You can open calculator.
+2025-10-30 19:42:00 | DEBUG | Speech started
+2025-10-30 19:42:04 | DEBUG | Speech started
+2025-10-30 19:42:06 | DEBUG | Speech started
+2025-10-30 19:42:07 | DEBUG | Interim: Yuki, hello.
+2025-10-30 19:42:08 | DEBUG | Interim: Yuki, hello.
+2025-10-30 19:42:09 | DEBUG | Speech started
+2025-10-30 19:42:09 | DEBUG | Final transcript: Yuki, hello.
+2025-10-30 19:42:09 | DEBUG | Utterance end
+2025-10-30 19:42:09 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 19:42:09 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 19:42:09 | INFO | USER QUERY: hello.
+2025-10-30 19:42:09 | INFO | [33m[Starting] Task Analysis: Processing: 'hello.'[0m
+2025-10-30 19:42:11 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 19:42:11 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 19:42:11 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 19:42:13 | INFO | --- ITERATION 1/30 ---
+2025-10-30 19:42:13 | INFO | EVALUATE: Neutral. The agent is ready to receive instructions.
+2025-10-30 19:42:13 | INFO | PLAN: The user has said "hello". I will respond to the user.
+2025-10-30 19:42:13 | INFO | THOUGHT: The user has said hello. I will respond to the user with a greeting.
+2025-10-30 19:42:13 | INFO | [95mThe user has said hello. I will respond to the user with a greeting.[0m
+2025-10-30 19:42:13 | INFO | [33m[Reasoning] Agent Thought: The user has said hello. I will respond to the user with a greeting.[0m
+2025-10-30 19:42:13 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 19:42:13 | INFO | FINAL ANSWER: Hello there! How can I help you today?
+2025-10-30 19:42:13 | INFO | [36m
+Hello there! How can I help you today?[0m
+2025-10-30 19:42:13 | DEBUG | Generating speech for: Hello there! How can I help you today?...
+2025-10-30 19:42:14 | DEBUG | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1761833533492.mp3
+2025-10-30 19:42:14 | DEBUG | Speech started
+2025-10-30 19:42:14 | DEBUG | Speech started
+2025-10-30 19:42:16 | DEBUG | Speech started
+2025-10-30 19:42:18 | DEBUG | Speech started
+2025-10-30 19:42:19 | DEBUG | Final transcript: Yuki OpenCalculator.
+2025-10-30 19:42:20 | DEBUG | Utterance end
+2025-10-30 19:42:20 | DEBUG | Finalized transcript: Yuki OpenCalculator.
+2025-10-30 19:42:20 | DEBUG | Trigger word 'yuki' detected with command: opencalculator.
+2025-10-30 19:42:20 | INFO | USER QUERY: opencalculator.
+2025-10-30 19:42:20 | INFO | [33m[Starting] Task Analysis: Processing: 'opencalculator.'[0m
+2025-10-30 19:42:21 | DEBUG | Finalized transcript: Yuki OpenCalculator.
+2025-10-30 19:42:21 | DEBUG | Trigger word 'yuki' detected with command: opencalculator.
+2025-10-30 19:42:22 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 19:42:24 | INFO | --- ITERATION 1/30 ---
+2025-10-30 19:42:24 | INFO | EVALUATE: The desktop is ready and I can see the interactive elements.
+2025-10-30 19:42:24 | INFO | PLAN: The user wants me to open calculator. I will use the Launch Tool to open calculator.
+2025-10-30 19:42:24 | INFO | THOUGHT: The user wants to open calculator. I will use the Launch Tool to open calculator.
+2025-10-30 19:42:24 | INFO | [95mThe user wants to open calculator. I will use the Launch Tool to open calculator.[0m
+2025-10-30 19:42:24 | INFO | [33m[Reasoning] Agent Thought: The user wants to open calculator. I will use the Launch Tool to open calculator.[0m
+2025-10-30 19:42:24 | INFO | [33m[Executing] Launch Tool: Step 2/30[0m
+2025-10-30 19:42:24 | INFO | ACTION: Launch Tool(name=calculator)
+2025-10-30 19:42:24 | INFO | [34mUsing Launch Tool...[0m
+2025-10-30 19:42:33 | INFO | TOOL RESULT [SUCCESS] Launch Tool: Launched Calculator and refreshed coordinates.
+2025-10-30 19:42:33 | INFO | [33m[Completed] Launch Tool: Success[0m
+2025-10-30 19:42:33 | INFO | [33m[Refreshing] Desktop State: Getting fresh coordinates after launch[0m
+2025-10-30 19:42:34 | INFO | OBSERVATION: Launched Calculator and refreshed coordinates.
+2025-10-30 19:42:34 | INFO | [32mLaunched Calculator and refreshed coordinates.[0m
+2025-10-30 19:42:34 | INFO | [33m[Thinking] Planning Next Action: Step 2/30[0m
+2025-10-30 19:42:36 | INFO | --- ITERATION 2/30 ---
+2025-10-30 19:42:36 | INFO | EVALUATE: The calculator app is now in the foreground.
+2025-10-30 19:42:36 | INFO | PLAN: The user asked me to open calculator, and I have already done that. Now I will use the Done Tool to inform the user that the task is completed.
+2025-10-30 19:42:36 | INFO | THOUGHT: The user asked me to open calculator, and I have already done that. Now I will use the Done Tool to inform the user that the task is completed.
+2025-10-30 19:42:36 | INFO | [95mThe user asked me to open calculator, and I have already done that. Now I will use the Done Tool to inform the user that the task is completed.[0m
+2025-10-30 19:42:36 | INFO | [33m[Reasoning] Agent Thought: The user asked me to open calculator, and I have already done that. Now I will use the Done Tool to inform the user that the task is completed.[0m
+2025-10-30 19:42:36 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 19:42:36 | INFO | FINAL ANSWER: I have opened the calculator for you.
+2025-10-30 19:42:36 | INFO | [36m
+I have opened the calculator for you.[0m
+2025-10-30 19:42:36 | DEBUG | Generating speech for: I have opened the calculator for you....
+2025-10-30 19:42:37 | DEBUG | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1761833556803.mp3
+2025-10-30 19:42:37 | DEBUG | Speech started
+2025-10-30 19:42:42 | DEBUG | Stopping listening...
+2025-10-30 19:42:42 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-30 19:46:51 | INFO | USER QUERY: hi
+2025-10-30 19:46:51 | INFO | [33m[Starting] Task Analysis: Processing: 'hi'[0m
+2025-10-30 19:46:52 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 19:46:56 | INFO | --- ITERATION 1/30 ---
+2025-10-30 19:46:56 | INFO | EVALUATE: Neutral. The calculator was opened in the previous step.
+2025-10-30 19:46:56 | INFO | PLAN: The user is saying "hi" again after I said that I opened the calculator. I will reiterate that I opened the calculator and ask if they need anything else.
+2025-10-30 19:46:56 | INFO | THOUGHT: The user said "hi" again, so I will respond again and ask if they need anything else.
+2025-10-30 19:46:56 | INFO | [95mThe user said "hi" again, so I will respond again and ask if they need anything else.[0m
+2025-10-30 19:46:56 | INFO | [33m[Reasoning] Agent Thought: The user said "hi" again, so I will respond again and ask if they need anything else.[0m
+2025-10-30 19:46:56 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 19:46:56 | INFO | FINAL ANSWER: I have already opened the calculator for you. Do you need any further assistance?
+2025-10-30 19:46:56 | INFO | [36m
+I have already opened the calculator for you. Do you need any further assistance?[0m
+2025-10-30 19:47:00 | DEBUG | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-30 19:47:03 | DEBUG | Speech started
+2025-10-30 19:47:04 | DEBUG | Interim: Yuki
+2025-10-30 19:47:04 | DEBUG | Final transcript: Yuki, hi.
+2025-10-30 19:47:05 | DEBUG | Utterance end
+2025-10-30 19:47:05 | DEBUG | Finalized transcript: Yuki, hi.
+2025-10-30 19:47:05 | DEBUG | Trigger word 'yuki' detected with command: hi.
+2025-10-30 19:47:05 | INFO | USER QUERY: hi.
+2025-10-30 19:47:05 | INFO | [33m[Starting] Task Analysis: Processing: 'hi.'[0m
+2025-10-30 19:47:06 | DEBUG | Finalized transcript: Yuki, hi.
+2025-10-30 19:47:06 | DEBUG | Trigger word 'yuki' detected with command: hi.
+2025-10-30 19:47:06 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 19:47:10 | INFO | --- ITERATION 1/30 ---
+2025-10-30 19:47:10 | INFO | EVALUATE: Neutral - The agent is ready to receive instructions.
+2025-10-30 19:47:10 | INFO | PLAN: Acknowledge the user's greeting and wait for further instructions.
+2025-10-30 19:47:10 | INFO | THOUGHT: The user has said "hi". I should respond to acknowledge the greeting and indicate that I am ready for further instructions.
+2025-10-30 19:47:10 | INFO | [95mThe user has said "hi". I should respond to acknowledge the greeting and indicate that I am ready for further instructions.[0m
+2025-10-30 19:47:10 | INFO | [33m[Reasoning] Agent Thought: The user has said "hi". I should respond to acknowledge the greeting and indicate that I am ready for further instructions.[0m
+2025-10-30 19:47:10 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 19:47:10 | INFO | FINAL ANSWER: Hello! How can I help you today?
+2025-10-30 19:47:10 | INFO | [36m
+Hello! How can I help you today?[0m
+2025-10-30 19:47:10 | DEBUG | Generating speech for: Hello! How can I help you today?...
+2025-10-30 19:47:11 | DEBUG | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1761833830661.mp3
+2025-10-30 19:47:17 | DEBUG | Stopping listening...
+2025-10-30 19:47:17 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-30 19:47:29 | DEBUG | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-30 19:47:34 | DEBUG | Speech started
+2025-10-30 19:47:34 | DEBUG | Interim: Yuki has
+2025-10-30 19:47:35 | DEBUG | Final transcript: Yuki, hello.
+2025-10-30 19:47:35 | DEBUG | Utterance end
+2025-10-30 19:47:35 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 19:47:35 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 19:47:35 | INFO | USER QUERY: hello.
+2025-10-30 19:47:35 | INFO | [33m[Starting] Task Analysis: Processing: 'hello.'[0m
+2025-10-30 19:47:36 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 19:47:36 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 19:47:36 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 19:47:42 | INFO | --- ITERATION 1/30 ---
+2025-10-30 19:47:42 | INFO | EVALUATE: Neutral - The agent received a simple greeting.
+2025-10-30 19:47:42 | INFO | PLAN: Acknowledge the user's greeting.
+2025-10-30 19:47:42 | INFO | THOUGHT: The user has said "hello". I should respond in a friendly manner.
+2025-10-30 19:47:42 | INFO | [95mThe user has said "hello". I should respond in a friendly manner.[0m
+2025-10-30 19:47:42 | INFO | [33m[Reasoning] Agent Thought: The user has said "hello". I should respond in a friendly manner.[0m
+2025-10-30 19:47:42 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 19:47:42 | INFO | FINAL ANSWER: Hello there! How can I help you today?
+2025-10-30 19:47:42 | INFO | [36m
+Hello there! How can I help you today?[0m
+2025-10-30 19:47:42 | DEBUG | Generating speech for: Hello there! How can I help you today?...
+2025-10-30 19:47:43 | DEBUG | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1761833862506.mp3
+2025-10-30 19:47:46 | DEBUG | Stopping listening...
+2025-10-30 19:47:46 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-30 19:48:09 | INFO | USER QUERY: hi
+2025-10-30 19:48:09 | INFO | [33m[Starting] Task Analysis: Processing: 'hi'[0m
+2025-10-30 19:48:10 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 19:48:12 | INFO | --- ITERATION 1/30 ---
+2025-10-30 19:48:12 | INFO | EVALUATE: Neutral - The agent is ready to receive instructions.
+2025-10-30 19:48:12 | INFO | PLAN: The user has said "hi". I will respond with a greeting.
+2025-10-30 19:48:12 | INFO | THOUGHT: The user has initiated a conversation. I will respond with a friendly greeting to acknowledge their message.
+2025-10-30 19:48:12 | INFO | [95mThe user has initiated a conversation. I will respond with a friendly greeting to acknowledge their message.[0m
+2025-10-30 19:48:12 | INFO | [33m[Reasoning] Agent Thought: The user has initiated a conversation. I will respond with a friendly greeting to acknowledge their message.[0m
+2025-10-30 19:48:12 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 19:48:12 | INFO | FINAL ANSWER: Hello! How can I help you today?
+2025-10-30 19:48:12 | INFO | [36m
+Hello! How can I help you today?[0m
+2025-10-30 19:48:17 | DEBUG | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-30 19:48:21 | DEBUG | Speech started
+2025-10-30 19:48:21 | DEBUG | Final transcript: Hello.
+2025-10-30 19:48:22 | DEBUG | Utterance end
+2025-10-30 19:48:22 | DEBUG | Finalized transcript: Hello.
+2025-10-30 19:48:22 | DEBUG | No trigger word detected, ignoring: Hello.
+2025-10-30 19:48:23 | DEBUG | Speech started
+2025-10-30 19:48:24 | DEBUG | Interim: Yuki
+2025-10-30 19:48:24 | DEBUG | Final transcript: Yuki, hello.
+2025-10-30 19:48:26 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 19:48:26 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 19:48:26 | INFO | USER QUERY: hello.
+2025-10-30 19:48:26 | INFO | [33m[Starting] Task Analysis: Processing: 'hello.'[0m
+2025-10-30 19:48:26 | DEBUG | Utterance end
+2025-10-30 19:48:26 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 19:48:26 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 19:48:27 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 19:48:30 | INFO | --- ITERATION 1/30 ---
+2025-10-30 19:48:30 | INFO | EVALUATE: Neutral - The agent received the user query "hello." and the desktop state.
+2025-10-30 19:48:30 | INFO | PLAN: The user has sent a greeting. Respond to the user with a greeting as well.
+2025-10-30 19:48:30 | INFO | THOUGHT: The user sent a greeting. I should respond in a friendly manner using the Done Tool.
+2025-10-30 19:48:30 | INFO | [95mThe user sent a greeting. I should respond in a friendly manner using the Done Tool.[0m
+2025-10-30 19:48:30 | INFO | [33m[Reasoning] Agent Thought: The user sent a greeting. I should respond in a friendly manner using the Done Tool.[0m
+2025-10-30 19:48:30 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 19:48:30 | INFO | FINAL ANSWER: Hello there! How can I help you today?
+2025-10-30 19:48:30 | INFO | [36m
+Hello there! How can I help you today?[0m
+2025-10-30 19:48:30 | DEBUG | Generating speech for: Hello there! How can I help you today?...
+2025-10-30 19:48:31 | DEBUG | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1761833910151.mp3
+2025-10-30 19:48:32 | DEBUG | Stopping listening...
+2025-10-30 19:48:33 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-30 19:56:02 | DEBUG | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-30 19:56:05 | DEBUG | Speech started
+2025-10-30 19:56:05 | DEBUG | Interim: Yuki, hello.
+2025-10-30 19:56:06 | DEBUG | Final transcript: Yuki, hello.
+2025-10-30 19:56:07 | DEBUG | Speech started
+2025-10-30 19:56:07 | DEBUG | Utterance end
+2025-10-30 19:56:21 | INFO | ================================================================================
+2025-10-30 19:56:21 | INFO | SESSION ENDED
+2025-10-30 19:56:21 | INFO | ================================================================================
+
+2025-10-30 19:56:29 | DEBUG | Speech started
+2025-10-30 19:56:43 | INFO | ================================================================================
+2025-10-30 19:56:43 | INFO | NEW SESSION STARTED
+2025-10-30 19:56:43 | INFO | ================================================================================
+2025-10-30 19:56:44 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 19:56:47 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 19:57:01 | DEBUG | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-30 19:57:06 | DEBUG | Speech started
+2025-10-30 19:57:07 | DEBUG | Interim: Yuki, hello.
+2025-10-30 19:57:08 | DEBUG | Final transcript: Yuki, hello.
+2025-10-30 19:57:09 | DEBUG | Utterance end
+2025-10-30 19:57:09 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 19:57:09 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 19:57:09 | INFO | USER QUERY: hello.
+2025-10-30 19:57:09 | INFO | [33m[Starting] Task Analysis: Processing: 'hello.'[0m
+2025-10-30 19:57:09 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 19:57:09 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 19:57:10 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 19:57:13 | INFO | --- ITERATION 1/30 ---
+2025-10-30 19:57:13 | INFO | EVALUATE: Neutral - The agent is ready to receive instructions.
+2025-10-30 19:57:13 | INFO | PLAN: The user has provided the input "hello". Since this is a greeting and doesn't require any specific action, I will acknowledge it and wait for further instructions.
+2025-10-30 19:57:13 | INFO | THOUGHT: The user said hello, so I should respond in a friendly way and wait for the next instruction.
+2025-10-30 19:57:13 | INFO | [95mThe user said hello, so I should respond in a friendly way and wait for the next instruction.[0m
+2025-10-30 19:57:13 | INFO | [33m[Reasoning] Agent Thought: The user said hello, so I should respond in a friendly way and wait for the next instruction.[0m
+2025-10-30 19:57:13 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 19:57:13 | INFO | FINAL ANSWER: Hello there! How can I help you today?
+2025-10-30 19:57:13 | INFO | [36m
+Hello there! How can I help you today?[0m
+2025-10-30 19:57:13 | DEBUG | Generating speech for: Hello there! How can I help you today?...
+2025-10-30 19:57:14 | DEBUG | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1761834433700.mp3
+2025-10-30 19:57:20 | DEBUG | Speech started
+2025-10-30 19:57:22 | DEBUG | Speech started
+2025-10-30 19:57:23 | DEBUG | Speech started
+2025-10-30 19:57:32 | DEBUG | Speech started
+2025-10-30 19:57:33 | DEBUG | Speech started
+2025-10-30 19:57:42 | DEBUG | Speech started
+2025-10-30 19:57:49 | DEBUG | Speech started
+2025-10-30 19:57:50 | INFO | ================================================================================
+2025-10-30 19:57:50 | INFO | SESSION ENDED
+2025-10-30 19:57:50 | INFO | ================================================================================
+

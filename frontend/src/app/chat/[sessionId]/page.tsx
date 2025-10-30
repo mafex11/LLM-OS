@@ -361,6 +361,14 @@ function ChatContent() {
   const [voiceModeStarting, setVoiceModeStarting] = useState(false)
   const [inputPosition, setInputPosition] = useState<'centered' | 'bottom'>('centered')
 
+  useEffect(() => {
+    if (messages.length === 0) {
+      setInputPosition('centered')
+    } else {
+      setInputPosition('bottom')
+    }
+  }, [currentSessionId, messages.length])
+
   const updateSessionMessages = useCallback((sessionId: string, newMessages: Message[]) => {
     setChatSessions(prev => prev.map(session => 
       session.id === sessionId 
@@ -552,25 +560,50 @@ function ChatContent() {
             const voiceMessages = data.conversation.map((msg: any) => ({
               role: msg.role,
               content: msg.content,
-              timestamp: new Date(msg.timestamp * 1000).toISOString(),
+              timestamp: new Date(msg.timestamp * 1000),
               workflowSteps: msg.workflowSteps ? msg.workflowSteps.map((step: any) => ({
                 type: step.type,
                 message: step.message,
-                timestamp: new Date(step.timestamp * 1000).toISOString(),
+                timestamp: new Date(step.timestamp * 1000),
                 status: step.status,
                 actionName: step.actionName
               })) : undefined
             }))
             
-            const newMessages = voiceMessages.filter((voiceMsg: any) => 
-              !messages.some(existingMsg => 
-                existingMsg.role === voiceMsg.role && 
-                existingMsg.content === voiceMsg.content
-              )
+            // Find latest assistant placeholder (no content) to drive live workflow/loader
+            const latestPlaceholder = [...voiceMessages]
+              .reverse()
+              .find((m: any) => m.role === 'assistant' && (!m.content || m.content.trim() === '') && m.workflowSteps && m.workflowSteps.length > 0)
+
+            if (latestPlaceholder) {
+              // Show loader with latest placeholder workflow steps
+              const steps: WorkflowStep[] = latestPlaceholder.workflowSteps.map((s: any) => ({
+                type: s.type,
+                message: s.message,
+                timestamp: new Date(s.timestamp),
+                status: s.status,
+                actionName: s.actionName
+              }))
+              setCurrentWorkflow(steps)
+              setIsLoading(true)
+            }
+
+            // Do not add placeholders into messages; only add final assistant/user messages
+            const filteredVoiceMessages = voiceMessages.filter((m: any) => !(m.role === 'assistant' && (!m.content || m.content.trim() === '')))
+
+            const newMessages = filteredVoiceMessages.filter((voiceMsg: any) =>
+              !messages.some(existingMsg => (
+                existingMsg.role === voiceMsg.role && existingMsg.content === voiceMsg.content
+              ))
             )
             
             if (newMessages.length > 0) {
               updateSessionMessages(currentSessionId, [...messages, ...newMessages])
+              // If any new assistant message with content arrived, clear loader/workflow
+              if (newMessages.some((m: any) => m.role === 'assistant' && m.content && m.content.trim() !== '')) {
+                setCurrentWorkflow([])
+                setIsLoading(false)
+              }
             }
           }
         }
@@ -814,26 +847,7 @@ function ChatContent() {
     }
   }
 
-  // Voice mode connection to backend
-  const voiceToggleGuard = useRef(false)
-  useEffect(() => {
-    let cancelled = false
-    const run = async () => {
-      if (voiceToggleGuard.current) return
-      voiceToggleGuard.current = true
-      try {
-        if (voiceMode) {
-          await startVoiceMode()
-        } else {
-          await stopVoiceMode()
-        }
-      } finally {
-        if (!cancelled) voiceToggleGuard.current = false
-      }
-    }
-    run()
-    return () => { cancelled = true }
-  }, [voiceMode, startVoiceMode])
+  // Remove auto-start on state change; we'll directly call start/stop on click
 
   const stopVoiceMode = async () => {
     try {
@@ -848,13 +862,22 @@ function ChatContent() {
     }
   }
 
-  const handleMicClick = () => {
+  const handleMicClick = async () => {
     if (voiceModeStarting) {
       console.log("Voice mode operation in progress, please wait...")
       return
     }
-
-    setVoiceMode(!voiceMode)
+    try {
+      if (!voiceMode) {
+        await startVoiceMode()
+        setVoiceMode(true)
+      } else {
+        await stopVoiceMode()
+        setVoiceMode(false)
+      }
+    } catch (e) {
+      // startVoiceMode already shows a toast on error
+    }
   }
 
   return (
@@ -931,11 +954,6 @@ function ChatContent() {
                       onClick={() => {
                         router.push(`/chat/${session.id}`)
                         setNewlyGeneratedMessageIds(new Set())
-                        if (session.messages.length === 0) {
-                          setInputPosition('centered')
-                        } else {
-                          setInputPosition('bottom')
-                        }
                       }}
                     >
                       {session.title}

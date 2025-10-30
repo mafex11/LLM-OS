@@ -829,6 +829,11 @@ async def stop_speaking():
 
 # Voice conversation storage
 voice_conversation = []
+# Track the index of the current assistant placeholder message during voice processing
+voice_current_assistant_index: Optional[int] = None
+# Last processed voice command to avoid duplicates when STT emits repeated finals
+voice_last_command_text: Optional[str] = None
+voice_last_command_ts: float = 0.0
 
 # Session-based conversation storage
 session_conversations: Dict[str, List[Dict[str, Any]]] = {}
@@ -922,6 +927,8 @@ async def start_voice_mode(request: VoiceModeRequest):
         def on_transcription(transcript: str):
             """Handle voice transcription and send to chat (only triggered commands after 'yuki')"""
             global _voice_processing_lock
+            global voice_current_assistant_index
+            global voice_last_command_text, voice_last_command_ts
             
             # BULLETPROOF DUPLICATE PREVENTION
             if _voice_processing_lock:
@@ -937,12 +944,45 @@ async def start_voice_mode(request: VoiceModeRequest):
                 print(f"Trigger word detected, voice command received: {transcript}")
             
             try:
+                # Normalize transcript: strip trigger word 'yuki' prefix if present
+                norm = transcript.strip()
+                low = norm.lower()
+                if low.startswith("yuki"):
+                    norm = norm[len("yuki"):].lstrip(" ,:.-")
+                elif low.startswith("hey yuki"):
+                    norm = norm[len("hey yuki"):].lstrip(" ,:.-")
+                elif low.startswith("hi yuki"):
+                    norm = norm[len("hi yuki"):].lstrip(" ,:.-")
+                if not norm:
+                    # Nothing meaningful after trigger
+                    _voice_processing_lock = False
+                    return
+
+                # Deduplicate same command within a short window (e.g., 4 seconds)
+                now_ts = time.time()
+                if voice_last_command_text is not None:
+                    same_text = norm.strip().lower() == voice_last_command_text.strip().lower()
+                    if same_text and (now_ts - voice_last_command_ts) < 4.0:
+                        print(f"VOICE DEDUP: ignoring duplicate command within window: {norm}")
+                        _voice_processing_lock = False
+                        return
+
                 # Store user message
                 voice_conversation.append({
                     "role": "user",
-                    "content": transcript,
+                    "content": norm,
                     "timestamp": time.time()
                 })
+                
+                # Create a placeholder assistant message to accumulate live workflow steps
+                placeholder = {
+                    "role": "assistant",
+                    "content": "",  # will be filled when final response is ready
+                    "timestamp": time.time(),
+                    "workflowSteps": []
+                }
+                voice_conversation.append(placeholder)
+                voice_current_assistant_index = len(voice_conversation) - 1
                 
                 # Process the transcript through the agent with workflow step capture
                 # Create a new agent instance for voice processing (isolated from global agent)
@@ -1021,25 +1061,52 @@ async def start_voice_mode(request: VoiceModeRequest):
                         "status": status,
                         "actionName": action_name
                     })
+
+                    # Also update the live placeholder assistant message so UI can poll and render steps
+                    try:
+                        if voice_current_assistant_index is not None and 0 <= voice_current_assistant_index < len(voice_conversation):
+                            current_msg = voice_conversation[voice_current_assistant_index]
+                            steps = current_msg.get("workflowSteps", [])
+                            steps.append({
+                                "type": update_type,
+                                "message": message,
+                                "timestamp": time.time(),
+                                "status": status,
+                                "actionName": action_name
+                            })
+                            current_msg["workflowSteps"] = steps
+                            current_msg["timestamp"] = time.time()
+                    except Exception as _:
+                        pass
                 
                 # Apply the override
                 voice_agent.show_status = capture_show_status
                 
                 try:
                     # Process the voice query normally
-                    response = voice_agent.invoke(transcript)
+                    response = voice_agent.invoke(norm)
                 finally:
                     # Always restore the original method
                     voice_agent.show_status = original_show_status
+
+                # Mark this command as processed
+                voice_last_command_text = norm
+                voice_last_command_ts = now_ts
                 
                 if response and hasattr(response, 'content') and response.content:
-                    # Store assistant response with workflow steps
-                    voice_conversation.append({
-                        "role": "assistant",
-                        "content": response.content,
-                        "timestamp": time.time(),
-                        "workflowSteps": workflow_steps
-                    })
+                    # Finalize the placeholder assistant message with content and captured steps
+                    if voice_current_assistant_index is not None and 0 <= voice_current_assistant_index < len(voice_conversation):
+                        voice_conversation[voice_current_assistant_index]["content"] = response.content
+                        voice_conversation[voice_current_assistant_index]["workflowSteps"] = workflow_steps
+                        voice_conversation[voice_current_assistant_index]["timestamp"] = time.time()
+                    else:
+                        # Fallback: append if placeholder missing
+                        voice_conversation.append({
+                            "role": "assistant",
+                            "content": response.content,
+                            "timestamp": time.time(),
+                            "workflowSteps": workflow_steps
+                        })
                     
                     # Speak the response if TTS is available
                     if hasattr(agent, 'tts_service') and agent.tts_service and agent.tts_service.enabled:
@@ -1109,6 +1176,7 @@ async def start_voice_mode(request: VoiceModeRequest):
             finally:
                 # Always release the lock
                 _voice_processing_lock = False
+                voice_current_assistant_index = None
         
         # Set the callback
         voice_stt_service.on_transcription = on_transcription
@@ -1220,6 +1288,69 @@ async def get_voice_status():
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting voice status: {str(e)}")
+
+@app.get("/api/voice/ready")
+async def get_voice_ready():
+    """Check if backend is ready to start voice mode (dependencies and keys)."""
+    try:
+        if not agent_initialized or not agent:
+            return {
+                "ready": False,
+                "reason": "Agent not initialized",
+                "details": {"agent_initialized": agent_initialized}
+            }
+
+        # STT readiness
+        stt_dependency = False
+        stt_key_present = False
+        stt_reason = None
+        try:
+            from windows_use.agent.stt_service import DEEPGRAM_AVAILABLE  # type: ignore
+            stt_dependency = bool(DEEPGRAM_AVAILABLE)
+        except Exception as e:
+            stt_reason = f"STT import failed: {e}"
+
+        try:
+            config_file = os.path.join(CONFIG_PATH, "api_keys.json")
+            if os.path.exists(config_file):
+                with open(config_file, "r", encoding="utf-8") as f:
+                    cfg = json.load(f)
+                    stt_key_present = bool((cfg.get("deepgram_api_key", "") or "").strip())
+            else:
+                stt_reason = (stt_reason or "") + ("; " if stt_reason else "") + "Config file missing"
+        except Exception as e:
+            stt_reason = (stt_reason or "") + ("; " if stt_reason else "") + f"Config read error: {e}"
+
+        # TTS readiness
+        tts_available = False
+        tts_key_present = False
+        try:
+            if hasattr(agent, 'tts_service') and agent.tts_service and agent.tts_service.enabled:
+                tts_available = True
+            else:
+                config_file = os.path.join(CONFIG_PATH, "api_keys.json")
+                if os.path.exists(config_file):
+                    with open(config_file, "r", encoding="utf-8") as f:
+                        cfg = json.load(f)
+                        tts_key_present = bool((cfg.get("elevenlabs_api_key", "") or "").strip())
+        except Exception:
+            pass
+
+        ready = stt_dependency and stt_key_present
+        return {
+            "ready": ready,
+            "stt": {
+                "dependency": stt_dependency,
+                "api_key": stt_key_present,
+                "reason": stt_reason
+            },
+            "tts": {
+                "available": tts_available,
+                "api_key": tts_key_present
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error checking voice readiness: {str(e)}")
 
 @app.get("/api/config/keys", response_model=ApiKeysResponse)
 async def get_api_keys():
