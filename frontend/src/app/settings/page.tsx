@@ -62,6 +62,8 @@ export default function SettingsPage() {
     deepgram_api_key: false
   })
   const [savingKeys, setSavingKeys] = useState(false)
+  const [savingAgentSettings, setSavingAgentSettings] = useState(false)
+  const [maxSteps, setMaxSteps] = useState<number>(50)
   const [showRunningPrograms, setShowRunningPrograms] = useState(false)
   const [apiKeyInputs, setApiKeyInputs] = useState<ApiKeys>({
     google_api_key: "",
@@ -169,6 +171,41 @@ export default function SettingsPage() {
       title: "API Keys Cleared",
       description: "All API key fields have been cleared.",
     })
+  }
+
+  const saveAgentSettings = async () => {
+    setSavingAgentSettings(true)
+    try {
+      const value = Number(maxSteps)
+      const bounded = isNaN(value) ? 50 : Math.max(1, Math.min(200, Math.floor(value)))
+      const response = await fetch("http://localhost:8000/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ max_steps: bounded })
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Agent settings saved",
+          description: `Max tool calls set to ${bounded}.`
+        })
+        setMaxSteps(bounded)
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to update agent settings.",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Backend Unavailable",
+        description: "Cannot connect to backend. Ensure the server is running.",
+        variant: "destructive"
+      })
+    } finally {
+      setSavingAgentSettings(false)
+    }
   }
 
   const clearApiKey = (keyType: keyof ApiKeys) => {
@@ -569,6 +606,67 @@ export default function SettingsPage() {
                   </div>
                 </CardContent>
               </Card>
+              </motion.div>
+
+              {/* Agent Settings Card */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.25 }}
+              >
+                <Card className="bg-transparent border border-white/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Settings01Icon size={20} />
+                      Agent Settings
+                    </CardTitle>
+                    <CardDescription>
+                      Control how many tool calls the agent can make per run
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="space-y-2 max-w-xs">
+                        <Label htmlFor="max-steps" className="text-sm font-normal">
+                          Max tool calls per run
+                        </Label>
+                        <Input
+                          id="max-steps"
+                          type="number"
+                          min={1}
+                          max={200}
+                          value={maxSteps}
+                          onChange={(e) => setMaxSteps(Number(e.target.value))}
+                          className="bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Higher values allow longer workflows. Start with 50–100.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-end">
+                        <Button
+                          onClick={saveAgentSettings}
+                          disabled={savingAgentSettings}
+                          size="sm"
+                          className="text-xs"
+                        >
+                          {savingAgentSettings ? (
+                            <>
+                              <Loading01Icon size={14} className="mr-1 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <FloppyDiskIcon size={14} className="mr-1" />
+                              Save Agent Settings
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </motion.div>
 
               {/* Audio Settings Card */}

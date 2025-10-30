@@ -700,7 +700,11 @@ function ChatContent() {
     }
   }
 
-  const createNewChat = () => {
+  const createNewChat = async () => {
+    if (voiceMode) {
+      await stopVoiceMode();
+      setVoiceMode(false);
+    }
     const newSessionId = generateUniqueSessionId()
     const newSession: ChatSession = {
       id: newSessionId,
