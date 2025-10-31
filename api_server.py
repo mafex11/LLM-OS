@@ -837,6 +837,8 @@ voice_last_command_ts: float = 0.0
 
 # Session-based conversation storage
 session_conversations: Dict[str, List[Dict[str, Any]]] = {}
+# Default session id for single-chat UI
+DEFAULT_SESSION_ID = "default"
 
 # Global flags to prevent duplicate voice processing/starts
 _voice_processing_lock = False
@@ -866,6 +868,25 @@ async def clear_session_conversation(session_id: str):
     """Clear conversation for a specific session"""
     if session_id in session_conversations:
         del session_conversations[session_id]
+    return {"success": True, "message": "Conversation cleared"}
+
+# Default-session conversation endpoints (no session_id in path)
+@app.get("/api/conversation")
+async def get_default_conversation():
+    """Get conversation for the default session (no path param)."""
+    return {"conversation": session_conversations.get(DEFAULT_SESSION_ID, [])}
+
+@app.post("/api/conversation")
+async def save_default_conversation(conversation: List[Dict[str, Any]]):
+    """Save conversation for the default session (no path param)."""
+    session_conversations[DEFAULT_SESSION_ID] = conversation
+    return {"success": True, "message": "Conversation saved"}
+
+@app.delete("/api/conversation")
+async def clear_default_conversation():
+    """Clear conversation for the default session (no path param)."""
+    if DEFAULT_SESSION_ID in session_conversations:
+        del session_conversations[DEFAULT_SESSION_ID]
     return {"success": True, "message": "Conversation cleared"}
 
 # Voice mode control endpoints

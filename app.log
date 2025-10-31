@@ -26214,3 +26214,375 @@ Hello there! How can I help you today?[0m
 2025-10-30 19:57:50 | INFO | SESSION ENDED
 2025-10-30 19:57:50 | INFO | ================================================================================
 
+2025-10-30 20:01:19 | INFO | ================================================================================
+2025-10-30 20:01:19 | INFO | NEW SESSION STARTED
+2025-10-30 20:01:19 | INFO | ================================================================================
+2025-10-30 20:01:20 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 20:01:22 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 20:01:49 | DEBUG | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-30 20:01:51 | DEBUG | Speech started
+2025-10-30 20:01:53 | DEBUG | Speech started
+2025-10-30 20:01:54 | DEBUG | Interim: Yuki, hello.
+2025-10-30 20:01:54 | DEBUG | Final transcript: Yuki, hello.
+2025-10-30 20:01:55 | DEBUG | Utterance end
+2025-10-30 20:01:55 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 20:01:55 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 20:01:55 | INFO | USER QUERY: hello.
+2025-10-30 20:01:55 | INFO | [33m[Starting] Task Analysis: Processing: 'hello.'[0m
+2025-10-30 20:01:56 | DEBUG | Finalized transcript: Yuki, hello.
+2025-10-30 20:01:56 | DEBUG | Trigger word 'yuki' detected with command: hello.
+2025-10-30 20:01:56 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 20:01:59 | INFO | --- ITERATION 1/30 ---
+2025-10-30 20:01:59 | INFO | EVALUATE: Neutral - The user simply said "hello." There's no action to evaluate.
+2025-10-30 20:01:59 | INFO | PLAN: The user has initiated a conversation with a greeting. I should respond in a friendly manner.
+2025-10-30 20:01:59 | INFO | THOUGHT: The user said hello. I should respond in a friendly way.
+2025-10-30 20:01:59 | INFO | [95mThe user said hello. I should respond in a friendly way.[0m
+2025-10-30 20:01:59 | INFO | [33m[Reasoning] Agent Thought: The user said hello. I should respond in a friendly way.[0m
+2025-10-30 20:01:59 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 20:01:59 | INFO | FINAL ANSWER: Hello there! How can I help you today?
+2025-10-30 20:01:59 | INFO | [36m
+Hello there! How can I help you today?[0m
+2025-10-30 20:01:59 | DEBUG | Generating speech for: Hello there! How can I help you today?...
+2025-10-30 20:02:00 | DEBUG | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1761834719421.mp3
+2025-10-30 20:02:03 | DEBUG | Speech started
+2025-10-30 20:02:04 | DEBUG | Interim: You can you open
+2025-10-30 20:02:05 | DEBUG | Interim: You can you open calculator?
+2025-10-30 20:02:06 | DEBUG | Final transcript: You can you open calculator?
+2025-10-30 20:02:07 | DEBUG | Utterance end
+2025-10-30 20:02:07 | DEBUG | Finalized transcript: You can you open calculator?
+2025-10-30 20:02:07 | DEBUG | No trigger word detected, ignoring: You can you open calculator?
+2025-10-30 20:02:11 | DEBUG | Speech started
+2025-10-30 20:02:11 | DEBUG | Interim: So
+2025-10-30 20:02:11 | DEBUG | Interim: Yuki, can you open
+2025-10-30 20:02:13 | DEBUG | Final transcript: Yuki, can you open calculator?
+2025-10-30 20:02:13 | DEBUG | Speech started
+2025-10-30 20:02:14 | DEBUG | Utterance end
+2025-10-30 20:02:15 | DEBUG | Speech started
+2025-10-30 20:02:18 | DEBUG | Speech started
+2025-10-30 20:02:20 | DEBUG | Interim: Yuki, can you
+2025-10-30 20:02:21 | DEBUG | Final transcript: Yuki, can you open calculator?
+2025-10-30 20:02:22 | DEBUG | Utterance end
+2025-10-30 20:02:22 | DEBUG | Finalized transcript: Yuki, can you open calculator?
+2025-10-30 20:02:22 | DEBUG | Trigger word 'yuki' detected with command: can you open calculator?
+2025-10-30 20:02:22 | INFO | USER QUERY: can you open calculator?
+2025-10-30 20:02:22 | INFO | [33m[Starting] Task Analysis: Processing: 'can you open calculator?'[0m
+2025-10-30 20:02:23 | DEBUG | Finalized transcript: Yuki, can you open calculator?
+2025-10-30 20:02:23 | DEBUG | Trigger word 'yuki' detected with command: can you open calculator?
+2025-10-30 20:02:23 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 20:02:26 | INFO | --- ITERATION 1/30 ---
+2025-10-30 20:02:26 | INFO | EVALUATE: Success - The desktop state was successfully analyzed.
+2025-10-30 20:02:26 | INFO | PLAN: The user wants me to open the calculator application. I will use the Launch Tool to open the calculator.
+2025-10-30 20:02:26 | INFO | THOUGHT: The user has asked me to open the calculator application. I will use the Launch Tool to open the calculator application.
+2025-10-30 20:02:26 | INFO | [95mThe user has asked me to open the calculator application. I will use the Launch Tool to open the calculator application.[0m
+2025-10-30 20:02:26 | INFO | [33m[Reasoning] Agent Thought: The user has asked me to open the calculator application. I will use the Launch Tool to open the calculator application.[0m
+2025-10-30 20:02:26 | INFO | [33m[Executing] Launch Tool: Step 2/30[0m
+2025-10-30 20:02:26 | INFO | ACTION: Launch Tool(name=calculator)
+2025-10-30 20:02:26 | INFO | [34mUsing Launch Tool...[0m
+2025-10-30 20:02:33 | INFO | TOOL RESULT [SUCCESS] Launch Tool: Launched Calculator and refreshed coordinates.
+2025-10-30 20:02:33 | INFO | [33m[Completed] Launch Tool: Success[0m
+2025-10-30 20:02:33 | INFO | [33m[Refreshing] Desktop State: Getting fresh coordinates after launch[0m
+2025-10-30 20:02:34 | INFO | OBSERVATION: Launched Calculator and refreshed coordinates.
+2025-10-30 20:02:34 | INFO | [32mLaunched Calculator and refreshed coordinates.[0m
+2025-10-30 20:02:34 | INFO | [33m[Thinking] Planning Next Action: Step 2/30[0m
+2025-10-30 20:02:36 | INFO | --- ITERATION 2/30 ---
+2025-10-30 20:02:36 | INFO | EVALUATE: Success - The calculator application was successfully launched.
+2025-10-30 20:02:36 | INFO | PLAN: The user asked me to open the calculator, and I have successfully opened it. Now I will use the Done Tool to inform the user that the task is completed.
+2025-10-30 20:02:36 | INFO | THOUGHT: I have successfully opened the calculator as requested by the user. Now I will use the Done Tool to inform the user that the task is completed.
+2025-10-30 20:02:36 | INFO | [95mI have successfully opened the calculator as requested by the user. Now I will use the Done Tool to inform the user that the task is completed.[0m
+2025-10-30 20:02:36 | INFO | [33m[Reasoning] Agent Thought: I have successfully opened the calculator as requested by the user. Now I will use the Done Tool to inform the user that the task is completed.[0m
+2025-10-30 20:02:36 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 20:02:36 | INFO | FINAL ANSWER: I have successfully opened the calculator for you.
+2025-10-30 20:02:36 | INFO | [36m
+I have successfully opened the calculator for you.[0m
+2025-10-30 20:02:36 | DEBUG | Generating speech for: I have successfully opened the calculator for you....
+2025-10-30 20:02:37 | DEBUG | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1761834756551.mp3
+2025-10-30 20:02:37 | DEBUG | Speech started
+2025-10-30 20:02:37 | DEBUG | Speech started
+2025-10-30 20:02:37 | DEBUG | Speech started
+2025-10-30 20:02:37 | DEBUG | Speech started
+2025-10-30 20:02:37 | DEBUG | Speech started
+2025-10-30 20:02:40 | DEBUG | Speech started
+2025-10-30 20:02:41 | DEBUG | Interim: You can now calculate
+2025-10-30 20:02:42 | DEBUG | Interim: You can now calculate two plus two on that
+2025-10-30 20:02:43 | DEBUG | Speech started
+2025-10-30 20:02:43 | DEBUG | Final transcript: You can now calculate two plus two on that calculate.
+2025-10-30 20:02:44 | DEBUG | Final transcript: Later.
+2025-10-30 20:02:45 | DEBUG | Utterance end
+2025-10-30 20:02:45 | DEBUG | Finalized transcript: You can now calculate two plus two on that calculate. Later.
+2025-10-30 20:02:45 | DEBUG | No trigger word detected, ignoring: You can now calculate two plus two on that calculate. Later.
+2025-10-30 20:02:49 | DEBUG | Speech started
+2025-10-30 20:02:51 | DEBUG | Interim: Yuki, now calculate
+2025-10-30 20:02:52 | DEBUG | Interim: Yuki, now calculate two plus two on that
+2025-10-30 20:02:52 | DEBUG | Speech started
+2025-10-30 20:02:52 | DEBUG | Final transcript: Yuki, now calculate two plus two on that
+2025-10-30 20:02:54 | DEBUG | Finalized transcript: Yuki, now calculate two plus two on that
+2025-10-30 20:02:54 | DEBUG | Trigger word 'yuki' detected with command: now calculate two plus two on that
+2025-10-30 20:02:54 | INFO | USER QUERY: now calculate two plus two on that
+2025-10-30 20:02:54 | INFO | [33m[Starting] Task Analysis: Processing: 'now calculate two plus two on that'[0m
+2025-10-30 20:02:54 | DEBUG | Speech started
+2025-10-30 20:02:54 | DEBUG | Final transcript: calculator.
+2025-10-30 20:02:54 | DEBUG | Speech started
+2025-10-30 20:02:55 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 20:02:56 | DEBUG | Utterance end
+2025-10-30 20:02:58 | INFO | --- ITERATION 1/30 ---
+2025-10-30 20:02:58 | INFO | EVALUATE: The calculator app is already open and in focus.
+2025-10-30 20:02:58 | INFO | PLAN: Calculate 2 + 2 in the calculator app and then use the Done Tool to provide the answer to the user.
+2025-10-30 20:02:58 | INFO | THOUGHT: First, I need to input the numbers 2 + 2 into the calculator. Then, I will use the equals button to get the result. Finally, I will use the Done Tool to respond to the user with the answer.
+2025-10-30 20:02:58 | INFO | [95mFirst, I need to input the numbers 2 + 2 into the calculator. Then, I will use the equals button to get the result. Finally, I will use the Done Tool to respond to the user with the answer.[0m
+2025-10-30 20:02:58 | INFO | [33m[Reasoning] Agent Thought: First, I need to input the numbers 2 + 2 into the calculator. Then, I will use the equals button to get the result. Finally, I will use the Done Tool to respond to the user with the answer.[0m
+2025-10-30 20:02:58 | INFO | [33m[Executing] Click Tool: Step 2/30[0m
+2025-10-30 20:02:59 | INFO | [33m[Refreshing] Desktop State: Getting updated coordinates[0m
+2025-10-30 20:02:59 | INFO | ACTION: Click Tool(loc=[64, 278], button=left, clicks=1)
+2025-10-30 20:02:59 | INFO | [34mUsing Click Tool...[0m
+2025-10-30 20:02:59 | INFO | TOOL RESULT [SUCCESS] Click Tool: Clicked on Unknown.
+2025-10-30 20:02:59 | INFO | [33m[Completed] Click Tool: Success[0m
+2025-10-30 20:02:59 | INFO | OBSERVATION: Clicked on Unknown.
+2025-10-30 20:02:59 | INFO | [32mClicked on Unknown.[0m
+2025-10-30 20:03:00 | INFO | [33m[Thinking] Planning Next Action: Step 2/30[0m
+2025-10-30 20:03:03 | INFO | --- ITERATION 2/30 ---
+2025-10-30 20:03:03 | INFO | EVALUATE: The previous action failed because the calculator app was not in focus. The click was registered on the desktop instead. I need to switch to the calculator app before continuing.
+2025-10-30 20:03:03 | INFO | PLAN: Switch to the Calculator app and then input the numbers 2 + 2 into the calculator. Then, I will use the equals button to get the result. Finally, I will use the Done Tool to respond to the user with the answer.
+2025-10-30 20:03:03 | INFO | THOUGHT: The calculator app is open but not in focus. I need to switch to it using the Switch Tool. After switching, I will click the '2' button, the '+' button, the '2' button again, and finally the '=' button.
+2025-10-30 20:03:03 | INFO | [95mThe calculator app is open but not in focus. I need to switch to it using the Switch Tool. After switching, I will click the '2' button, the '+' button, the '2' button again, and finally the '=' button.[0m
+2025-10-30 20:03:03 | INFO | [33m[Reasoning] Agent Thought: The calculator app is open but not in focus. I need to switch to it using the Switch Tool. After switching, I will click the '2' button, the '+' button, the '2' button again, and finally the '=' button.[0m
+2025-10-30 20:03:03 | INFO | [33m[Executing] Switch Tool: Step 3/30[0m
+2025-10-30 20:03:03 | INFO | ACTION: Switch Tool(name=Calculator)
+2025-10-30 20:03:03 | INFO | [34mUsing Switch Tool...[0m
+2025-10-30 20:03:03 | INFO | TOOL RESULT [SUCCESS] Switch Tool: Switched to Calculator.
+2025-10-30 20:03:03 | INFO | [33m[Completed] Switch Tool: Success[0m
+2025-10-30 20:03:03 | INFO | OBSERVATION: Switched to Calculator.
+2025-10-30 20:03:03 | INFO | [32mSwitched to Calculator.[0m
+2025-10-30 20:03:05 | INFO | [33m[Thinking] Planning Next Action: Step 3/30[0m
+2025-10-30 20:03:08 | INFO | --- ITERATION 3/30 ---
+2025-10-30 20:03:08 | INFO | EVALUATE: The calculator app is now in focus. I can proceed with the calculation.
+2025-10-30 20:03:08 | INFO | PLAN: Input the numbers 2 + 2 into the calculator. Then, I will use the equals button to get the result. Finally, I will use the Done Tool to respond to the user with the answer.
+2025-10-30 20:03:08 | INFO | THOUGHT: I need to click the '2' button, the '+' button, the '2' button again, and finally the '=' button to calculate 2 + 2.
+2025-10-30 20:03:08 | INFO | [95mI need to click the '2' button, the '+' button, the '2' button again, and finally the '=' button to calculate 2 + 2.[0m
+2025-10-30 20:03:08 | INFO | [33m[Reasoning] Agent Thought: I need to click the '2' button, the '+' button, the '2' button again, and finally the '=' button to calculate 2 + 2.[0m
+2025-10-30 20:03:08 | INFO | [33m[Executing] Click Tool: Step 4/30[0m
+2025-10-30 20:03:09 | INFO | [33m[Refreshing] Desktop State: Getting updated coordinates[0m
+2025-10-30 20:03:09 | INFO | ACTION: Click Tool(loc=[1837, 838], button=left, clicks=1, control_type=Button)
+2025-10-30 20:03:09 | INFO | [34mUsing Click Tool...[0m
+2025-10-30 20:03:09 | INFO | TOOL RESULT [SUCCESS] Click Tool: Clicked on Two.
+2025-10-30 20:03:09 | INFO | [33m[Completed] Click Tool: Success[0m
+2025-10-30 20:03:09 | INFO | OBSERVATION: Clicked on Two.
+2025-10-30 20:03:09 | INFO | [32mClicked on Two.[0m
+2025-10-30 20:03:10 | INFO | [33m[Thinking] Planning Next Action: Step 4/30[0m
+2025-10-30 20:03:13 | INFO | --- ITERATION 4/30 ---
+2025-10-30 20:03:13 | INFO | EVALUATE: Successfully clicked the '2' button on the calculator.
+2025-10-30 20:03:13 | INFO | PLAN: Input the numbers 2 + 2 into the calculator. Then, I will use the equals button to get the result. Finally, I will use the Done Tool to respond to the user with the answer.
+2025-10-30 20:03:13 | INFO | THOUGHT: Now I need to click the '+' button, the '2' button again, and finally the '=' button to calculate 2 + 2.
+2025-10-30 20:03:13 | INFO | [95mNow I need to click the '+' button, the '2' button again, and finally the '=' button to calculate 2 + 2.[0m
+2025-10-30 20:03:13 | INFO | [33m[Reasoning] Agent Thought: Now I need to click the '+' button, the '2' button again, and finally the '=' button to calculate 2 + 2.[0m
+2025-10-30 20:03:13 | INFO | [33m[Executing] Click Tool: Step 5/30[0m
+2025-10-30 20:03:14 | INFO | [33m[Refreshing] Desktop State: Getting updated coordinates[0m
+2025-10-30 20:03:14 | INFO | ACTION: Click Tool(loc=[1976, 834], button=left, clicks=1, control_type=Button)
+2025-10-30 20:03:14 | INFO | [34mUsing Click Tool...[0m
+2025-10-30 20:03:14 | INFO | TOOL RESULT [SUCCESS] Click Tool: Clicked on Plus.
+2025-10-30 20:03:14 | INFO | [33m[Completed] Click Tool: Success[0m
+2025-10-30 20:03:14 | INFO | OBSERVATION: Clicked on Plus.
+2025-10-30 20:03:14 | INFO | [32mClicked on Plus.[0m
+2025-10-30 20:03:15 | DEBUG | Speech started
+2025-10-30 20:03:15 | INFO | [33m[Thinking] Planning Next Action: Step 5/30[0m
+2025-10-30 20:03:17 | INFO | --- ITERATION 5/30 ---
+2025-10-30 20:03:17 | INFO | EVALUATE: Successfully clicked the '+' button on the calculator.
+2025-10-30 20:03:17 | INFO | PLAN: Input the numbers 2 + 2 into the calculator. Then, I will use the equals button to get the result. Finally, I will use the Done Tool to respond to the user with the answer.
+2025-10-30 20:03:17 | INFO | THOUGHT: Now I need to click the '2' button again, and finally the '=' button to calculate 2 + 2.
+2025-10-30 20:03:17 | INFO | [95mNow I need to click the '2' button again, and finally the '=' button to calculate 2 + 2.[0m
+2025-10-30 20:03:17 | INFO | [33m[Reasoning] Agent Thought: Now I need to click the '2' button again, and finally the '=' button to calculate 2 + 2.[0m
+2025-10-30 20:03:17 | INFO | [33m[Executing] Click Tool: Step 6/30[0m
+2025-10-30 20:03:19 | INFO | [33m[Refreshing] Desktop State: Getting updated coordinates[0m
+2025-10-30 20:03:19 | INFO | ACTION: Click Tool(loc=[1851, 839], button=left, clicks=1, control_type=Button)
+2025-10-30 20:03:19 | INFO | [34mUsing Click Tool...[0m
+2025-10-30 20:03:19 | INFO | TOOL RESULT [SUCCESS] Click Tool: Clicked on Two.
+2025-10-30 20:03:19 | INFO | [33m[Completed] Click Tool: Success[0m
+2025-10-30 20:03:19 | INFO | OBSERVATION: Clicked on Two.
+2025-10-30 20:03:19 | INFO | [32mClicked on Two.[0m
+2025-10-30 20:03:19 | DEBUG | Speech started
+2025-10-30 20:03:20 | INFO | [33m[Thinking] Planning Next Action: Step 6/30[0m
+2025-10-30 20:03:22 | INFO | --- ITERATION 6/30 ---
+2025-10-30 20:03:22 | INFO | EVALUATE: Successfully clicked the '2' button on the calculator.
+2025-10-30 20:03:22 | INFO | PLAN: Input the numbers 2 + 2 into the calculator. Then, I will use the equals button to get the result. Finally, I will use the Done Tool to respond to the user with the answer.
+2025-10-30 20:03:22 | INFO | THOUGHT: Now I need to click the '=' button to calculate 2 + 2.
+2025-10-30 20:03:22 | INFO | [95mNow I need to click the '=' button to calculate 2 + 2.[0m
+2025-10-30 20:03:22 | INFO | [33m[Reasoning] Agent Thought: Now I need to click the '=' button to calculate 2 + 2.[0m
+2025-10-30 20:03:22 | INFO | [33m[Executing] Click Tool: Step 7/30[0m
+2025-10-30 20:03:23 | INFO | [33m[Refreshing] Desktop State: Getting updated coordinates[0m
+2025-10-30 20:03:23 | INFO | ACTION: Click Tool(loc=[1971, 873], button=left, clicks=1, control_type=Button)
+2025-10-30 20:03:23 | INFO | [34mUsing Click Tool...[0m
+2025-10-30 20:03:23 | INFO | TOOL RESULT [SUCCESS] Click Tool: Clicked on Equals.
+2025-10-30 20:03:23 | INFO | [33m[Completed] Click Tool: Success[0m
+2025-10-30 20:03:23 | INFO | OBSERVATION: Clicked on Equals.
+2025-10-30 20:03:23 | INFO | [32mClicked on Equals.[0m
+2025-10-30 20:03:24 | INFO | [33m[Thinking] Planning Next Action: Step 7/30[0m
+2025-10-30 20:03:27 | INFO | --- ITERATION 7/30 ---
+2025-10-30 20:03:27 | INFO | EVALUATE: Successfully clicked the '=' button on the calculator and the result is 4.
+2025-10-30 20:03:27 | INFO | PLAN: The calculation is complete. Now I will use the Done Tool to respond to the user with the answer.
+2025-10-30 20:03:27 | INFO | THOUGHT: The calculator shows the result of 2 + 2 as 4. I can now use the Done Tool to tell the user the answer.
+2025-10-30 20:03:27 | INFO | [95mThe calculator shows the result of 2 + 2 as 4. I can now use the Done Tool to tell the user the answer.[0m
+2025-10-30 20:03:27 | INFO | [33m[Reasoning] Agent Thought: The calculator shows the result of 2 + 2 as 4. I can now use the Done Tool to tell the user the answer.[0m
+2025-10-30 20:03:27 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 20:03:27 | INFO | FINAL ANSWER: The answer to 2 + 2 is 4.
+2025-10-30 20:03:27 | INFO | [36m
+The answer to 2 + 2 is 4.[0m
+2025-10-30 20:03:27 | DEBUG | Generating speech for: The answer to 2 + 2 is 4....
+2025-10-30 20:03:28 | DEBUG | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1761834807096.mp3
+2025-10-30 20:03:31 | DEBUG | Speech started
+2025-10-30 20:03:31 | DEBUG | Interim: Yuki,
+2025-10-30 20:03:32 | DEBUG | Speech started
+2025-10-30 20:03:32 | DEBUG | Final transcript: Yuki, now
+2025-10-30 20:03:33 | DEBUG | Utterance end
+2025-10-30 20:03:33 | DEBUG | Finalized transcript: Yuki, now
+2025-10-30 20:03:33 | DEBUG | Trigger word 'yuki' detected with command: now
+2025-10-30 20:03:33 | INFO | USER QUERY: now
+2025-10-30 20:03:33 | INFO | [33m[Starting] Task Analysis: Processing: 'now'[0m
+2025-10-30 20:03:33 | DEBUG | Finalized transcript: Yuki, now
+2025-10-30 20:03:33 | DEBUG | Trigger word 'yuki' detected with command: now
+2025-10-30 20:03:34 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 20:03:37 | INFO | --- ITERATION 1/30 ---
+2025-10-30 20:03:37 | INFO | EVALUATE: Neutral
+2025-10-30 20:03:37 | INFO | PLAN: The user query is "now". It is unclear what the user wants. I will ask the user what they want to do now.
+2025-10-30 20:03:37 | INFO | THOUGHT: The user query is ambiguous. I need to ask the user what they want to do now to proceed.
+2025-10-30 20:03:37 | INFO | [95mThe user query is ambiguous. I need to ask the user what they want to do now to proceed.[0m
+2025-10-30 20:03:37 | INFO | [33m[Reasoning] Agent Thought: The user query is ambiguous. I need to ask the user what they want to do now to proceed.[0m
+2025-10-30 20:03:37 | INFO | [33m[Finalizing] Human Tool: Preparing response[0m
+2025-10-30 20:03:37 | INFO | FINAL ANSWER: What would you like me to do now?
+2025-10-30 20:03:37 | DEBUG | Generating speech for: What would you like me to do now?...
+2025-10-30 20:03:38 | DEBUG | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1761834817204.mp3
+2025-10-30 20:03:38 | DEBUG | Speech started
+2025-10-30 20:03:39 | DEBUG | Speech started
+2025-10-30 20:03:41 | DEBUG | Interim: Yuki, you are
+2025-10-30 20:03:42 | DEBUG | Final transcript: UK, you are nice.
+2025-10-30 20:03:43 | DEBUG | Utterance end
+2025-10-30 20:03:43 | DEBUG | Finalized transcript: UK, you are nice.
+2025-10-30 20:03:43 | DEBUG | No trigger word detected, ignoring: UK, you are nice.
+2025-10-30 20:03:49 | DEBUG | Speech started
+2025-10-30 20:03:49 | DEBUG | Interim: You
+2025-10-30 20:03:50 | DEBUG | Interim: Yuki, nice work.
+2025-10-30 20:03:51 | DEBUG | Final transcript: Yuki, nice work.
+2025-10-30 20:03:51 | DEBUG | Utterance end
+2025-10-30 20:03:51 | DEBUG | Finalized transcript: Yuki, nice work.
+2025-10-30 20:03:51 | DEBUG | Trigger word 'yuki' detected with command: nice work.
+2025-10-30 20:03:52 | INFO | USER QUERY: nice work.
+2025-10-30 20:03:52 | INFO | [33m[Starting] Task Analysis: Processing: 'nice work.'[0m
+2025-10-30 20:03:52 | DEBUG | Finalized transcript: Yuki, nice work.
+2025-10-30 20:03:52 | DEBUG | Trigger word 'yuki' detected with command: nice work.
+2025-10-30 20:03:53 | INFO | [33m[Thinking] Planning Next Action: Step 1/30[0m
+2025-10-30 20:03:56 | INFO | --- ITERATION 1/30 ---
+2025-10-30 20:03:56 | INFO | EVALUATE: Neutral - The previous action was successful, and the calculator is open and displaying the result of 2 + 2.
+2025-10-30 20:03:56 | INFO | PLAN: The user said "nice work," indicating satisfaction with the previous calculation. Since there are no further instructions, I will now use the Done Tool to complete the task.
+2025-10-30 20:03:56 | INFO | THOUGHT: The user seems satisfied with the previous calculation. I will now respond to the user using the Done Tool.
+2025-10-30 20:03:56 | INFO | [95mThe user seems satisfied with the previous calculation. I will now respond to the user using the Done Tool.[0m
+2025-10-30 20:03:56 | INFO | [33m[Reasoning] Agent Thought: The user seems satisfied with the previous calculation. I will now respond to the user using the Done Tool.[0m
+2025-10-30 20:03:56 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 20:03:56 | INFO | FINAL ANSWER: Thank you! I am glad I could help.
+2025-10-30 20:03:56 | INFO | [36m
+Thank you! I am glad I could help.[0m
+2025-10-30 20:03:56 | DEBUG | Generating speech for: Thank you! I am glad I could help....
+2025-10-30 20:03:57 | DEBUG | Speech generated successfully: C:\Users\esska\AppData\Local\Temp\tts_audio_1761834836630.mp3
+2025-10-30 20:03:57 | DEBUG | Speech started
+2025-10-30 20:03:57 | DEBUG | Speech started
+2025-10-30 20:04:00 | DEBUG | Speech started
+2025-10-30 20:04:02 | DEBUG | Stopping listening...
+2025-10-30 20:04:03 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-30 20:04:37 | INFO | ================================================================================
+2025-10-30 20:04:37 | INFO | SESSION ENDED
+2025-10-30 20:04:37 | INFO | ================================================================================
+
+2025-10-30 20:08:30 | INFO | ================================================================================
+2025-10-30 20:08:30 | INFO | NEW SESSION STARTED
+2025-10-30 20:08:30 | INFO | ================================================================================
+2025-10-30 20:08:31 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 20:08:33 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-30 20:09:05 | INFO | USER QUERY: hi
+2025-10-30 20:09:05 | INFO | [33m[Starting] Task Analysis: Processing: 'hi'[0m
+2025-10-30 20:09:06 | INFO | [33m[Thinking] Planning Next Action: Step 1/50[0m
+2025-10-30 20:09:09 | INFO | --- ITERATION 1/50 ---
+2025-10-30 20:09:09 | INFO | EVALUATE: Neutral - The agent received the user query "hi".
+2025-10-30 20:09:09 | INFO | PLAN: Acknowledge the user's greeting.
+2025-10-30 20:09:09 | INFO | THOUGHT: The user has sent a greeting. I should respond in a friendly manner.
+2025-10-30 20:09:09 | INFO | [95mThe user has sent a greeting. I should respond in a friendly manner.[0m
+2025-10-30 20:09:09 | INFO | [33m[Reasoning] Agent Thought: The user has sent a greeting. I should respond in a friendly manner.[0m
+2025-10-30 20:09:09 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-30 20:09:09 | INFO | FINAL ANSWER: Hello there!
+2025-10-30 20:09:09 | INFO | [36m
+Hello there![0m
+2025-10-30 20:16:37 | DEBUG | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-30 20:16:41 | DEBUG | Speech started
+2025-10-30 20:16:41 | DEBUG | Interim: Hello. Hello. Hello. Hello.
+2025-10-30 20:16:43 | DEBUG | Final transcript: Hello. Hello. Hello. Hello. Hello.
+2025-10-30 20:16:44 | DEBUG | Utterance end
+2025-10-30 20:16:44 | DEBUG | Finalized transcript: Hello. Hello. Hello. Hello. Hello.
+2025-10-30 20:16:44 | DEBUG | No trigger word detected, ignoring: Hello. Hello. Hello. Hello. Hello.
+2025-10-30 20:16:46 | DEBUG | Stopping listening...
+2025-10-30 20:16:47 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-30 20:43:28 | INFO | ================================================================================
+2025-10-30 20:43:28 | INFO | SESSION ENDED
+2025-10-30 20:43:28 | INFO | ================================================================================
+
+2025-10-31 20:35:51 | INFO | ================================================================================
+2025-10-31 20:35:51 | INFO | NEW SESSION STARTED
+2025-10-31 20:35:51 | INFO | ================================================================================
+2025-10-31 20:35:53 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-31 20:35:56 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-31 20:35:56 | INFO | ================================================================================
+2025-10-31 20:35:56 | INFO | SESSION ENDED
+2025-10-31 20:35:56 | INFO | ================================================================================
+
+2025-10-31 21:04:04 | INFO | ================================================================================
+2025-10-31 21:04:04 | INFO | NEW SESSION STARTED
+2025-10-31 21:04:04 | INFO | ================================================================================
+2025-10-31 21:04:05 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-31 21:04:07 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-31 21:04:07 | INFO | ================================================================================
+2025-10-31 21:04:07 | INFO | SESSION ENDED
+2025-10-31 21:04:07 | INFO | ================================================================================
+
+2025-10-31 21:04:35 | INFO | ================================================================================
+2025-10-31 21:04:35 | INFO | NEW SESSION STARTED
+2025-10-31 21:04:35 | INFO | ================================================================================
+2025-10-31 21:04:36 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-31 21:04:38 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-31 21:04:38 | INFO | ================================================================================
+2025-10-31 21:04:38 | INFO | SESSION ENDED
+2025-10-31 21:04:38 | INFO | ================================================================================
+
+2025-10-31 21:04:56 | INFO | ================================================================================
+2025-10-31 21:04:56 | INFO | NEW SESSION STARTED
+2025-10-31 21:04:56 | INFO | ================================================================================
+2025-10-31 21:04:57 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-31 21:04:59 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-31 21:05:24 | INFO | USER QUERY: hi
+2025-10-31 21:05:24 | INFO | [33m[Starting] Task Analysis: Processing: 'hi'[0m
+2025-10-31 21:05:25 | INFO | [33m[Thinking] Planning Next Action: Step 1/50[0m
+2025-10-31 21:05:28 | INFO | --- ITERATION 1/50 ---
+2025-10-31 21:05:28 | INFO | EVALUATE: Neutral - The previous attempt to process the user's query failed. The agent is now ready to respond to the user.
+2025-10-31 21:05:28 | INFO | PLAN: The user has sent a greeting. Acknowledge the greeting and offer assistance.
+2025-10-31 21:05:28 | INFO | THOUGHT: The user has sent a greeting. I should respond in a friendly manner and offer to help them with any tasks they might have.
+2025-10-31 21:05:28 | INFO | [95mThe user has sent a greeting. I should respond in a friendly manner and offer to help them with any tasks they might have.[0m
+2025-10-31 21:05:28 | INFO | [33m[Reasoning] Agent Thought: The user has sent a greeting. I should respond in a friendly manner and offer to help them with any tasks they might have.[0m
+2025-10-31 21:05:28 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-31 21:05:28 | INFO | FINAL ANSWER: Hi there! How can I help you today?
+2025-10-31 21:05:28 | INFO | [36m
+Hi there! How can I help you today?[0m
+2025-10-31 21:05:32 | DEBUG | Deepgram STT Service initialized successfully (latency_mode=balanced, silence_threshold=1.5s)
+2025-10-31 21:05:56 | DEBUG | Stopping listening...
+2025-10-31 21:05:57 | ERROR | Error in listening loop: 'Microphone' object has no attribute '_asyncio_thread'
+2025-10-31 21:13:58 | INFO | USER QUERY: hello
+2025-10-31 21:13:58 | INFO | [33m[Starting] Task Analysis: Processing: 'hello'[0m
+2025-10-31 21:14:00 | INFO | [33m[Thinking] Planning Next Action: Step 1/50[0m
+2025-10-31 21:14:03 | INFO | --- ITERATION 1/50 ---
+2025-10-31 21:14:03 | INFO | EVALUATE: I have successfully accessed the desktop state.
+2025-10-31 21:14:03 | INFO | PLAN: The user has provided the input "hello". Since this is a pure knowledge query, I will respond directly using the Done Tool.
+2025-10-31 21:14:03 | INFO | THOUGHT: The user is just saying hello. I will respond in a friendly manner.
+2025-10-31 21:14:03 | INFO | [95mThe user is just saying hello. I will respond in a friendly manner.[0m
+2025-10-31 21:14:03 | INFO | [33m[Reasoning] Agent Thought: The user is just saying hello. I will respond in a friendly manner.[0m
+2025-10-31 21:14:03 | INFO | [33m[Finalizing] Done Tool: Preparing response[0m
+2025-10-31 21:14:03 | INFO | FINAL ANSWER: Hello there! How can I help you today?
+2025-10-31 21:14:03 | INFO | [36m
+Hello there! How can I help you today?[0m
+2025-10-31 21:37:48 | INFO | ================================================================================
+2025-10-31 21:37:48 | INFO | NEW SESSION STARTED
+2025-10-31 21:37:48 | INFO | ================================================================================
+2025-10-31 21:37:49 | INFO | TTS Service initialized - Enabled: True, Audio: True
+2025-10-31 21:37:52 | INFO | TTS Service initialized - Enabled: True, Audio: True

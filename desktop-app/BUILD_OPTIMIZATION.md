@@ -178,3 +178,7 @@ For issues or questions, check:
 - Electron logs: `desktop-app/logs/electron-main.log`
 - Build output: Terminal output during build
 
+
+
+
+
