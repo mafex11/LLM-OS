@@ -73,156 +73,40 @@ import uuid
 async def lifespan(app: FastAPI):
     """Handle application startup and shutdown"""
     # Startup
-    global agent, streaming_wrapper, agent_initialized
+    # Log session start (matching CLI behavior)
+    agent_logger.log_session_start()
+    logger.info("Session logging started")
     
-    try:
-        logger.info("Starting agent initialization...")
-        print("Initializing Windows-Use Agent...")
-        
-        # Log session start (matching CLI behavior)
-        agent_logger.log_session_start()
-        logger.info("Session logging started")
-        
-        # Initialize LLM with API key
-        # Get Google API key from config file
-        config_file = os.path.join(CONFIG_PATH, "api_keys.json")
-        google_api_key = ""
-        
-        logger.info(f"Looking for API keys in config file: {config_file}")
-        print(f"🔍 Looking for API keys in: {config_file}")
-        if os.path.exists(config_file):
-            try:
-                with open(config_file, "r", encoding="utf-8") as f:
-                    config_data = json.load(f)
-                    google_api_key = config_data.get("google_api_key", "")
-                    logger.info(f"Found Google API key: {'Yes' if google_api_key else 'No'}")
-                    print(f"✅ Config file found - Google API key: {'Yes' if google_api_key else 'No'}")
-            except Exception as e:
-                logger.error(f"Error reading config file: {e}")
-                print(f"❌ Error reading config file: {e}")
-        else:
-            logger.warning(f"Config file not found: {config_file}")
-            print(f"⚠️  Config file not found: {config_file}")
-            print(f"📁 Directory exists: {os.path.exists(os.path.dirname(config_file))}")
-            print(f"📂 Directory contents: {os.listdir(os.path.dirname(config_file)) if os.path.exists(os.path.dirname(config_file)) else 'Directory does not exist'}")
-            
-        if not google_api_key:
-            # Try to create a default API keys file
-            logger.info("Creating default API keys file...")
-            print("🔧 Creating default API keys file...")
-            try:
-                default_config = {
-                    "google_api_key": "",
-                    "elevenlabs_api_key": "",
-                    "deepgram_api_key": "",
-                    "last_updated": datetime.now().isoformat(),
-                    "version": "1.0"
-                }
-                
-                # Ensure config directory exists
-                os.makedirs(CONFIG_PATH, exist_ok=True)
-                
-                with open(config_file, "w", encoding="utf-8") as f:
-                    json.dump(default_config, f, indent=2, ensure_ascii=False)
-                
-                logger.info(f"Default API keys file created at: {config_file}")
-                print(f"✅ Default API keys file created at: {config_file}")
-                print("📝 Please configure your API keys in the settings page")
-                
-            except Exception as e:
-                logger.error(f"Failed to create default API keys file: {e}")
-                print(f"❌ Failed to create default API keys file: {e}")
-            
-            error_msg = "Google API key is not set. Please configure it in the settings page."
-            logger.error(error_msg)
-            print(f"🚨 {error_msg}")
-            raise ValueError(error_msg)
-        
-        logger.info("Initializing ChatGoogleGenerativeAI...")
-        llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash", 
-            temperature=0.3,
-            google_api_key=google_api_key
-        )
-        logger.info("ChatGoogleGenerativeAI initialized successfully")
-        
-        # TTS configuration - check if ElevenLabs API key is available
-        enable_tts = False
-        tts_voice_id = "21m00Tcm4TlvDq8ikWAM"
-        
-        logger.info("Checking TTS configuration...")
-        # Check if ElevenLabs API key is available in config file
-        if os.path.exists(config_file):
-            try:
-                with open(config_file, "r", encoding="utf-8") as f:
-                    config_data = json.load(f)
-                    elevenlabs_key = config_data.get("elevenlabs_api_key", "")
-                    if elevenlabs_key and elevenlabs_key.strip():
-                        enable_tts = True
-                        logger.info("ElevenLabs API key found, TTS enabled")
-                    else:
-                        logger.info("No ElevenLabs API key found, TTS disabled")
-            except Exception as e:
-                logger.error(f"Error reading ElevenLabs API key: {e}")
-        else:
-            logger.info("No config file for TTS check")
-        
-        # Initialize agent (SAME PARAMS AS main.py line 364!)
-        logger.info("Initializing Agent with parameters...")
-        agent = Agent(
-            llm=llm,
-            browser='chrome',
-            use_vision=False,
-            enable_conversation=True,
-            literal_mode=True,
-            max_steps=100,
-            enable_tts=enable_tts,
-            tts_voice_id=tts_voice_id
-        )
-        logger.info("Agent initialized successfully")
-        
-        # Get running programs (SAME AS main.py line 354!)
-        logger.info("Getting running programs...")
-        running_programs = get_running_programs()
-        agent.running_programs = running_programs
-        logger.info(f"Found {len(running_programs)} running programs")
-        
-        # Pre-warm the system (SAME AS main.py line 383!)
-        logger.info("Pre-warming system for faster response...")
-        print("Pre-warming system for faster response...")
+    # Try to create default API keys file if it doesn't exist
+    config_file = os.path.join(CONFIG_PATH, "api_keys.json")
+    if not os.path.exists(config_file):
+        logger.info("Creating default API keys file...")
+        print("🔧 Creating default API keys file...")
         try:
-            agent.desktop.get_state(use_vision=False)
-            logger.info("System pre-warmed successfully")
-            print("System pre-warmed successfully!")
+            default_config = {
+                "google_api_key": "",
+                "elevenlabs_api_key": "",
+                "deepgram_api_key": "",
+                "last_updated": datetime.now().isoformat(),
+                "version": "1.0"
+            }
+            
+            # Ensure config directory exists
+            os.makedirs(CONFIG_PATH, exist_ok=True)
+            
+            with open(config_file, "w", encoding="utf-8") as f:
+                json.dump(default_config, f, indent=2, ensure_ascii=False)
+            
+            logger.info(f"Default API keys file created at: {config_file}")
+            print(f"✅ Default API keys file created at: {config_file}")
+            print("📝 Please configure your API keys in the settings page")
+            
         except Exception as e:
-            logger.warning(f"Pre-warming failed: {e}")
-            print(f"Pre-warming failed: {e}")
-            print("System will still work, but first response may be slower.")
-        
-        # Show TTS status (matching CLI behavior)
-        if enable_tts:
-            from windows_use.agent.tts_service import is_tts_available
-            tts_available = is_tts_available()
-            tts_status = 'Enabled' if tts_available else 'Disabled (API key not configured)'
-            logger.info(f"TTS Status: {tts_status}")
-            print(f"TTS Status: {tts_status}")
-        else:
-            logger.info("TTS Status: Disabled")
-            print("TTS Status: Disabled")
-        
-        # Create streaming wrapper to capture status updates
-        logger.info("Creating streaming wrapper...")
-        streaming_wrapper = StreamingAgentWrapper(agent)
-        logger.info("Streaming wrapper created")
-        
-        agent_initialized = True
-        logger.info("Agent initialization completed successfully")
-        print("Agent initialized successfully!")
-        
-    except Exception as e:
-        logger.error(f"Failed to initialize agent: {e}")
-        print(f"Failed to initialize agent: {e}")
-        agent_initialized = False
+            logger.error(f"Failed to create default API keys file: {e}")
+            print(f"❌ Failed to create default API keys file: {e}")
+    
+    # Initialize agent (will fail gracefully if no API key)
+    await initialize_agent()
     
     yield  # Application is running
     
@@ -248,7 +132,12 @@ app = FastAPI(
 # Add CORS middleware for Next.js frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001"],  # Next.js default ports
+    allow_origins=[
+        "http://localhost:3000", 
+        "http://127.0.0.1:3000", 
+        "http://localhost:3001",
+        "http://127.0.0.1:3001"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -258,6 +147,126 @@ app.add_middleware(
 agent: Optional[Agent] = None
 streaming_wrapper: Optional[StreamingAgentWrapper] = None
 agent_initialized = False
+
+# Function to initialize the agent (can be called multiple times)
+async def initialize_agent():
+    """Initialize or re-initialize the agent with current API keys"""
+    global agent, streaming_wrapper, agent_initialized
+    
+    try:
+        logger.info("Starting agent initialization...")
+        print("Initializing Windows-Use Agent...")
+        
+        # Get Google API key from config file
+        config_file = os.path.join(CONFIG_PATH, "api_keys.json")
+        google_api_key = ""
+        
+        logger.info(f"Looking for API keys in config file: {config_file}")
+        print(f"🔍 Looking for API keys in: {config_file}")
+        if os.path.exists(config_file):
+            try:
+                with open(config_file, "r", encoding="utf-8") as f:
+                    config_data = json.load(f)
+                    google_api_key = config_data.get("google_api_key", "")
+                    logger.info(f"Found Google API key: {'Yes' if google_api_key else 'No'}")
+                    print(f"✅ Config file found - Google API key: {'Yes' if google_api_key else 'No'}")
+            except Exception as e:
+                logger.error(f"Error reading config file: {e}")
+                print(f"❌ Error reading config file: {e}")
+        else:
+            logger.warning(f"Config file not found: {config_file}")
+            print(f"⚠️  Config file not found: {config_file}")
+        
+        if not google_api_key or not google_api_key.strip():
+            error_msg = "Google API key is not set. Please configure it in the settings page."
+            logger.error(error_msg)
+            print(f"🚨 {error_msg}")
+            agent_initialized = False
+            return False
+        
+        logger.info("Initializing ChatGoogleGenerativeAI...")
+        llm = ChatGoogleGenerativeAI(
+            model="gemini-2.0-flash", 
+            temperature=0.3,
+            google_api_key=google_api_key
+        )
+        logger.info("ChatGoogleGenerativeAI initialized successfully")
+        
+        # TTS configuration - check if ElevenLabs API key is available
+        enable_tts = False
+        tts_voice_id = "21m00Tcm4TlvDq8ikWAM"
+        
+        logger.info("Checking TTS configuration...")
+        if os.path.exists(config_file):
+            try:
+                with open(config_file, "r", encoding="utf-8") as f:
+                    config_data = json.load(f)
+                    elevenlabs_key = config_data.get("elevenlabs_api_key", "")
+                    if elevenlabs_key and elevenlabs_key.strip():
+                        enable_tts = True
+                        logger.info("ElevenLabs API key found, TTS enabled")
+                    else:
+                        logger.info("No ElevenLabs API key found, TTS disabled")
+            except Exception as e:
+                logger.error(f"Error reading ElevenLabs API key: {e}")
+        
+        # Initialize agent
+        logger.info("Initializing Agent with parameters...")
+        agent = Agent(
+            llm=llm,
+            browser='chrome',
+            use_vision=False,
+            enable_conversation=True,
+            literal_mode=True,
+            max_steps=100,
+            enable_tts=enable_tts,
+            tts_voice_id=tts_voice_id
+        )
+        logger.info("Agent initialized successfully")
+        
+        # Get running programs
+        logger.info("Getting running programs...")
+        running_programs = get_running_programs()
+        agent.running_programs = running_programs
+        logger.info(f"Found {len(running_programs)} running programs")
+        
+        # Pre-warm the system
+        logger.info("Pre-warming system for faster response...")
+        print("Pre-warming system for faster response...")
+        try:
+            agent.desktop.get_state(use_vision=False)
+            logger.info("System pre-warmed successfully")
+            print("System pre-warmed successfully!")
+        except Exception as e:
+            logger.warning(f"Pre-warming failed: {e}")
+            print(f"Pre-warming failed: {e}")
+        
+        # Show TTS status
+        if enable_tts:
+            from windows_use.agent.tts_service import is_tts_available
+            tts_available = is_tts_available()
+            tts_status = 'Enabled' if tts_available else 'Disabled (API key not configured)'
+            logger.info(f"TTS Status: {tts_status}")
+            print(f"TTS Status: {tts_status}")
+        else:
+            logger.info("TTS Status: Disabled")
+            print("TTS Status: Disabled")
+        
+        # Create streaming wrapper
+        logger.info("Creating streaming wrapper...")
+        streaming_wrapper = StreamingAgentWrapper(agent)
+        logger.info("Streaming wrapper created")
+        
+        agent_initialized = True
+        logger.info("Agent initialization completed successfully")
+        print("Agent initialized successfully!")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to initialize agent: {e}")
+        print(f"Failed to initialize agent: {e}")
+        agent_initialized = False
+        return False
 
 # In-flight request tracking for cooperative stop
 inflight_requests: Dict[str, Dict[str, Any]] = {}
@@ -1400,7 +1409,7 @@ async def get_api_keys():
 
 @app.post("/api/config/keys")
 async def save_api_keys(keys: ApiKeysRequest):
-    """Save API keys to config file"""
+    """Save API keys to config file and re-initialize agent"""
     try:
         config_file = os.path.join(CONFIG_PATH, "api_keys.json")
         
@@ -1420,11 +1429,23 @@ async def save_api_keys(keys: ApiKeysRequest):
         with open(config_file, "w", encoding="utf-8") as f:
             json.dump(config_data, f, indent=2, ensure_ascii=False)
         
-        return {
-            "success": True,
-            "message": "API keys saved to config file successfully."
-        }
+        logger.info("API keys saved, re-initializing agent...")
+        
+        # Re-initialize agent with new API keys
+        success = await initialize_agent()
+        
+        if success:
+            return {
+                "success": True,
+                "message": "API keys saved and agent initialized successfully."
+            }
+        else:
+            return {
+                "success": False,
+                "message": "API keys saved, but agent initialization failed. Please check your API keys."
+            }
     except Exception as e:
+        logger.error(f"Error saving API keys: {e}")
         raise HTTPException(status_code=500, detail=f"Error saving API keys: {str(e)}")
 
 if __name__ == "__main__":

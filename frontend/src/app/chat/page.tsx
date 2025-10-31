@@ -180,34 +180,52 @@ function ChatContent() {
             createdAt: new Date()
           }
           try {
-            const response = await fetch(`http://localhost:8000/api/conversation`)
+            const response = await fetch(`http://127.0.0.1:8000/api/conversation`)
             if (response.ok) {
               const data = await response.json()
               if (data.conversation && data.conversation.length > 0) {
-                const serverMessages = data.conversation.map((msg: any) => ({
-                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                  role: msg.role,
-                  content: msg.content,
-                  timestamp: new Date(msg.timestamp),
-                  workflowSteps: msg.workflowSteps?.map((step: any) => ({
-                    ...step,
-                    timestamp: new Date(step.timestamp)
-                  }))
-                }))
+                const serverMessages = data.conversation.map((msg: any) => {
+                  try {
+                    return {
+                      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                      role: msg.role,
+                      content: msg.content || '',
+                      timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+                      workflowSteps: msg.workflowSteps?.map((step: any) => ({
+                        ...step,
+                        timestamp: step.timestamp ? new Date(step.timestamp) : new Date()
+                      }))
+                    }
+                  } catch (e) {
+                    console.error('Error parsing message:', e, msg)
+                    return {
+                      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                      role: msg.role || 'user',
+                      content: msg.content || '',
+                      timestamp: new Date(),
+                      workflowSteps: undefined
+                    }
+                  }
+                })
                 newSession.messages = serverMessages
                 newSession.title = serverMessages.length > 0 
                   ? serverMessages[0].content.slice(0, 30) + (serverMessages[0].content.length > 30 ? "..." : "")
                   : "New Chat"
               }
+            } else {
+              console.warn('Failed to fetch conversation:', response.status, response.statusText)
             }
-          } catch {}
+          } catch (error) {
+            console.error('Error fetching conversation:', error)
+          }
           const updatedSessions = [newSession, ...existingSessions]
           setChatSessions(updatedSessions)
           setCurrentSessionId(sessionId)
           localStorage.setItem('chatSessions', JSON.stringify(updatedSessions))
         }
         setTimeout(() => { inputRef.current?.focus() }, 100)
-      } catch {
+      } catch (error) {
+        console.error('Error initializing chat:', error)
         const sessionId = 'default'
         const initialSession: ChatSession = { id: sessionId, title: "New Chat", messages: [], createdAt: new Date() }
         setChatSessions([initialSession])
