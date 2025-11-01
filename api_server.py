@@ -1,5 +1,5 @@
 """
-FastAPI Server for Windows-Use Agent
+FastAPI Server for Yuki AI Agent
 Provides REST API endpoints for the Next.js frontend
 """
 
@@ -104,7 +104,7 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.error(f"Failed to create default API keys file: {e}")
             print(f"❌ Failed to create default API keys file: {e}")
-    
+            
     # Initialize agent (will fail gracefully if no API key)
     await initialize_agent()
     
@@ -123,8 +123,8 @@ async def lifespan(app: FastAPI):
 
 # Initialize FastAPI app with lifespan
 app = FastAPI(
-    title="Windows-Use Agent API",
-    description="REST API for Windows automation agent",
+    title="Yuki AI Agent API",
+    description="REST API for Yuki AI automation agent",
     version="1.0.0",
     lifespan=lifespan
 )
@@ -155,7 +155,7 @@ async def initialize_agent():
     
     try:
         logger.info("Starting agent initialization...")
-        print("Initializing Windows-Use Agent...")
+        print("Initializing Yuki AI Agent...")
         
         # Get Google API key from config file
         config_file = os.path.join(CONFIG_PATH, "api_keys.json")

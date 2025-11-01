@@ -45,7 +45,7 @@ except ImportError:
 
 class Agent:
     '''
-    Windows Use
+    Yuki AI
 
     An agent that can interact with GUI elements on Windows
 
@@ -62,7 +62,7 @@ class Agent:
         Agent
     '''
     def __init__(self,instructions:list[str]=[],additional_tools:list[BaseTool]=[],browser:Literal['edge','chrome','firefox']='edge', llm: BaseChatModel=None,consecutive_failures:int=3,max_steps:int=20,use_vision:bool=False,enable_conversation:bool=True,literal_mode:bool=True,enable_tts:bool=False,tts_voice_id:str="21m00Tcm4TlvDq8ikWAM"):
-        self.name='Windows Use'
+        self.name='Yuki AI'
         self.description='An agent that can interact with GUI elements on Windows' 
         self.registry = Registry([
             click_tool,type_tool, launch_tool, shell_tool, clipboard_tool,

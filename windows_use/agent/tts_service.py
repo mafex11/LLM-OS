@@ -1,5 +1,5 @@
 """
-Text-to-Speech service using ElevenLabs for Windows-Use Agent
+Text-to-Speech service using ElevenLabs for Yuki AI Agent
 """
 
 import os

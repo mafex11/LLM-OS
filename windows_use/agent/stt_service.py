@@ -1,5 +1,5 @@
 """
-Speech-to-Text service using Deepgram for Windows-Use Agent
+Speech-to-Text service using Deepgram for Yuki AI Agent
 Provides continuous listening with automatic wake detection
 """
 

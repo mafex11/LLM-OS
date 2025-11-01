@@ -1,5 +1,5 @@
 """
-Performance monitoring utilities for Windows-Use agent
+Performance monitoring utilities for Yuki AI agent
 """
 import time
 import functools

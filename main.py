@@ -395,7 +395,7 @@ def main():
     agent_logger.log_session_start()
     
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description='Windows-Use Agent with Voice Control')
+    parser = argparse.ArgumentParser(description='Yuki AI Agent with Voice Control')
     parser.add_argument('--voice', action='store_true', help='Start in voice control mode')
     parser.add_argument('--stt', action='store_true', help='Start in voice control mode (alias for --voice)')
     args = parser.parse_args()
@@ -412,9 +412,9 @@ def main():
     voice_mode = args.voice or args.stt
     
     if voice_mode:
-        print("Windows-Use Agent - Voice Control Mode")
+        print("Yuki AI Agent - Voice Control Mode")
     else:
-        print("Windows-Use Agent with Conversation Support")
+        print("Yuki AI Agent with Conversation Support")
     print("=" * 50)
     
     # Start overlay UI if available
@@ -606,7 +606,7 @@ def main():
                 print("Speed optimizations disabled!")
                 continue
             elif query.lower() == 'help':
-                print("\nWindows-Use Agent Help")
+                print("\nYuki AI Agent Help")
                 print("-" * 30)
                 print("This agent can help you with Windows automation tasks like:")
                 print("• Opening applications")

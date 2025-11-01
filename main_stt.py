@@ -88,7 +88,7 @@ def main():
     # Log session start
     agent_logger.log_session_start()
     
-    print("Windows-Use Agent with Deepgram STT")
+    print("Yuki AI Agent with Deepgram STT")
     print("=" * 50)
     
     # Check for running programs at startup

@@ -1,7 +1,7 @@
 """
-Windows-Use GUI Application
+Yuki AI GUI Application
 
-A native Windows GUI for the Windows-Use agent system using tkinter.
+A native Windows GUI for the Yuki AI agent system using tkinter.
 Provides a clean interface for entering queries and viewing responses.
 """
 
@@ -24,7 +24,7 @@ from main import get_running_programs, display_running_programs
 class WindowsUseGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("Windows-Use Agent")
+        self.root.title("Yuki AI Agent")
         self.root.geometry("1000x700")
         self.root.minsize(800, 600)
         
@@ -247,7 +247,7 @@ class WindowsUseGUI:
                     self.update_status(f"Pre-warming failed: {e}")
                 
                 self.update_status("Ready - Enter your query above")
-                self.add_response("🤖 Windows-Use Agent initialized successfully!")
+                self.add_response("🤖 Yuki AI Agent initialized successfully!")
                 self.add_response("📱 Detected running programs:")
                 
                 # Display running programs

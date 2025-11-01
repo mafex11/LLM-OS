@@ -114,7 +114,7 @@ function ChatContent() {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([])
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { getApiKey, hasApiKey } = useApiKeys()
+  const { getApiKey } = useApiKeys()
   const { toast } = useToast()
   const [currentSessionId, setCurrentSessionId] = useState("")
   const [input, setInput] = useState("")
@@ -150,9 +150,9 @@ function ChatContent() {
     const initializeChat = async () => {
       try {
         const sessionId = 'default'
-        const saved = localStorage.getItem('chatSessions')
+    const saved = localStorage.getItem('chatSessions')
         let existingSessions: ChatSession[] = []
-        if (saved) {
+    if (saved) {
           const parsed = JSON.parse(saved)
           existingSessions = parsed.map((session: any, index: number) => ({
             ...session,
@@ -165,9 +165,9 @@ function ChatContent() {
                 ...step,
                 timestamp: new Date(step.timestamp)
               }))
-            }))
-          }))
-        }
+        }))
+      }))
+    }
         const existingSession = existingSessions.find(s => s.id === sessionId)
         if (existingSession) {
           setChatSessions(existingSessions)
@@ -231,7 +231,7 @@ function ChatContent() {
         setChatSessions([initialSession])
         setCurrentSessionId(sessionId)
         setTimeout(() => { inputRef.current?.focus() }, 100)
-      }
+  }
     }
     if (!isInitialized) {
       initializeChat()
@@ -283,13 +283,6 @@ function ChatContent() {
   const executeTask = useCallback(async (taskContent: string) => {
     if (!taskContent.trim() || isLoading) return
     setInputPosition('bottom')
-    if (!hasApiKey('google_api_key')) {
-      const messageId = `${Date.now()}-error-${Math.random().toString(36).substr(2, 9)}`
-      const errorMsg: Message = { id: messageId, role: "assistant", content: "Please set your Google API key in Settings before using the chat.", timestamp: new Date() }
-      setNewlyGeneratedMessageIds(prev => new Set([...prev, messageId]))
-      updateSessionMessages(currentSessionId, [...messages, errorMsg])
-      return
-    }
     const userMessage: Message = { id: `${Date.now()}-user-${Math.random().toString(36).substr(2, 9)}`, role: "user", content: taskContent, timestamp: new Date() }
     const newMessages = [...messages, userMessage]
     updateSessionMessages(currentSessionId, newMessages)
@@ -311,13 +304,13 @@ function ChatContent() {
         const lines = new TextDecoder().decode(value).split("\n")
         for (const line of lines) {
           if (line.startsWith("data: ")) {
-            try {
-              const data = JSON.parse(line.slice(6))
+          try {
+            const data = JSON.parse(line.slice(6))
               if (data.type === "start") { const rid = data?.data?.request_id as string | undefined; if (rid) setCurrentRequestId(rid) }
-              if (["thinking","reasoning","tool_use","tool_result","status"].includes(data.type)) {
+            if (["thinking","reasoning","tool_use","tool_result","status"].includes(data.type)) {
                 const step: WorkflowStep = { type: data.type, message: data.data.message, timestamp: new Date(data.timestamp), status: data.data.status, actionName: data.data.action_name }
-                workflowRef.current = [...workflowRef.current, step]
-                setCurrentWorkflow(prev => [...prev, step])
+              workflowRef.current = [...workflowRef.current, step]
+              setCurrentWorkflow(prev => [...prev, step])
               } else if (data.type === "response") {
                 const messageId = `${Date.now()}-assistant-${Math.random().toString(36).substr(2, 9)}`
                 const responseMessage: Message = { id: messageId, role: "assistant", content: data.data.message, timestamp: new Date(data.timestamp), workflowSteps: [...workflowRef.current] }
@@ -334,9 +327,9 @@ function ChatContent() {
                 updateSessionMessages(currentSessionId, [...newMessages, errorMessage])
                 setCurrentWorkflow([])
                 workflowRef.current = []
-              }
-            } catch {}
-          }
+            }
+          } catch {}
+        }
         }
       }
     } catch (error) {
@@ -349,7 +342,7 @@ function ChatContent() {
       setCurrentRequestId(null)
       setStopRequested(false)
     }
-  }, [isLoading, hasApiKey, currentSessionId, messages, updateSessionMessages, getApiKey])
+  }, [isLoading, currentSessionId, messages, updateSessionMessages, getApiKey])
 
   useEffect(() => {
     if (!voiceMode) return
@@ -433,23 +426,23 @@ function ChatContent() {
     <div className="flex h-screen relative">
       <div className="absolute inset-0 z-0" style={{ background: "radial-gradient(125% 125% at 50% 100%, #000000 40%, #2b0707 100%)" }} />
       <div className="relative z-10 flex w-full h-full">
-      <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait">
         <motion.div className={`${showSidebar ? 'w-64' : 'w-0'} transition-all duration-300 border-r border-white/10 bg-black/20 backdrop-blur-sm flex flex-col overflow-hidden`} initial={false} animate={{ width: showSidebar ? 256 : 0 }} transition={{ duration: 0.3 }}>
-        {showSidebar && (
-          <>
-            <div className="p-4 border-b border-white/10 mx-2 space-y-4">
-              <div className="flex items-center gap-2 px-2">
-                <Image src="/logo.svg" alt="Logo" width={30} height={30} className="flex-shrink-0 rounded-full" />
-                <span className="text-sm font-semibold">Yuki AI</span>
-              </div>
-              <Button onClick={createNewChat} className="w-full justify-start gap-2 hover:bg-black/20 backdrop-blur-sm border border-white/20 hover:border-white/30" variant="ghost">
-                <PlusSignIcon size={16} />
-                New Chat
-              </Button>
-            </div>
-            <ScrollArea className="flex-1 px-2 py-2">
-              <div className="space-y-1">
-                {chatSessions.map((session, index) => (
+            {showSidebar && (
+              <>
+                <div className="p-4 border-b border-white/10 mx-2 space-y-4">
+                  <div className="flex items-center gap-2 px-2">
+                    <Image src="/logo.svg" alt="Logo" width={30} height={30} className="flex-shrink-0 rounded-full" />
+                    <span className="text-sm font-semibold">Yuki AI</span>
+                  </div>
+                  <Button onClick={createNewChat} className="w-full justify-start gap-2 hover:bg-black/20 backdrop-blur-sm border border-white/20 hover:border-white/30" variant="ghost">
+                    <PlusSignIcon size={16} />
+                    New Chat
+                  </Button>
+                </div>
+                <ScrollArea className="flex-1 px-2 py-2">
+                  <div className="space-y-1">
+                    {chatSessions.map((session, index) => (
                   <motion.div key={session.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2, delay: index * 0.05 }} className={`group relative overflow-hidden flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${currentSessionId === session.id ? "bg-black/60" : "hover:bg-black/30"}`}>
                     {currentSessionId === session.id && (
                       <div className="pointer-events-none absolute inset-0 border-1 border-black/20">
@@ -458,31 +451,31 @@ function ChatContent() {
                         <motion.div className="absolute top-0 bottom-0 -left-16 w-40 bg-gradient-to-r from-white/60 to-transparent blur-2xl" animate={{ x: [0, 56, 0], opacity: [0.6, 1, 0.6] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} />
                       </div>
                     )}
-                    <div className="flex-1 truncate cursor-pointer" onClick={() => { setCurrentSessionId(session.id); setNewlyGeneratedMessageIds(new Set()) }}>{session.title}</div>
+                        <div className="flex-1 truncate cursor-pointer" onClick={() => { setCurrentSessionId(session.id); setNewlyGeneratedMessageIds(new Set()) }}>{session.title}</div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
                           <MoreVerticalIcon size={12} />
-                        </Button>
+                          </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => openRenameDialog(session.id)}>
                           <PencilEdit02Icon size={12} className="mr-2" />
                           Rename
                         </DropdownMenuItem>
-                        {chatSessions.length > 1 && (
+                          {chatSessions.length > 1 && (
                           <DropdownMenuItem onClick={() => deleteChat(session.id)} className="text-red-600">
                             <Delete02Icon size={12} className="mr-2" />
                             Delete
                           </DropdownMenuItem>
-                        )}
+                          )}
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  </motion.div>
-                ))}
-              </div>
-            </ScrollArea>
-            <div className="border-t border-white/10 mx-2 p-2 space-y-1">
+                      </motion.div>
+                    ))}
+                  </div>
+                </ScrollArea>
+                <div className="border-t border-white/10 mx-2 p-2 space-y-1">
               <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/")}>
                 <Home01Icon size={16} />
                 Home
@@ -491,10 +484,10 @@ function ChatContent() {
                 <Settings01Icon size={16} />
                 Settings
               </Button>
-            </div>
-          </>
-        )}
-        </motion.div>
+                </div>
+              </>
+            )}
+          </motion.div>
         </AnimatePresence>
         <div className="flex-1 flex flex-col">
         <AnimatePresence>
@@ -521,17 +514,17 @@ function ChatContent() {
           )}
         </AnimatePresence>
         <motion.div className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-10" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-          <div className="flex items-center gap-3">
-            <div className="cursor-pointer p-2 hover:bg-black/20 rounded-lg transition-colors" onClick={() => setShowSidebar(!showSidebar)}>
-              {showSidebar ? <SidebarLeft01Icon size={24} /> : <SidebarRight01Icon size={24} />}
-            </div>
+            <div className="flex items-center gap-3">
+              <div className="cursor-pointer p-2 hover:bg-black/20 rounded-lg transition-colors" onClick={() => setShowSidebar(!showSidebar)}>
+                {showSidebar ? <SidebarLeft01Icon size={24} /> : <SidebarRight01Icon size={24} />}
+              </div>
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-normal hidden sm:block">Yuki AI</h1>
             </div>
-          </div>
-        </motion.div>
+            </div>
+          </motion.div>
         <ScrollArea className="flex-1 px-2 sm:px-4" ref={scrollRef}>
-          <div className="max-w-4xl mx-auto py-4 sm:py-8">
+            <div className="max-w-4xl mx-auto py-4 sm:py-8">
             {messages.length === 0 && !isLoading && inputPosition === 'centered' && (
               <motion.div className="flex flex-col items-center justify-center min-h-[80vh] text-center" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="mb-8">
@@ -595,7 +588,7 @@ function ChatContent() {
                 </motion.div>
               </motion.div>
             )}
-            <div className="space-y-6">
+              <div className="space-y-6">
               <AnimatePresence mode="popLayout">
                 {messages.map((message, index) => (
                   <motion.div key={index} className={`group ${message.role === "user" ? "flex justify-end" : ""}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
@@ -625,8 +618,8 @@ function ChatContent() {
                   </motion.div>
                 ))}
               </AnimatePresence>
-              {isLoading && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+                {isLoading && (
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
                   <div className="flex gap-2 sm:gap-4">
                     <div className="flex-shrink-0 mt-1"><div className="h-8 w-8"></div></div>
                     <div className="flex-1 space-y-2">
@@ -644,12 +637,12 @@ function ChatContent() {
                       })()}
                     </div>
                   </div>
-                </motion.div>
-              )}
-              <div ref={messagesEndRef} />
+                  </motion.div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
             </div>
-          </div>
-        </ScrollArea>
+          </ScrollArea>
         <AnimatePresence>
           {inputPosition === 'bottom' && (
             <motion.div className="bg-black/20 backdrop-blur-sm p-4 sm:p-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4, delay: 0.4 }}>
@@ -692,13 +685,13 @@ function ChatContent() {
                       </motion.div>
                     )}
                   </AnimatePresence>
-                </div>
+            </div>
                 <p className="text-xs text-gray-500 text-center mt-2 hidden sm:block">Press Enter to send, Shift+Enter for new line, Ctrl+Shift+V for voice mode</p>
-              </div>
+          </div>
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+        </div>
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
         <DialogContent>
           <DialogHeader>

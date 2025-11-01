@@ -1,5 +1,5 @@
 """
-Comprehensive logging system for Windows-Use Agent
+Comprehensive logging system for Yuki AI Agent
 Logs all actions, thoughts, observations to app.log
 """
 import logging
