@@ -47,7 +47,7 @@ export default function LandingPage() {
   {/* Content */}
   <section className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-20">
     {/* Enhanced Logo with subtle animation */}
-    <div className="mb-8 flex justify-center transform  transition-transform duration-300">
+    <div className="mb-8 flex justify-center transform transition-transform duration-300">
       <div className="flex items-center gap-3 group">
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-700 rounded-full blur-md opacity-75 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -67,7 +67,7 @@ export default function LandingPage() {
     </div>
 
     {/* Enhanced Main Headline */}
-    <h1 className="mb-6 text-balance text-center font-sans text-4xl font-medium leading-tight tracking-tight md:text-5xl lg:text-6xl">
+    <h1 className="mb-6 text-balance text-center text-4xl font-normal md:text-5xl lg:text-7xl">
       Your AI copilot for{' '}
       <span className="bg-gradient-to-r from-white to-red-200 bg-clip-text text-transparent">
         devices
@@ -76,7 +76,7 @@ export default function LandingPage() {
     </h1>
 
     {/* Enhanced Supporting Text */}
-    <p className="mx-auto mb-10 max-w-2xl text-center text-pretty text-lg leading-relaxed text-white/60 md:text-xl">
+    <p className="mx-auto mb-10 max-w-4xl text-center text-pretty text-lg text-white/60 md:text-xl">
       Meet <span className="text-white font-semibold">Yuki</span>, your intelligent AI copilot. Have natural conversations, 
       automate tasks, and control your device effortlessly through voice commands and smart automation.
     </p>
@@ -85,9 +85,9 @@ export default function LandingPage() {
     <div className="mb-8 w-full max-w-2xl">
       <div className="relative flex gap-3">
         {/* Voice Button */}
-        <button className="relative inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20">
-          <span className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-800 rounded-full" />
-          <span className="absolute inset-0 bg-gradient-to-br from-red-500 to-red-700 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-300" />
+        <button className="relative inline-flex h-14 w-14 items-center justify-center overflow-hidden rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-red-500/20">
+          <span className="absolute inset-0 bg-gradient-to-br border border-white/50 rounded-full" />
+        
           <span className="relative text-white">
             <VoiceIcon size={22} />
           </span>
@@ -105,18 +105,18 @@ export default function LandingPage() {
             className="relative w-full px-6 py-4 bg-black/80 backdrop-blur-3xl rounded-full text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/50 text-base border border-white/10"
           />
         </div>
-
         {/* Start Now Button */}
         <button 
-          onClick={handleStartNow}
-          className="relative inline-flex h-12 items-center px-6 overflow-hidden rounded-full bg-white text-black transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-black/30"
-        >
-          <span className="absolute inset-0 bg-black/5 rounded-full" />
-          <span className="absolute inset-0 bg-white/10 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-300" />
-          <span className="relative font-medium text-sm">
-            Start Now
+        onClick={handleStartNow}
+        className="relative inline-flex h-14 w-14 items-center justify-center overflow-hidden rounded-full transition-all duration-300  hover:shadow-lg hover:shadow-red-500/20">
+          <span className="absolute inset-0 bg-gradient-to-br border border-white/50 rounded-full" />
+      
+          <span className="relative text-white">
+          <ArrowRight01Icon size={22} />
           </span>
         </button>
+
+       
       </div>
     </div>
 
@@ -125,8 +125,8 @@ export default function LandingPage() {
       <Link href="/chat">
         <Button 
           size="lg" 
-          variant="outline"
-          className="gap-3 px-8 py-6 border-2 border-white/20 bg-white/50 backdrop-blur-sm hover:bg-white/70 hover:border-white/30 hover:text-black text-black font-semibold rounded-xl transition-all duration-300 hover:scale-105 cursor-pointer"
+          variant="default"
+          className="gap-3 px-8 py-6 border-2 border-white/20 bg-zinc-950  backdrop-blur-sm hover: hover:border-white/30  text-white font-normal rounded-full transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-red-500/20 hover:bg-zinc-950"
         >
           Get Started
           <ArrowRight01Icon size={18} className="transition-transform duration-300 group-hover:translate-x-1" />
@@ -136,22 +136,22 @@ export default function LandingPage() {
         <Button 
           size="lg" 
           variant="outline"
-          className="gap-3 px-8 py-6 border-2 border-white/20 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-white/30 text-white font-semibold rounded-xl transition-all duration-300"
+          className="gap-3 px-4 py-6 border-2 border-white/20 bg-zinc-950  backdrop-blur-sm hover: hover:border-white/30  text-white font-normal rounded-full transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-red-500/20 hover:bg-zinc-950"
         >
           <Settings01Icon size={18} />
-          Configure API Keys
+          Configure Yuki
         </Button>
       </Link>
     </div>
 
     {/* Enhanced Example Commands */}
-    <div className="w-full max-w-3xl">
-      <p className="mb-4 text-center text-lg font-medium text-white/80">Try these examples</p>
+    <div className="w-full max-w-7xl">
+      <p className="mb-4 text-center text-lg font-medium text-white/80">Try these:</p>
       <div className="flex flex-wrap items-center justify-center gap-3">
         {exampleCommands.map((command, index) => (
           <button
             key={index}
-            className="px-4 py-3 bg-white/5 backdrop-blur-sm border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 rounded-xl text-sm text-white/80 hover:text-white transition-all duration-300 hover:scale-105 cursor-pointer min-w-[140px]"
+            className="px-4 py-3 bg-zinc-950 backdrop-blur-sm border border-white/40 hover:border-red-500/50 hover:bg-red-500/10 rounded-xl text-sm text-white/80 hover:text-white transition-all duration-300 hover:scale-105 cursor-pointer min-w-[140px]"
             onClick={() => setInputValue(command)}
           >
             {command}
