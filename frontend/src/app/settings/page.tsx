@@ -223,7 +223,6 @@ export default function SettingsPage() {
   return (
     <div className="flex h-screen relative">
       {/* Crimson Depth Background */}
-      
       <div
         className="absolute inset-0 z-0"
         style={{

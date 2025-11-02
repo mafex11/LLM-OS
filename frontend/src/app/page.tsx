@@ -47,7 +47,7 @@ export default function LandingPage() {
   {/* Content */}
   <section className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-20">
     {/* Enhanced Logo with subtle animation */}
-    <div className="mb-8 flex justify-center transform hover:scale-105 transition-transform duration-300">
+    <div className="mb-8 flex justify-center transform  transition-transform duration-300">
       <div className="flex items-center gap-3 group">
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-700 rounded-full blur-md opacity-75 group-hover:opacity-100 transition-opacity duration-300"></div>

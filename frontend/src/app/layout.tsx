@@ -1,14 +1,14 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-
-const inter = Inter({
-  subsets: ['latin'],
-  // weight: ['400', '500', '600', '700'], // Uncomment and adjust weights as needed
-  // display: 'swap', // Uncomment if you want to enable font-display: swap
-})
+import { Montserrat } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { ApiKeyProvider } from "@/contexts/ApiKeyContext"
+
+const montserrat = Montserrat({ 
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-montserrat",
+})
 
 export const metadata: Metadata = {
   title: "Yuki AI",
@@ -22,7 +22,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={montserrat.className}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
@@ -37,3 +37,4 @@ export default function RootLayout({
     </html>
   )
 }
+
