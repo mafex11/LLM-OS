@@ -1,9 +1,8 @@
 "use client"
 
-import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ArrowRight01Icon, Settings01Icon, VoiceIcon } from "hugeicons-react"
-import { DottedGlowBackground } from "@/components/ui/dotted-glow-background"
+import { GridBackground } from "@/components/ui/grid-background"
 import Link from "next/link"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -33,158 +32,138 @@ export default function LandingPage() {
     "What's running on my system?",
   ]
 
-  const container = {
-    hidden: { opacity: 0, y: 12 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: { type: "spring" as const, stiffness: 60, damping: 16, staggerChildren: 0.08 },
-    },
-  } as const
-  const item = {
-    hidden: { opacity: 0, y: 10 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.35 } },
-  } as const
-  const subtleItem = {
-    hidden: { opacity: 0, y: 6 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-  } as const
-
   return (
-    <div className="min-h-screen w-full relative">
-      {/* Crimson Depth Background */}
-      <div
-        className="absolute inset-0 z-0"
-        style={{
-          background: "radial-gradient(125% 125% at 50% 100%, #000000 40%, #2b0707 100%)",
-        }}
-      />
-      {/* Content */}
-      <section className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-20">
-        <motion.div className="mx-auto max-w-6xl text-center" variants={container} initial="hidden" animate="show">
-          
-          {/* Logo */}
-          <motion.div variants={item} className="mb-6 flex justify-center">
-            <div className="flex items-center gap-2">
-              <Image src="/logo.svg" alt="Yuki AI Logo" width={50} height={50} className="flex-shrink-0 rounded-full" />
-               <span className="text-5xl font-semibold text-foreground relative">
-                 {["Y", "u", "k", "i"].map((letter, index) => (
-                   <motion.span
-                     key={index}
-                     className="inline-block"
-                     animate={{
-                       textShadow: [
-                         "0 0 0px rgba(255, 255, 255, 0)",
-                         "0 0 20px rgba(255, 255, 255, 0.8)",
-                         "0 0 0px rgba(255, 255, 255, 0)"
-                       ],
-                       filter: [
-                         "brightness(1)",
-                         "brightness(1.5)",
-                         "brightness(1)"
-                       ]
-                     }}
-                     transition={{
-                       duration: 0.8,
-                       delay: index * 0.2,
-                       repeat: Infinity,
-                       repeatDelay: 2,
-                       ease: "easeInOut"
-                     }}
-                   >
-                     {letter}
-                   </motion.span>
-                 ))}
-               </span>
-                    </div>
-          </motion.div>
+<div className="min-h-screen w-full relative overflow-hidden">
+  {/* Enhanced Background with Animated Elements */}
+  <div
+    className="absolute inset-0 z-0"
+    style={{
+      background: "radial-gradient(125% 125% at 50% 100%, #000000 30%, #1a0b0b 70%, #2b0707 100%)",
+    }}
+  />
+  
+  <GridBackground />
 
-          {/* Main Headline */}
-          <motion.h1
-            variants={item}
-            className="mb-4 text-balance font-sans text-3xl font-light leading-tight tracking-tight text-foreground md:text-4xl lg:text-5xl"
-          >
-            Your AI copilot for devices.
-
-          </motion.h1>
-
-          {/* Supporting Text */}
-          <motion.p
-            variants={item}
-            className="hidden sm:block mx-auto mb-8 max-w-3xl text-pretty text-sm leading-relaxed text-white/40 md:text-base"
-          >
-            Meet Yuki, your intelligent AI copilot. Have natural conversations, automate tasks, and control
-            your device effortlessly. Voice commands, smart automation, and seamless integration.
-          </motion.p>
-
-          {/* Input Box */}
-          <motion.div variants={item} className="mb-6 flex justify-center">
-            <div className="relative w-full max-w-2xl flex gap-2">
-              <button className="relative inline-flex h-10 w-10 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
-                <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#991B1B_0%,#450A0A_50%,#991B1B_100%)]" />
-                <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 text-white backdrop-blur-3xl">
-                  <VoiceIcon size={20} />
-                </span>
-              </button>
-              <div className="relative flex-1 inline-flex overflow-hidden rounded-full p-[1px]">
-                <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#991B1B_0%,#450A0A_50%,#991B1B_100%)]" />
-                <input
-                  type="text"
-                  placeholder="Enter what you want to do..."
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  className="relative w-full px-3 py-2 bg-slate-950 backdrop-blur-3xl rounded-full text-white placeholder:text-gray-500 focus:outline-none text-sm"
-                />
-              </div>
-              <button 
-                onClick={handleStartNow}
-                className="relative inline-flex h-10 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50"
-              >
-                <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#991B1B_0%,#450A0A_50%,#991B1B_100%)]" />
-                <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-xs font-medium text-white backdrop-blur-3xl">
-                  Start Now
-                </span>
-              </button>
-            </div>
-          </motion.div>
-
-          {/* CTA Buttons */}
-          <motion.div variants={item} className="mb-8 flex flex-col items-center justify-center gap-2 sm:flex-row">
-            <Link href="/chat">
-              <Button size="sm" className="gap-2">
-                Get Started
-                <ArrowRight01Icon size={14} />
-            </Button>
-            </Link>
-            <Link href="/settings">
-              <Button size="sm" variant="destructive" className="gap-2">
-                <Settings01Icon size={14} />
-                Configure API Keys
-                </Button>
-            </Link>
-          </motion.div>
-
-          {/* Example Commands */}
-          <motion.div variants={item} className="hidden sm:block">
-            <p className="mb-3 text-lg font-normal text-white underline-offset-4 underline">Try these</p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              {exampleCommands.map((command, index) => (
-                <motion.button
-                  key={index}
-                  variants={subtleItem}
-                  initial="hidden"
-                  animate="show"
-                  transition={{ delay: 0.05 * index }}
-                  className="flex-1 min-w-0 justify-center gap-2 hover:bg-black/20 backdrop-blur-sm border border-white/20 hover:border-white/30 rounded-lg px-3 py-2 text-xs text-center transition-colors"
-                >
-                  {command}
-                </motion.button>
-              ))}
-            </div>
-          </motion.div>
-        </motion.div>
-      </section>
+  {/* Content */}
+  <section className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-20">
+    {/* Enhanced Logo with subtle animation */}
+    <div className="mb-8 flex justify-center transform hover:scale-105 transition-transform duration-300">
+      <div className="flex items-center gap-3 group">
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-700 rounded-full blur-md opacity-75 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <Image 
+            src="/logo.svg" 
+            alt="Yuki AI Logo" 
+            width={60} 
+            height={60} 
+            className="relative flex-shrink-0 rounded-full border-2 border-white/10"
+          />
+        </div>
+        <span className="text-6xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent relative">
+          Yuki
+          <span className="absolute -bottom-2 left-0 w-full h-0.5 bg-gradient-to-r from-red-500 to-transparent"></span>
+        </span>
+      </div>
     </div>
+
+    {/* Enhanced Main Headline */}
+    <h1 className="mb-6 text-balance text-center font-sans text-4xl font-medium leading-tight tracking-tight md:text-5xl lg:text-6xl">
+      Your AI copilot for{' '}
+      <span className="bg-gradient-to-r from-white to-red-200 bg-clip-text text-transparent">
+        devices
+      </span>
+      .
+    </h1>
+
+    {/* Enhanced Supporting Text */}
+    <p className="mx-auto mb-10 max-w-2xl text-center text-pretty text-lg leading-relaxed text-white/60 md:text-xl">
+      Meet <span className="text-white font-semibold">Yuki</span>, your intelligent AI copilot. Have natural conversations, 
+      automate tasks, and control your device effortlessly through voice commands and smart automation.
+    </p>
+
+    {/* Enhanced Input Section */}
+    <div className="mb-8 w-full max-w-2xl">
+      <div className="relative flex gap-3">
+        {/* Voice Button */}
+        <button className="relative inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/20">
+          <span className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-800 rounded-full" />
+          <span className="absolute inset-0 bg-gradient-to-br from-red-500 to-red-700 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-300" />
+          <span className="relative text-white">
+            <VoiceIcon size={22} />
+          </span>
+        </button>
+
+        {/* Input Field */}
+        <div className="relative flex-1">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-800 rounded-full blur-sm opacity-50 transition-opacity duration-300 hover:opacity-75" />
+          <input
+            type="text"
+            placeholder="Enter what you want to do..."
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyPress={handleKeyPress}
+            className="relative w-full px-6 py-4 bg-black/80 backdrop-blur-3xl rounded-full text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/50 text-base border border-white/10"
+          />
+        </div>
+
+        {/* Start Now Button */}
+        <button 
+          onClick={handleStartNow}
+          className="relative inline-flex h-12 items-center px-6 overflow-hidden rounded-full bg-white text-black transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-black/30"
+        >
+          <span className="absolute inset-0 bg-black/5 rounded-full" />
+          <span className="absolute inset-0 bg-white/10 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-300" />
+          <span className="relative font-medium text-sm">
+            Start Now
+          </span>
+        </button>
+      </div>
+    </div>
+
+    {/* Enhanced CTA Buttons */}
+    <div className="mb-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
+      <Link href="/chat">
+        <Button 
+          size="lg" 
+          variant="outline"
+          className="gap-3 px-8 py-6 border-2 border-white/20 bg-white/50 backdrop-blur-sm hover:bg-white/70 hover:border-white/30 hover:text-black text-black font-semibold rounded-xl transition-all duration-300 hover:scale-105 cursor-pointer"
+        >
+          Get Started
+          <ArrowRight01Icon size={18} className="transition-transform duration-300 group-hover:translate-x-1" />
+        </Button>
+      </Link>
+      <Link href="/settings">
+        <Button 
+          size="lg" 
+          variant="outline"
+          className="gap-3 px-8 py-6 border-2 border-white/20 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-white/30 text-white font-semibold rounded-xl transition-all duration-300"
+        >
+          <Settings01Icon size={18} />
+          Configure API Keys
+        </Button>
+      </Link>
+    </div>
+
+    {/* Enhanced Example Commands */}
+    <div className="w-full max-w-3xl">
+      <p className="mb-4 text-center text-lg font-medium text-white/80">Try these examples</p>
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        {exampleCommands.map((command, index) => (
+          <button
+            key={index}
+            className="px-4 py-3 bg-white/5 backdrop-blur-sm border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 rounded-xl text-sm text-white/80 hover:text-white transition-all duration-300 hover:scale-105 cursor-pointer min-w-[140px]"
+            onClick={() => setInputValue(command)}
+          >
+            {command}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    {/* Additional Features Preview */}
+
+  </section>
+</div>
   )
 }
+
