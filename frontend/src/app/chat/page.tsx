@@ -135,6 +135,8 @@ function ChatContent() {
   const [voiceMode, setVoiceMode] = useState(false)
   const [showVoiceInstructions, setShowVoiceInstructions] = useState(false)
   const [newlyGeneratedMessageIds, setNewlyGeneratedMessageIds] = useState<Set<string>>(new Set())
+  const [scheduledCount, setScheduledCount] = useState<number>(0)
+  const [scheduledFlag, setScheduledFlag] = useState<boolean>(false)
   const workflowRef = useRef<WorkflowStep[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -340,6 +342,9 @@ function ChatContent() {
                 const step: WorkflowStep = { type: data.type, message: data.data.message, timestamp: new Date(data.timestamp), status: data.data.status, actionName: data.data.action_name }
               workflowRef.current = [...workflowRef.current, step]
               setCurrentWorkflow(prev => [...prev, step])
+              if (data.type === 'tool_use' && (data.data?.tool_name || '').toLowerCase().includes('schedule')) {
+                setScheduledFlag(true)
+              }
               } else if (data.type === "response") {
                 const messageId = `${Date.now()}-assistant-${Math.random().toString(36).substr(2, 9)}`
                 const responseMessage: Message = { id: messageId, role: "assistant", content: data.data.message, timestamp: new Date(data.timestamp), workflowSteps: [...workflowRef.current] }
@@ -398,6 +403,14 @@ function ChatContent() {
     document.addEventListener('keydown', handleKeyDown)
     return () => { document.removeEventListener('keydown', handleKeyDown) }
   }, [voiceMode, voiceModeStarting, toast])
+
+  // Poll scheduled tasks to show count in header icon
+  useEffect(() => {
+    const poll = async () => { try { const r = await fetch('http://localhost:8000/api/scheduled-tasks'); if (r.ok) { const list = await r.json(); const upcoming = (list || []).filter((t: any) => ['scheduled','running'].includes((t.status||'').toLowerCase())); setScheduledCount(upcoming.length) } } catch {} }
+    poll()
+    const id = setInterval(poll, 5000)
+    return () => clearInterval(id)
+  }, [])
 
   const fetchSystemStatus = async () => {
     try { const r = await fetch("http://localhost:8000/api/status"); if (r.ok) setSystemStatus(await r.json()) } catch {}
@@ -554,6 +567,16 @@ function ChatContent() {
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-normal hidden sm:block">Yuki AI</h1>
             </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {(scheduledFlag || scheduledCount > 0) && (
+                <Button variant="outline" size="sm" onClick={() => router.push('/scheduled')} className="text-xs rounded-full border-white/30 bg-white/5 hover:bg-white/10 ring-1 ring-white/10 hover:ring-white/30">
+                  Scheduled
+                  {scheduledCount > 0 && (
+                    <span className="ml-2 inline-flex items-center justify-center h-5 min-w-5 px-2 rounded-full bg-white text-black text-[10px]">{scheduledCount}</span>
+                  )}
+                </Button>
+              )}
             </div>
           </motion.div>
         <ScrollArea className="flex-1 px-2 sm:px-4 pb-28" ref={scrollRef}>
