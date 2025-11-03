@@ -24,7 +24,8 @@ import {
   Moon02Icon, 
   PaintBrush01Icon,
   Home01Icon,
-  Cancel01Icon
+  Cancel01Icon,
+  Tick02Icon,
 } from "hugeicons-react"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
@@ -33,6 +34,7 @@ import { useTheme } from "next-themes"
 import { useAudioDevices } from "@/hooks/useAudioDevices"
 // Removed useApiKeys import - using config file only
 import { motion, AnimatePresence } from "framer-motion"
+import { AppSidebar } from "@/components/layout/Sidebar"
 import Image from "next/image"
 
 interface SystemStatus {
@@ -64,6 +66,8 @@ export default function SettingsPage() {
   const [savingKeys, setSavingKeys] = useState(false)
   const [savingAgentSettings, setSavingAgentSettings] = useState(false)
   const [maxSteps, setMaxSteps] = useState<number>(50)
+  const [maxStepsInput, setMaxStepsInput] = useState<string>("50")
+  const [maxStepsInvalid, setMaxStepsInvalid] = useState<boolean>(false)
   const [showRunningPrograms, setShowRunningPrograms] = useState(false)
   const [apiKeyInputs, setApiKeyInputs] = useState<ApiKeys>({
     google_api_key: "",
@@ -114,6 +118,10 @@ export default function SettingsPage() {
     const interval = setInterval(fetchSystemStatus, 5000)
     return () => clearInterval(interval)
   }, [loadApiKeys])
+
+  useEffect(() => {
+    setMaxStepsInput(String(maxSteps))
+  }, [maxSteps])
 
   const handleApiKeyChange = (keyType: keyof ApiKeys, value: string) => {
     // Update input field state
@@ -221,24 +229,9 @@ export default function SettingsPage() {
 
 
   return (
-    <div className="flex h-screen relative">
-      {/* Crimson Depth Background */}
-      <div
-        className="absolute inset-0 z-0"
-        style={{
-          background: "radial-gradient(125% 125% at 50% 100%, #000000 40%, #2b0707 100%)",
-        }}
-      />
-      <div className="relative z-10 flex w-full h-full">
-      <AnimatePresence mode="wait">
-        <motion.div 
-          className={`${showSidebar ? 'w-64' : 'w-0'} transition-all duration-300 border-r border-white/10 bg-black/20 backdrop-blur-sm flex flex-col overflow-hidden`}
-          initial={false}
-          animate={{ width: showSidebar ? 256 : 0 }}
-          transition={{ duration: 0.3 }}
-        >
-        {showSidebar && (
-          <>
+    <div className="flex min-h-screen w-full ">
+      <div className="relative z-10 w-full">
+        <AppSidebar isOpen={showSidebar}>
             {/* Sidebar Header */}
             <div className="p-4 border-b border-white/10 mx-2 space-y-4">
               <div className="flex items-center gap-2 px-2">
@@ -253,23 +246,38 @@ export default function SettingsPage() {
                 Back to Chat
               </Button>
             </div>
-
             {/* Sidebar Content */}
             <ScrollArea className="flex-1 px-2 py-2">
               <div className="space-y-1">
                 <div className="px-3 py-2 text-sm font-normal text-muted-foreground">
                   Settings
                 </div>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-2 bg-black/60"
-                >
-                  <Settings01Icon size={16} />
-                  Configuration
-                </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-2 bg-black/60"
+                onClick={() => document.getElementById('api-keys')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              >
+                <Settings01Icon size={16} />
+                API Keys
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-2"
+                onClick={() => document.getElementById('audio-settings')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              >
+                <Settings01Icon size={16} />
+                Audio Settings
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-2"
+                onClick={() => document.getElementById('system-status')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              >
+                <Settings01Icon size={16} />
+                System Status
+              </Button>
               </div>
             </ScrollArea>
-
             {/* Sidebar Footer */}
             <div className="border-t border-white/10 mx-2 p-2 space-y-1">
               <Button
@@ -280,6 +288,14 @@ export default function SettingsPage() {
                 <Home01Icon size={16} />
                 Home
               </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-2 hover:bg-black/30"
+              onClick={() => router.push("/agent-settings")}
+            >
+              <BotIcon size={16} />
+              Agent Settings
+            </Button>
               <Button
                 variant="ghost"
                 className="w-full justify-start gap-2 hover:bg-black/30"
@@ -289,12 +305,9 @@ export default function SettingsPage() {
                 Settings
               </Button>
             </div>
-          </>
-        )}
-        </motion.div>
-        </AnimatePresence>
+        </AppSidebar>
 
-        <div className="flex-1 flex flex-col">
+        <div className={`${showSidebar ? 'pl-64' : 'pl-0'} flex-1 flex flex-col`}>
         <motion.div 
           className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-10"
           initial={{ opacity: 0, y: -20 }}
@@ -328,10 +341,10 @@ export default function SettingsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.2 }}
               >
-              <Card className="bg-transparent border border-white/20">
+              <Card id="api-keys" className="bg-black/40 border border-white/20 ">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Key01Icon size={20} />
+                  <CardTitle className="flex items-center gap-2 font-normal text-white">
+                    {/* <Key01Icon size={20} /> */}
                     API Keys
                   </CardTitle>
                   <CardDescription>
@@ -341,55 +354,47 @@ export default function SettingsPage() {
                 <CardContent>
                   <div className="space-y-6">
                     <div className="space-y-2">
-                      <Label htmlFor="google_api_key" className="text-sm font-normal">
+                      <Label htmlFor="google_api_key" className="text-sm font-normal pl-2">
                         Google API Key <span className="text-red-500">*</span>
                       </Label>
-                      <div className="relative">
-                        <Input
-                          id="google_api_key"
-                          type={showApiKeys.google_api_key ? "text" : "password"}
-                          value={apiKeyInputs.google_api_key}
-                          onChange={(e) => handleApiKeyChange('google_api_key', e.target.value)}
-                          placeholder="Enter your Google API key"
-                          className="pr-10 bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white placeholder:text-gray-500"
-                        />
-                        <div className="absolute right-0 top-0 h-full flex">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-full px-2"
-                            onClick={() => clearApiKey('google_api_key')}
-                            disabled={!apiKeyInputs.google_api_key}
-                          >
-                            <Cancel01Icon size={14} />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-full px-2"
-                            onClick={() => {
-                              navigator.clipboard.writeText(apiKeyInputs.google_api_key)
-                              toast({
-                                title: "Copied!",
-                                description: "Google API key copied to clipboard",
-                              })
-                            }}
-                            disabled={!apiKeyInputs.google_api_key}
-                          >
-                            <FloppyDiskIcon size={14} />
-                          </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                            className="h-full px-2"
-                          onClick={() => setShowApiKeys({ ...showApiKeys, google_api_key: !showApiKeys.google_api_key })}
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <Input
+                            id="google_api_key"
+                            type={showApiKeys.google_api_key ? "text" : "password"}
+                            value={apiKeyInputs.google_api_key}
+                            onChange={(e) => handleApiKeyChange('google_api_key', e.target.value)}
+                            placeholder="Enter your Google API key"
+                            className="pr-10 rounded-full bg-transparent border border-white/40 hover:border-white/30 text-white outline-none focus placeholder:text-gray-500"
+                          />
+                          <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+                            <motion.div
+                              whileTap={{ scale: 0.85, rotate: 180 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <Button
+                                type="button"
+                                variant="default"
+                                size="icon"
+                                className="h-6 w-6 bg-transparent hover:bg-transparent  text-white rounded-full"
+                                onClick={() => setShowApiKeys({ ...showApiKeys, google_api_key: !showApiKeys.google_api_key })}
+                              >
+                                <motion.div
+                                  animate={{ rotate: showApiKeys.google_api_key ? 360 : 0 }}
+                                  transition={{ duration: 0.3 }}
+                                >
+                                  {showApiKeys.google_api_key ? <ViewOffIcon size={14} /> : <ViewIcon size={14} />}
+                                </motion.div>
+                              </Button>
+                            </motion.div>
+                          </div>
+                        </div>
+                        <div 
+                          className={`h-9 w-9 flex items-center justify-center rounded-full cursor-pointer ${apiKeyInputs.google_api_key ? 'bg-white border border-zinc-950/40' : 'bg-zinc-900 border border-white/40'}`}
+                          onClick={() => apiKeyInputs.google_api_key && clearApiKey('google_api_key')}
                         >
-                          {showApiKeys.google_api_key ? <ViewOffIcon size={16} /> : <ViewIcon size={16} />}
-                        </Button>
-                      </div>
+                          <Tick02Icon size={16} className={apiKeyInputs.google_api_key ? 'text-green-700' : 'text-gray-500'} />
+                        </div>
                       </div>
                       <div className="flex items-center justify-between">
                       <p className="text-xs text-muted-foreground">
@@ -403,11 +408,6 @@ export default function SettingsPage() {
                           Google AI Studio
                         </a>
                       </p>
-                        {apiKeyInputs.google_api_key && (
-                          <Badge variant="secondary" className="text-xs">
-                            ✓ Configured
-                          </Badge>
-                        )}
                       </div>
                     </div>
 
@@ -417,54 +417,45 @@ export default function SettingsPage() {
                       <Label htmlFor="elevenlabs_api_key" className="text-sm font-normal">
                         ElevenLabs API Key
                       </Label>
-                      <div className="relative">
-                        <Input
-                          id="elevenlabs_api_key"
-                          type={showApiKeys.elevenlabs_api_key ? "text" : "password"}
-                          value={apiKeyInputs.elevenlabs_api_key}
-                          onChange={(e) => handleApiKeyChange('elevenlabs_api_key', e.target.value)}
-                          placeholder="Enter your ElevenLabs API key (optional)"
-                          className="pr-10 bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white placeholder:text-gray-500"
-                        />
-                        <div className="absolute right-0 top-0 h-full flex">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-full px-2"
-                            onClick={() => clearApiKey('elevenlabs_api_key')}
-                            disabled={!apiKeyInputs.elevenlabs_api_key}
-                          >
-                            <Cancel01Icon size={14} />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-full px-2"
-                            onClick={() => {
-                              navigator.clipboard.writeText(apiKeyInputs.elevenlabs_api_key)
-                              toast({
-                                title: "Copied!",
-                                description: "ElevenLabs API key copied to clipboard",
-                              })
-                            }}
-                            disabled={!apiKeyInputs.elevenlabs_api_key}
-                          >
-                            <FloppyDiskIcon size={14} />
-                          </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                            className="h-full px-2"
-                          onClick={() => setShowApiKeys({ ...showApiKeys, elevenlabs_api_key: !showApiKeys.elevenlabs_api_key })}
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <Input
+                            id="elevenlabs_api_key"
+                            type={showApiKeys.elevenlabs_api_key ? "text" : "password"}
+                            value={apiKeyInputs.elevenlabs_api_key}
+                            onChange={(e) => handleApiKeyChange('elevenlabs_api_key', e.target.value)}
+                            placeholder="Enter your ElevenLabs API key (optional)"
+                            className="pr-10 rounded-full bg-transparent border border-white/40 hover:border-white/30 text-white outline-none focus:- placeholder:text-gray-500"
+                          />
+                          <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+                            <motion.div
+                              whileTap={{ scale: 0.85, rotate: 180 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <Button
+                                type="button"
+                                variant="default"
+                                size="icon"
+                                className="h-6 w-6 bg-transparent hover:bg-transparent text-white rounded-full"
+                                onClick={() => setShowApiKeys({ ...showApiKeys, elevenlabs_api_key: !showApiKeys.elevenlabs_api_key })}
+                              >
+                                <motion.div
+                                  animate={{ rotate: showApiKeys.elevenlabs_api_key ? 360 : 0 }}
+                                  transition={{ duration: 0.3 }}
+                                >
+                                  {showApiKeys.elevenlabs_api_key ? <ViewOffIcon size={14} /> : <ViewIcon size={14} />}
+                                </motion.div>
+                              </Button>
+                            </motion.div>
+                          </div>
+                        </div>
+                        <div 
+                          className={`h-9 w-9 flex items-center justify-center rounded-full cursor-pointer ${apiKeyInputs.elevenlabs_api_key ? 'bg-white' : 'bg-zinc-800'}`}
+                          onClick={() => apiKeyInputs.elevenlabs_api_key && clearApiKey('elevenlabs_api_key')}
                         >
-                          {showApiKeys.elevenlabs_api_key ? <ViewOffIcon size={16} /> : <ViewIcon size={16} />}
-                        </Button>
+                          <Tick02Icon size={16} className={apiKeyInputs.elevenlabs_api_key ? 'text-green-700' : 'text-gray-500'} />
+                        </div>
                       </div>
-                      </div>
-                      <div className="flex items-center justify-between">
                       <p className="text-xs text-muted-foreground">
                         Optional for text-to-speech. Get your key from{" "}
                         <a 
@@ -476,12 +467,6 @@ export default function SettingsPage() {
                           ElevenLabs
                         </a>
                       </p>
-                        {apiKeyInputs.elevenlabs_api_key && (
-                          <Badge variant="secondary" className="text-xs">
-                            ✓ Configured
-                          </Badge>
-                        )}
-                      </div>
                     </div>
 
                     <Separator />
@@ -490,54 +475,45 @@ export default function SettingsPage() {
                       <Label htmlFor="deepgram_api_key" className="text-sm font-normal">
                         Deepgram API Key
                       </Label>
-                      <div className="relative">
-                        <Input
-                          id="deepgram_api_key"
-                          type={showApiKeys.deepgram_api_key ? "text" : "password"}
-                          value={apiKeyInputs.deepgram_api_key}
-                          onChange={(e) => handleApiKeyChange('deepgram_api_key', e.target.value)}
-                          placeholder="Enter your Deepgram API key (optional)"
-                          className="pr-10 bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white placeholder:text-gray-500"
-                        />
-                        <div className="absolute right-0 top-0 h-full flex">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-full px-2"
-                            onClick={() => clearApiKey('deepgram_api_key')}
-                            disabled={!apiKeyInputs.deepgram_api_key}
-                          >
-                            <Cancel01Icon size={14} />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-full px-2"
-                            onClick={() => {
-                              navigator.clipboard.writeText(apiKeyInputs.deepgram_api_key)
-                              toast({
-                                title: "Copied!",
-                                description: "Deepgram API key copied to clipboard",
-                              })
-                            }}
-                            disabled={!apiKeyInputs.deepgram_api_key}
-                          >
-                            <FloppyDiskIcon size={14} />
-                          </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                            className="h-full px-2"
-                          onClick={() => setShowApiKeys({ ...showApiKeys, deepgram_api_key: !showApiKeys.deepgram_api_key })}
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <Input
+                            id="deepgram_api_key"
+                            type={showApiKeys.deepgram_api_key ? "text" : "password"}
+                            value={apiKeyInputs.deepgram_api_key}
+                            onChange={(e) => handleApiKeyChange('deepgram_api_key', e.target.value)}
+                            placeholder="Enter your Deepgram API key (optional)"
+                            className="pr-10 rounded-full bg-transparent border border-white/20 hover:border-white/30 text-white outline-none focus:- placeholder:text-gray-500"
+                          />
+                          <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+                            <motion.div
+                              whileTap={{ scale: 0.85, rotate: 180 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <Button
+                                type="button"
+                                variant="default"
+                                size="icon"
+                                className="h-6 w-6 bg-transparent hover:bg-transparent text-white rounded-full"
+                                onClick={() => setShowApiKeys({ ...showApiKeys, deepgram_api_key: !showApiKeys.deepgram_api_key })}
+                              >
+                                <motion.div
+                                  animate={{ rotate: showApiKeys.deepgram_api_key ? 360 : 0 }}
+                                  transition={{ duration: 0.3 }}
+                                >
+                                  {showApiKeys.deepgram_api_key ? <ViewOffIcon size={14} /> : <ViewIcon size={14} />}
+                                </motion.div>
+                              </Button>
+                            </motion.div>
+                          </div>
+                        </div>
+                        <div 
+                          className={`h-9 w-9 flex items-center justify-center rounded-full cursor-pointer ${apiKeyInputs.deepgram_api_key ? 'bg-white' : 'bg-zinc-800'}`}
+                          onClick={() => apiKeyInputs.deepgram_api_key && clearApiKey('deepgram_api_key')}
                         >
-                          {showApiKeys.deepgram_api_key ? <ViewOffIcon size={16} /> : <ViewIcon size={16} />}
-                        </Button>
+                          <Tick02Icon size={16} className={apiKeyInputs.deepgram_api_key ? 'text-green-700' : 'text-gray-500'} />
+                        </div>
                       </div>
-                      </div>
-                      <div className="flex items-center justify-between">
                       <p className="text-xs text-muted-foreground">
                         Optional for voice control. Get your key from{" "}
                         <a 
@@ -549,12 +525,6 @@ export default function SettingsPage() {
                           Deepgram
                         </a>
                       </p>
-                        {apiKeyInputs.deepgram_api_key && (
-                          <Badge variant="secondary" className="text-xs">
-                            ✓ Configured
-                          </Badge>
-                        )}
-                      </div>
                     </div>
 
                     <div className="flex items-center justify-between pt-4">
@@ -568,10 +538,10 @@ export default function SettingsPage() {
                           onClick={() => {
                             toast({
                               title: "API Keys Status",
-                              description: `Google: ${apiKeyInputs.google_api_key ? '✓' : '✗'}, ElevenLabs: ${apiKeyInputs.elevenlabs_api_key ? '✓' : '✗'}, Deepgram: ${apiKeyInputs.deepgram_api_key ? '✓' : '✗'}`,
+                              description: `Google: ${apiKeyInputs.google_api_key ? 'Working' : 'Not Found'}, ElevenLabs: ${apiKeyInputs.elevenlabs_api_key ? 'Working' : 'Not Found'}, Deepgram: ${apiKeyInputs.deepgram_api_key ? 'Working' : 'Not Found'}`,
                             })
                           }}
-                          className="text-xs"
+                          className="text-xs rounded-full border-white/30 bg-white/5 hover:bg-white/10 shadow-[0_0_12px_rgba(255,255,255,0.35)] hover:shadow-[0_0_22px_rgba(255,255,255,0.55)] ring-1 ring-white/10 hover:ring-white/30 transition-all"
                         >
                           Test Keys
                         </Button>
@@ -579,7 +549,7 @@ export default function SettingsPage() {
                           variant="outline"
                           size="sm"
                           onClick={resetApiKeys}
-                          className="text-xs"
+                          className="text-xs rounded-full border-white/30 bg-white/5 hover:bg-white/10 shadow-[0_0_12px_rgba(255,255,255,0.35)] hover:shadow-[0_0_22px_rgba(255,255,255,0.55)] ring-1 ring-white/10 hover:ring-white/30 transition-all"
                         >
                           Reset
                         </Button>
@@ -587,7 +557,7 @@ export default function SettingsPage() {
                           onClick={saveApiKeys}
                           disabled={savingKeys}
                           size="sm"
-                          className="text-xs"
+                          className="text-xs rounded-full bg-white text-black hover:bg-white/90 shadow-[0_0_14px_rgba(255,255,255,0.45)] hover:shadow-[0_0_24px_rgba(255,255,255,0.65)] ring-1 ring-white/60 hover:ring-white/80 transition-all"
                         >
                           {savingKeys ? (
                             <>
@@ -595,10 +565,7 @@ export default function SettingsPage() {
                               Saving...
                             </>
                           ) : (
-                            <>
-                              <FloppyDiskIcon size={14} className="mr-1" />
-                              Save Keys
-                            </>
+                            <>Save Keys</>
                           )}
                         </Button>
                       </div>
@@ -608,66 +575,7 @@ export default function SettingsPage() {
               </Card>
               </motion.div>
 
-              {/* Agent Settings Card */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.25 }}
-              >
-                <Card className="bg-transparent border border-white/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Settings01Icon size={20} />
-                      Agent Settings
-                    </CardTitle>
-                    <CardDescription>
-                      Control how many tool calls the agent can make per run
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="space-y-2 max-w-xs">
-                        <Label htmlFor="max-steps" className="text-sm font-normal">
-                          Max tool calls per run
-                        </Label>
-                        <Input
-                          id="max-steps"
-                          type="number"
-                          min={1}
-                          max={200}
-                          value={maxSteps}
-                          onChange={(e) => setMaxSteps(Number(e.target.value))}
-                          className="bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Higher values allow longer workflows. Start with 50–100.
-                        </p>
-                      </div>
-
-                      <div className="flex items-center justify-end">
-                        <Button
-                          onClick={saveAgentSettings}
-                          disabled={savingAgentSettings}
-                          size="sm"
-                          className="text-xs"
-                        >
-                          {savingAgentSettings ? (
-                            <>
-                              <Loading01Icon size={14} className="mr-1 animate-spin" />
-                              Saving...
-                            </>
-                          ) : (
-                            <>
-                              <FloppyDiskIcon size={14} className="mr-1" />
-                              Save Agent Settings
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+              {/* Agent Settings moved to /agent-settings */}
 
               {/* Audio Settings Card */}
               <motion.div
@@ -675,10 +583,10 @@ export default function SettingsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.3 }}
               >
-                <Card className="bg-transparent border border-white/20">
+                <Card id="audio-settings" className="bg-black/40 border border-white/20">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <BotIcon size={20} />
+                    <CardTitle className="flex items-center gap-2 font-normal text-white">
+                      {/* <BotIcon size={20} /> */}
                       Audio Settings
                     </CardTitle>
                     <CardDescription>
@@ -720,7 +628,7 @@ export default function SettingsPage() {
                                 disabled={audioDevices.isLoading}
                                 size="sm"
                                 variant="outline"
-                                className="text-xs"
+                                className="text-xs rounded-full border-white/30 bg-white/5 hover:bg-white/10 shadow-[0_0_12px_rgba(255,255,255,0.35)] hover:shadow-[0_0_22px_rgba(255,255,255,0.55)] ring-1 ring-white/10 hover:ring-white/30 transition-all focus:outline-none focus:ring-0 focus-visible:ring-0"
                               >
                                 {audioDevices.isLoading ? (
                                   <>
@@ -740,7 +648,7 @@ export default function SettingsPage() {
                               disabled={audioDevices.isLoading}
                               size="sm"
                               variant="outline"
-                              className="text-xs"
+                              className="text-xs rounded-full border-white/30 bg-white/5 hover:bg-white/10 shadow-[0_0_12px_rgba(255,255,255,0.35)] hover:shadow-[0_0_22px_rgba(255,255,255,0.55)] ring-1 ring-white/10 hover:ring-white/30 transition-all focus:outline-none focus:ring-0 focus-visible:ring-0"
                             >
                               <Loading01Icon size={14} className="mr-1" />
                               Refresh
@@ -766,7 +674,7 @@ export default function SettingsPage() {
                         >
                           <SelectTrigger 
                             id="microphone-input"
-                            className="bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white"
+                            className="rounded-full bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white focus:outline-none focus:ring-0 focus-visible:ring-0"
                           >
                             <SelectValue placeholder="Select microphone..." />
                           </SelectTrigger>
@@ -806,7 +714,7 @@ export default function SettingsPage() {
                         >
                           <SelectTrigger 
                             id="audio-output"
-                            className="bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white"
+                            className="rounded-full bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white focus:outline-none focus:ring-0 focus-visible:ring-0"
                           >
                             <SelectValue placeholder="Select speaker..." />
                           </SelectTrigger>
@@ -846,7 +754,7 @@ export default function SettingsPage() {
                                 description: `Input: ${audioDevices.inputDevices.find(d => d.deviceId === audioDevices.selectedInputDevice)?.label || 'None'}, Output: ${audioDevices.outputDevices.find(d => d.deviceId === audioDevices.selectedOutputDevice)?.label || 'None'}`,
                               })
                             }}
-                            className="text-xs"
+                            className="text-xs rounded-full border-white/30 bg-white/5 hover:bg-white/10 shadow-[0_0_12px_rgba(255,255,255,0.35)] hover:shadow-[0_0_22px_rgba(255,255,255,0.55)] ring-1 ring-white/10 hover:ring-white/30 transition-all focus:outline-none focus:ring-0 focus-visible:ring-0"
                           >
                             Test Audio
                           </Button>
@@ -863,10 +771,10 @@ export default function SettingsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.4 }}
               >
-                <Card className="bg-transparent border border-white/20">
+                <Card id="system-status" className="bg-black/40 border border-white/20">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <ComputerIcon size={20} />
+                    <CardTitle className="flex items-center gap-2 font-normal text-white">
+                      {/* <ComputerIcon size={20} /> */}
                       System Status
                     </CardTitle>
                     <CardDescription>
@@ -877,7 +785,13 @@ export default function SettingsPage() {
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <span className="text-sm">Agent Status</span>
-                        <Badge variant={systemStatus?.agent_ready ? "default" : "destructive"}>
+                        <Badge 
+                          variant={systemStatus?.agent_ready ? "default" : "destructive"}
+                          className={systemStatus?.agent_ready 
+                            ? "rounded-full bg-white/10 text-white border border-white/30 shadow-[0_0_12px_rgba(255,255,255,0.35)] hover:shadow-[0_0_22px_rgba(255,255,255,0.55)] ring-1 ring-white/10"
+                            : "rounded-full bg-red-500/20 text-red-300 border border-red-500/40 shadow-[0_0_14px_rgba(239,68,68,0.35)] hover:shadow-[0_0_24px_rgba(239,68,68,0.55)] ring-1 ring-red-500/20"
+                          }
+                        >
                           {systemStatus?.agent_ready ? "✓ Ready" : "✗ Not Ready"}
                         </Badge>
                       </div>
@@ -886,7 +800,7 @@ export default function SettingsPage() {
                         <div className="flex items-center justify-between">
                           <span className="text-sm">Running Programs</span>
                           <div className="flex items-center gap-2">
-                            <Badge variant="secondary">
+                            <Badge variant="secondary" className="rounded-full bg-white/5 text-white border border-white/30 shadow-[0_0_10px_rgba(255,255,255,0.25)]">
                               {systemStatus?.running_programs?.length || 0} active
                             </Badge>
                             {systemStatus?.running_programs && systemStatus.running_programs.length > 0 && (
@@ -894,7 +808,7 @@ export default function SettingsPage() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setShowRunningPrograms(!showRunningPrograms)}
-                                className="h-6 w-6 p-0"
+                                className="h-6 w-6 p-0 rounded-full bg-white/5 hover:bg-white/10 border border-white/30 shadow-[0_0_12px_rgba(255,255,255,0.35)] hover:shadow-[0_0_22px_rgba(255,255,255,0.55)] ring-1 ring-white/10 hover:ring-white/30 transition-all focus:outline-none focus:ring-0 focus-visible:ring-0"
                               >
                                 {showRunningPrograms ? (
                                   <ViewOffIcon size={14} />
@@ -948,14 +862,26 @@ export default function SettingsPage() {
 
                       <div className="flex items-center justify-between">
                         <span className="text-sm">Voice Mode</span>
-                        <Badge variant={apiKeyInputs.deepgram_api_key ? "default" : "secondary"}>
+                        <Badge 
+                          variant={apiKeyInputs.deepgram_api_key ? "default" : "destructive"}
+                          className={apiKeyInputs.deepgram_api_key 
+                            ? "rounded-full bg-white/10 text-white border border-white/30 shadow-[0_0_12px_rgba(255,255,255,0.35)]"
+                            : "rounded-full bg-red-500/20 text-red-300 border border-red-500/40 shadow-[0_0_14px_rgba(239,68,68,0.35)]"
+                          }
+                        >
                           {apiKeyInputs.deepgram_api_key ? "✓ Available" : "⚠ No API Key"}
                         </Badge>
                       </div>
 
                       <div className="flex items-center justify-between">
                         <span className="text-sm">Text-to-Speech</span>
-                        <Badge variant={apiKeyInputs.elevenlabs_api_key ? "default" : "secondary"}>
+                        <Badge 
+                          variant={apiKeyInputs.elevenlabs_api_key ? "default" : "destructive"}
+                          className={apiKeyInputs.elevenlabs_api_key 
+                            ? "rounded-full bg-white/10 text-white border border-white/30 shadow-[0_0_12px_rgba(255,255,255,0.35)]"
+                            : "rounded-full bg-red-500/20 text-red-300 border border-red-500/40 shadow-[0_0_14px_rgba(239,68,68,0.35)]"
+                          }
+                        >
                           {apiKeyInputs.elevenlabs_api_key ? "✓ Available" : "⚠ No API Key"}
                         </Badge>
                     </div>

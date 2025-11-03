@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button"
 import { ArrowRight01Icon, Settings01Icon, VoiceIcon } from "hugeicons-react"
-import { GridBackground } from "@/components/ui/grid-background"
 import Link from "next/link"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -33,17 +32,7 @@ export default function LandingPage() {
   ]
 
   return (
-<div className="min-h-screen w-full relative overflow-hidden">
-  {/* Enhanced Background with Animated Elements */}
-  <div
-    className="absolute inset-0 z-0"
-    style={{
-      background: "radial-gradient(125% 125% at 50% 100%, #000000 30%, #1a0b0b 70%, #2b0707 100%)",
-    }}
-  />
-  
-  <GridBackground />
-
+<div className="min-h-screen w-full relative">
   {/* Content */}
   <section className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-20">
     {/* Enhanced Logo with subtle animation */}

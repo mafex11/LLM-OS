@@ -35,6 +35,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useRouter, useSearchParams } from "next/navigation"
 import { useApiKeys } from "@/contexts/ApiKeyContext"
 import { motion, AnimatePresence } from "framer-motion"
+import { AppSidebar } from "@/components/layout/Sidebar"
 import Image from "next/image"
 import { TextGenerateEffect } from "@/components/ui/text-generate-effect"
 import { useToast } from "@/hooks/use-toast"
@@ -274,6 +275,34 @@ function ChatContent() {
   const [voiceModeStarting, setVoiceModeStarting] = useState(false)
   const [inputPosition, setInputPosition] = useState<'centered' | 'bottom'>('centered')
   useEffect(() => { setInputPosition(messages.length === 0 ? 'centered' : 'bottom') }, [currentSessionId, messages.length])
+  
+  // Hero subtitle phrases; pick one randomly each page load
+  const heroPhrases = useMemo(() => [
+    "How can I help you today?",
+    "Tell me your goal for today",
+    "What's gonna be today?",
+    "Let's acheive some productivity!",
+    "Let me handle your repetitive works!",
+    "What task is on your mind right now?",
+    "Ready to make progress? Tell me where to start.",
+    "What's the first thing we should tackle today?",
+    "I'm here to turn your ideas into actions.",
+    "Let’s smash some goals together!",
+    "What do you want to focus on next?",
+    "Tell me what’s slowing you down, and I’ll handle it.",
+    "What can we make easier today?",
+    "Got a mission? I'm ready to assist.",
+    "Let’s turn your to-dos into ta-das.",
+    "Need a boost? I’ve got your back.",
+    "Point me in the right direction, and I’ll take it from there.",
+    "Let’s get you closer to your dreams today.",
+    "What's the next milestone we’re chasing?",
+  ], [])
+  const [heroText, setHeroText] = useState(heroPhrases[0])
+  useEffect(() => {
+    const idx = Math.floor(Math.random() * heroPhrases.length)
+    setHeroText(heroPhrases[idx])
+  }, [heroPhrases])
 
   const updateSessionMessages = useCallback((sessionId: string, newMessages: Message[]) => {
     setChatSessions(prev => prev.map(session => session.id === sessionId ? { ...session, messages: newMessages, title: newMessages.length > 0 && session.title === "New Chat" ? newMessages[0].content.slice(0, 30) + (newMessages[0].content.length > 30 ? "..." : "") : session.title } : session))
@@ -425,71 +454,69 @@ function ChatContent() {
   return (
     <div className="flex h-screen relative">
       <div className="absolute inset-0 z-0" style={{ background: "radial-gradient(125% 125% at 50% 100%, #000000 40%, #2b0707 100%)" }} />
-      <div className="relative z-10 flex w-full h-full">
-        <AnimatePresence mode="wait">
-        <motion.div className={`${showSidebar ? 'w-64' : 'w-0'} transition-all duration-300 border-r border-white/10 bg-black/20 backdrop-blur-sm flex flex-col overflow-hidden`} initial={false} animate={{ width: showSidebar ? 256 : 0 }} transition={{ duration: 0.3 }}>
-            {showSidebar && (
-              <>
-                <div className="p-4 border-b border-white/10 mx-2 space-y-4">
-                  <div className="flex items-center gap-2 px-2">
-                    <Image src="/logo.svg" alt="Logo" width={30} height={30} className="flex-shrink-0 rounded-full" />
-                    <span className="text-sm font-semibold">Yuki AI</span>
-                  </div>
-                  <Button onClick={createNewChat} className="w-full justify-start gap-2 hover:bg-black/20 backdrop-blur-sm border border-white/20 hover:border-white/30" variant="ghost">
-                    <PlusSignIcon size={16} />
-                    New Chat
-                  </Button>
-                </div>
-                <ScrollArea className="flex-1 px-2 py-2">
-                  <div className="space-y-1">
-                    {chatSessions.map((session, index) => (
-                  <motion.div key={session.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2, delay: index * 0.05 }} className={`group relative overflow-hidden flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${currentSessionId === session.id ? "bg-black/60" : "hover:bg-black/30"}`}>
-                    {currentSessionId === session.id && (
-                      <div className="pointer-events-none absolute inset-0 border-1 border-black/20">
-                        <motion.div className="absolute inset-y-0 left-0 w-2 bg-white/60 rounded-r-full blur-2xl" initial={{ opacity: 0.8 }} animate={{ opacity: [0.7, 1, 0.7] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }} />
-                        <motion.div className="absolute inset-y-0 left-0 w-2/3 bg-gradient-to-r from-white/60 to-transparent" initial={{ opacity: 0.35 }} animate={{ opacity: [0.25, 0.5, 0.25] }} transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }} />
-                        <motion.div className="absolute top-0 bottom-0 -left-16 w-40 bg-gradient-to-r from-white/60 to-transparent blur-2xl" animate={{ x: [0, 56, 0], opacity: [0.6, 1, 0.6] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} />
-                      </div>
-                    )}
-                        <div className="flex-1 truncate cursor-pointer" onClick={() => { setCurrentSessionId(session.id); setNewlyGeneratedMessageIds(new Set()) }}>{session.title}</div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
-                          <MoreVerticalIcon size={12} />
-                          </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openRenameDialog(session.id)}>
-                          <PencilEdit02Icon size={12} className="mr-2" />
-                          Rename
+      <div className="relative z-10 w-full h-full">
+        <AppSidebar isOpen={showSidebar}>
+          <div className="p-4 border-b border-white/10 mx-2 space-y-4">
+            <div className="flex items-center gap-2 px-2">
+              <Image src="/logo.svg" alt="Logo" width={30} height={30} className="flex-shrink-0 rounded-full" />
+              <span className="text-sm font-semibold">Yuki AI</span>
+            </div>
+            <Button onClick={createNewChat} className="w-full justify-start gap-2 hover:bg-black/20 backdrop-blur-sm border border-white/20 hover:border-white/30" variant="ghost">
+              <PlusSignIcon size={16} />
+              New Chat
+            </Button>
+          </div>
+          <ScrollArea className="flex-1 px-2 py-2">
+            <div className="space-y-1">
+              {chatSessions.map((session, index) => (
+                <motion.div key={session.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2, delay: index * 0.05 }} className={`group relative overflow-hidden flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${currentSessionId === session.id ? "bg-black/60" : "hover:bg-black/30"}`}>
+                  {currentSessionId === session.id && (
+                    <div className="pointer-events-none absolute inset-0 border-1 border-black/20">
+                      <motion.div className="absolute inset-y-0 left-0 w-2 bg-white/60 rounded-r-full blur-2xl" initial={{ opacity: 0.8 }} animate={{ opacity: [0.7, 1, 0.7] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }} />
+                      <motion.div className="absolute inset-y-0 left-0 w-2/3 bg-gradient-to-r from-white/60 to-transparent" initial={{ opacity: 0.35 }} animate={{ opacity: [0.25, 0.5, 0.25] }} transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }} />
+                      <motion.div className="absolute top-0 bottom-0 -left-16 w-40 bg-gradient-to-r from-white/60 to-transparent blur-2xl" animate={{ x: [0, 56, 0], opacity: [0.6, 1, 0.6] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} />
+                    </div>
+                  )}
+                  <div className="flex-1 truncate cursor-pointer" onClick={() => { setCurrentSessionId(session.id); setNewlyGeneratedMessageIds(new Set()) }}>{session.title}</div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
+                        <MoreVerticalIcon size={12} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => openRenameDialog(session.id)}>
+                        <PencilEdit02Icon size={12} className="mr-2" />
+                        Rename
+                      </DropdownMenuItem>
+                      {chatSessions.length > 1 && (
+                        <DropdownMenuItem onClick={() => deleteChat(session.id)} className="text-red-600">
+                          <Delete02Icon size={12} className="mr-2" />
+                          Delete
                         </DropdownMenuItem>
-                          {chatSessions.length > 1 && (
-                          <DropdownMenuItem onClick={() => deleteChat(session.id)} className="text-red-600">
-                            <Delete02Icon size={12} className="mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                          )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                      </motion.div>
-                    ))}
-                  </div>
-                </ScrollArea>
-                <div className="border-t border-white/10 mx-2 p-2 space-y-1">
-              <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/")}>
-                <Home01Icon size={16} />
-                Home
-              </Button>
-              <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/settings")}>
-                <Settings01Icon size={16} />
-                Settings
-              </Button>
-                </div>
-              </>
-            )}
-          </motion.div>
-        </AnimatePresence>
-        <div className="flex-1 flex flex-col">
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </motion.div>
+              ))}
+            </div>
+          </ScrollArea>
+          <div className="border-t border-white/10 mx-2 p-2 space-y-1">
+            <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/")}>
+              <Home01Icon size={16} />
+              Home
+            </Button>
+            <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/agent-settings")}>
+              <BotIcon size={16} />
+              Agent Settings
+            </Button>
+            <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/settings")}>
+              <Settings01Icon size={16} />
+              Settings
+            </Button>
+          </div>
+        </AppSidebar>
+        <div className={`${showSidebar ? 'pl-64' : 'pl-0'} flex-1 flex flex-col`}>
         <AnimatePresence>
           {showVoiceInstructions && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3 }} className="bg-blue-500/10 border-b border-blue-500/20 px-4 py-3 backdrop-blur-sm">
@@ -529,15 +556,15 @@ function ChatContent() {
               <motion.div className="flex flex-col items-center justify-center min-h-[80vh] text-center" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="mb-8">
                 <div className="relative overflow-hidden">
-                  <h2 className="text-4xl sm:text-5xl font-thin relative">
+                  <h2 className="text-4xl sm:text-6xl font-normal relative">
                     {["H","i",","," ","I","'","m"," ","Y","u","k","i"].map((letter, index) => (
                       <motion.span key={index} className="inline-block" animate={{ textShadow: ["0 0 0px rgba(255,255,255,0)","0 0 20px rgba(255,255,255,0.8)","0 0 0px rgba(255,255,255,0)"], filter: ["brightness(1)","brightness(1.5)","brightness(1)"] }} transition={{ duration: 0.8, delay: index * 0.15, repeat: Infinity, repeatDelay: 2, ease: "easeInOut" }}>{letter === " " ? "\u00A0" : letter}</motion.span>
                     ))}
                   </h2>
                 </div>
                 <div className="relative overflow-hidden">
-                  <h2 className="text-4xl sm:text-5xl font-thin mb-4 relative">
-                    {["H","o","w"," ","c","a","n"," ","I"," ","h","e","l","p"," ","y","o","u"," ","t","o","d","a","y","?"].map((letter, index) => (
+                  <h2 className="text-3xl sm:text-4xl font-thin mb-4 relative">
+                    {heroText.split("").map((letter, index) => (
                       <motion.span key={index} className="inline-block" animate={{ textShadow: ["0 0 0px rgba(255,255,255,0)","0 0 20px rgba(255,255,255,0.8)","0 0 0px rgba(255,255,255,0)"], filter: ["brightness(1)","brightness(1.5)","brightness(1)"] }} transition={{ duration: 0.8, delay: (index * 0.1) + 2, repeat: Infinity, repeatDelay: 2, ease: "easeInOut" }}>{letter === " " ? "\u00A0" : letter}</motion.span>
                     ))}
                   </h2>
@@ -550,18 +577,18 @@ function ChatContent() {
                       {!isListening ? (
                         <motion.div key="normal-input" initial={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="flex items-center gap-3 w-full">
                           <motion.div initial={{ opacity: 1, scale: 1 }} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} transition={{ duration: 0.2 }}>
-                            <Button variant="ghost" size="sm" className={`h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border ${isListening ? 'border-red-500/50 bg-red-500/10' : isSpeaking ? 'border-blue-500/50 bg-blue-500/10' : 'border-white/20 hover:border-white/30'}`} disabled={isLoading} title={isListening ? "Stop voice mode" : "Start voice mode (say 'yuki' + command)"} onClick={handleMicClick}>
+                            <Button variant="ghost" size="sm" className={`h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border hover:shadow-lg hover:shadow-red-500/20 ${isListening ? 'border-red-500/50 bg-red-500/10' : isSpeaking ? 'border-blue-500/50 bg-blue-500/10' : 'border-white/20 hover:border-white/30'}`} disabled={isLoading} title={isListening ? "Stop voice mode" : "Start voice mode (say 'yuki' + command)"} onClick={handleMicClick}>
                               {isListening ? (<motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 1, repeat: Infinity }}><VoiceIcon size={24} className="text-red-500" /></motion.div>) : isSpeaking ? (<motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 0.8, repeat: Infinity }}><VoiceIcon size={24} className="text-blue-500" /></motion.div>) : (<VoiceIcon size={24} className="text-white" />)}
                             </Button>
                           </motion.div>
                           <motion.div className="flex-1 relative" initial={{ opacity: 1, x: 0 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.3, ease: "easeInOut" }}>
-                            <Input ref={inputRef} placeholder="What can I do for you?" value={input} onChange={(e) => setInput(e.target.value)} onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()} disabled={isLoading} className="w-full text-base sm:text-lg bg-black/30 border border-white/20 text-gray-100 placeholder:text-gray-500 rounded-3xl shadow-lg focus-visible:ring-0 focus-visible:ring-offset-0 h-12 sm:h-14 backdrop-blur-sm hover:border-white/30 focus:border-white/40" />
+                            <Input ref={inputRef} placeholder="What can I do for you?" value={input} onChange={(e) => setInput(e.target.value)} onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()} disabled={isLoading} className="w-full text-base sm:text-lg bg-black/30 border border-white/20 text-gray-100 placeholder:text-gray-500 rounded-3xl shadow-lg focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus:ring-0 h-12 sm:h-14 backdrop-blur-sm hover:border-white/30 hover:shadow-lg hover:shadow-red-500/20" />
                           </motion.div>
                           <motion.div initial={{ opacity: 1, x: 0 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.3, ease: "easeInOut" }}>
                             {isLoading ? (
                               <Button onClick={() => { if (!stopRequested && currentRequestId) { fetch("http://localhost:8000/api/query/stop", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ request_id: currentRequestId }) }).catch(console.error); setStopRequested(true) } }} variant="ghost" size="sm" className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-red-500/50"><span className="flex items-center justify-center w-full h-full text-red-500"><Cancel01Icon size={28} /></span></Button>
                             ) : (
-                              <Button onClick={sendMessage} disabled={!input.trim()} variant="ghost" size="sm" className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-white/20 hover:border-white/30"><span className="flex items-center justify-center w-full h-full"><Navigation03Icon size={36} /></span></Button>
+                              <Button onClick={sendMessage} disabled={!input.trim()} variant="ghost" size="sm" className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-white/20 hover:border-white/30 hover:shadow-lg hover:shadow-red-500/20"><span className="flex items-center justify-center w-full h-full"><Navigation03Icon size={36} /></span></Button>
                             )}
                           </motion.div>
                         </motion.div>
