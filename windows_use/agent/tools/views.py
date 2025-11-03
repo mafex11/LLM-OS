@@ -68,3 +68,8 @@ class Human(SharedBaseModel):
 
 class System(SharedBaseModel):
     info_type:Literal['all','cpu','memory','disk','processes','summary']=Field(description="The type of system information to retrieve. 'all' for complete analysis, 'summary' for quick overview, or specific categories.",default='all',examples=['all','cpu','memory'])
+
+class Schedule(SharedBaseModel):
+    name:str=Field(...,description="The application name to launch from Start menu (e.g., 'calculator', 'chrome').",examples=["calculator","chrome"]) 
+    delay_seconds:int|None=Field(default=None,description="How many seconds from now to run. Use this for phrases like 'in 10 seconds'.")
+    run_at:str|None=Field(default=None,description="Absolute local time to run, accepts HH:MM (24h) or ISO-8601 like '2025-11-03T10:00:00'. For phrases like 'at 10 am'.")

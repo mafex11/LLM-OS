@@ -1,9 +1,11 @@
-from windows_use.agent.tools.views import Click, Type, Launch, Scroll, Drag, Move, Shortcut, Key, Wait, Scrape,Done, Clipboard, Shell, Switch, Resize, Human, System
+from windows_use.agent.tools.views import Click, Type, Launch, Scroll, Drag, Move, Shortcut, Key, Wait, Scrape,Done, Clipboard, Shell, Switch, Resize, Human, System, Schedule
 from windows_use.desktop.service import Desktop
 from humancursor import SystemCursor
 from markdownify import markdownify
 from langchain.tools import tool
 from typing import Literal
+import threading
+from datetime import datetime, timedelta
 import uiautomation as uia
 import pyperclip as pc
 import pyautogui as pg
@@ -525,3 +527,44 @@ def system_tool(info_type:Literal['all','cpu','memory','disk','processes','summa
         
     except Exception as e:
         return f"Error retrieving system information: {e}"
+
+@tool('Schedule Tool', args_schema=Schedule)
+def schedule_tool(name: str, delay_seconds: int | None = None, run_at: str | None = None, desktop: Desktop = None) -> str:
+    'Schedule launching an application at a specific time or after a delay. This registers the task with the API server so it appears on the Scheduled Tasks page.'
+    if delay_seconds is None and (run_at is None or run_at.strip() == ''):
+        return 'Please provide either delay_seconds or run_at.'
+
+    # Normalize HH:MM to future by moving to next day if needed; API server also handles this
+    normalized_run_at = None
+    if delay_seconds is not None:
+        try:
+            delay_seconds = max(0, int(delay_seconds))
+        except Exception:
+            return 'Invalid delay_seconds; provide an integer number of seconds.'
+    else:
+        text = run_at.strip()
+        try:
+            if len(text) in (4,5) and ":" in text:
+                normalized_run_at = text
+            else:
+                # Validate ISO format
+                _ = datetime.fromisoformat(text)
+                normalized_run_at = text
+        except Exception:
+            return 'Invalid run_at; use HH:MM (24h) or ISO-8601 like 2025-11-03T10:00:00.'
+
+    try:
+        body = {"name": name}
+        if delay_seconds is not None:
+            body["delay_seconds"] = delay_seconds
+        if normalized_run_at is not None:
+            body["run_at"] = normalized_run_at
+        r = requests.post("http://127.0.0.1:8000/api/scheduled-tasks", json=body, timeout=5)
+        if r.ok:
+            data = r.json()
+            when = data.get("run_at") or f"in {delay_seconds}s"
+            return f'Scheduled {name} ({when}).'
+        else:
+            return f'Failed to register scheduled task (HTTP {r.status_code}).'
+    except Exception as e:
+        return f'Failed to register scheduled task: {e}'

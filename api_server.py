@@ -15,7 +15,7 @@ import os
 import sys
 import time
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
 # Determine data paths (from environment or defaults)
@@ -67,6 +67,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 from main import get_running_programs
 import threading
 import uuid
+import re
 
 # Lifespan context manager for startup/shutdown
 @asynccontextmanager
@@ -107,6 +108,23 @@ async def lifespan(app: FastAPI):
             
     # Initialize agent (will fail gracefully if no API key)
     await initialize_agent()
+    # Load persisted scheduled tasks and re-schedule future ones
+    try:
+        _load_scheduled_tasks()
+        with _scheduled_lock:
+            for task in list(_scheduled_tasks.values()):
+                # Only reschedule tasks that are still pending
+                if task.status in ("scheduled", "running"):
+                    # recompute scheduled_for
+                    if task.delay_seconds is not None:
+                        task.scheduled_for = None
+                    elif task.run_at:
+                        # keep as provided
+                        task.scheduled_for = task.run_at
+                    _scheduled_tasks[task.id] = task
+                    _schedule_timer_for_task(task)
+    except Exception as e:
+        logger.warning(f"Scheduled tasks reload failed: {e}")
     
     yield  # Application is running
     
@@ -316,6 +334,171 @@ class ApiKeysResponse(BaseModel):
     google_api_key: str
     elevenlabs_api_key: str
     deepgram_api_key: str
+
+# Scheduled tasks
+class ScheduledTask(BaseModel):
+    id: str
+    name: str | None = None
+    query: str | None = None
+    delay_seconds: Optional[int] = None
+    run_at: Optional[str] = None  # ISO string or HH:MM
+    status: str = "scheduled"  # scheduled, running, completed, cancelled, failed
+    created_at: str
+    scheduled_for: Optional[str] = None
+    last_error: Optional[str] = None
+
+# In-memory registry and persistence for scheduled tasks
+_scheduled_tasks: Dict[str, ScheduledTask] = {}
+_scheduled_timers: Dict[str, threading.Timer] = {}
+_scheduled_lock = threading.Lock()
+SCHEDULED_TASKS_FILE = os.path.join(DATA_PATH, "scheduled_tasks.json")
+
+def _parse_run_at_to_delay(run_at_text: str) -> Optional[float]:
+    text = (run_at_text or "").strip()
+    if not text:
+        return None
+
+def _extract_time_from_text(text: str) -> tuple[Optional[int], Optional[str]]:
+    """Extract delay_seconds or run_at from natural language like 'in 20 minutes', 'in around 50 seconds', 'at 10:30 am'.
+    Returns (delay_seconds, run_at_iso_or_HHMM) with only one populated.
+    """
+    if not text:
+        return (None, None)
+    lowered = text.lower().strip()
+    # in X seconds/minutes/hours
+    m = re.search(r"in\s+(?:about|around\s+)?(\d+)\s*(seconds?|mins?|minutes?|hours?|hrs?)", lowered)
+    if m:
+        amount = int(m.group(1))
+        unit = m.group(2)
+        if unit.startswith("sec"):
+            return (amount, None)
+        if unit.startswith("min"):
+            return (amount * 60, None)
+        if unit.startswith("hour") or unit.startswith("hr"):
+            return (amount * 3600, None)
+    # at HH:MM [am|pm]
+    m2 = re.search(r"at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?", lowered)
+    if m2:
+        hh = int(m2.group(1))
+        mm = int(m2.group(2) or 0)
+        ap = (m2.group(3) or '').lower()
+        if ap in ("am", "pm"):
+            if hh == 12:
+                hh = 0
+            if ap == "pm":
+                hh += 12
+        # Return HH:MM in 24h
+        return (None, f"{hh:02d}:{mm:02d}")
+    return (None, None)
+    now = datetime.now()
+    try:
+        if len(text) in (4,5) and ":" in text:
+            hh, mm = text.split(":", 1)
+            target = now.replace(hour=int(hh), minute=int(mm), second=0, microsecond=0)
+            if target <= now:
+                target += timedelta(days=1)
+        else:
+            target = datetime.fromisoformat(text)
+            if target <= now:
+                return None
+        return max(0.0, (target - now).total_seconds())
+    except Exception:
+        return None
+
+def _persist_scheduled_tasks() -> None:
+    try:
+        with open(SCHEDULED_TASKS_FILE, "w", encoding="utf-8") as f:
+            json.dump({tid: t.model_dump() for tid, t in _scheduled_tasks.items()}, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        logger.warning(f"Failed to persist scheduled tasks: {e}")
+
+def _load_scheduled_tasks() -> None:
+    if not os.path.exists(SCHEDULED_TASKS_FILE):
+        return
+    try:
+        with open(SCHEDULED_TASKS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            for tid, tdict in data.items():
+                try:
+                    _scheduled_tasks[tid] = ScheduledTask(**tdict)
+                except Exception:
+                    continue
+    except Exception as e:
+        logger.warning(f"Failed to load scheduled tasks: {e}")
+
+def _schedule_timer_for_task(task: ScheduledTask) -> None:
+    if not agent_initialized or not agent:
+        return
+    # compute delay
+    delay: Optional[float] = None
+    if task.delay_seconds is not None:
+        delay = max(0.0, float(task.delay_seconds))
+    elif task.run_at:
+        delay = _parse_run_at_to_delay(task.run_at)
+    if delay is None:
+        with _scheduled_lock:
+            t = _scheduled_tasks.get(task.id)
+            if t:
+                t.status = "failed"
+                t.last_error = "Invalid schedule time"
+                _scheduled_tasks[task.id] = t
+                _persist_scheduled_tasks()
+        return
+
+    def _run():
+        try:
+            with _scheduled_lock:
+                t = _scheduled_tasks.get(task.id)
+                if not t or t.status in ("cancelled",):
+                    return
+                t.status = "running"
+                _scheduled_tasks[task.id] = t
+                _persist_scheduled_tasks()
+            # Launch app
+            status = 0
+            response = ""
+            if task.query and task.query.strip():
+                try:
+                    # Run full agent query
+                    agent.invoke(task.query)
+                    status = 0
+                except Exception as e:
+                    status = 1
+                    response = str(e)
+            elif task.name:
+                app_name, response, status = agent.desktop.launch_app(task.name)
+            else:
+                status = 1
+                response = "Task missing name or query"
+            with _scheduled_lock:
+                t = _scheduled_tasks.get(task.id)
+                if t:
+                    t.status = "completed" if status == 0 else "failed"
+                    if status != 0:
+                        t.last_error = response
+                    _scheduled_tasks[task.id] = t
+                    _persist_scheduled_tasks()
+        except Exception as e:
+            with _scheduled_lock:
+                t = _scheduled_tasks.get(task.id)
+                if t:
+                    t.status = "failed"
+                    t.last_error = str(e)
+                    _scheduled_tasks[task.id] = t
+                    _persist_scheduled_tasks()
+
+    timer = threading.Timer(delay, _run)
+    timer.daemon = True
+    with _scheduled_lock:
+        # cancel existing
+        old = _scheduled_timers.pop(task.id, None)
+        if old:
+            try:
+                old.cancel()
+            except Exception:
+                pass
+        _scheduled_timers[task.id] = timer
+    timer.start()
 
 class VoiceModeRequest(BaseModel):
     # Frontend may omit this; backend uses server-side env keys for voice mode
@@ -1447,6 +1630,140 @@ async def save_api_keys(keys: ApiKeysRequest):
     except Exception as e:
         logger.error(f"Error saving API keys: {e}")
         raise HTTPException(status_code=500, detail=f"Error saving API keys: {str(e)}")
+
+# Scheduled Tasks API
+class CreateTaskRequest(BaseModel):
+    name: Optional[str] = None
+    query: Optional[str] = None
+    delay_seconds: Optional[int] = None
+    run_at: Optional[str] = None
+
+class UpdateTaskRequest(BaseModel):
+    name: Optional[str] = None
+    query: Optional[str] = None
+    delay_seconds: Optional[int] = None
+    run_at: Optional[str] = None
+    status: Optional[str] = None  # allow cancel
+
+@app.get("/api/scheduled-tasks", response_model=List[ScheduledTask])
+async def list_scheduled_tasks():
+    with _scheduled_lock:
+        return list(_scheduled_tasks.values())
+
+@app.post("/api/scheduled-tasks", response_model=ScheduledTask)
+async def create_scheduled_task(req: CreateTaskRequest):
+    if not agent_initialized or not agent:
+        raise HTTPException(status_code=503, detail="Agent not initialized")
+    delay_seconds = req.delay_seconds
+    run_at = (req.run_at or '').strip() if req.run_at else None
+    # If no explicit scheduling provided, try to parse from query
+    if (delay_seconds is None) and (not run_at or not run_at.strip()):
+        if req.query and req.query.strip():
+            parsed_delay, parsed_run_at = _extract_time_from_text(req.query)
+            delay_seconds = parsed_delay
+            run_at = parsed_run_at
+        if (delay_seconds is None) and (not run_at or not run_at.strip()):
+            raise HTTPException(status_code=400, detail="Provide delay_seconds/run_at or include timing in the query (e.g., 'in 20 minutes' or 'at 10:30 am')")
+    if (not req.name or not req.name.strip()) and (not req.query or not req.query.strip()):
+        raise HTTPException(status_code=400, detail="Provide a name or a query for the task")
+    # compute scheduled_for for display
+    scheduled_for = None
+    if run_at and run_at.strip():
+        scheduled_for = run_at.strip()
+    created = datetime.now().isoformat()
+    task_id = str(uuid.uuid4())
+    task = ScheduledTask(
+        id=task_id,
+        name=req.name.strip() if req.name else None,
+        query=req.query.strip() if req.query else None,
+        delay_seconds=delay_seconds,
+        run_at=run_at,
+        status="scheduled",
+        created_at=created,
+        scheduled_for=scheduled_for
+    )
+    with _scheduled_lock:
+        _scheduled_tasks[task_id] = task
+        _persist_scheduled_tasks()
+    _schedule_timer_for_task(task)
+    return task
+
+@app.patch("/api/scheduled-tasks/{task_id}", response_model=ScheduledTask)
+async def update_scheduled_task(task_id: str, req: UpdateTaskRequest):
+    if not agent_initialized or not agent:
+        raise HTTPException(status_code=503, detail="Agent not initialized")
+    with _scheduled_lock:
+        task = _scheduled_tasks.get(task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+        if req.name is not None:
+            task.name = req.name
+        if req.query is not None:
+            task.query = req.query
+        if req.delay_seconds is not None or (req.run_at is not None):
+            task.delay_seconds = req.delay_seconds
+            task.run_at = req.run_at.strip() if req.run_at else None
+            task.status = "scheduled"
+        if req.status == "cancelled":
+            task.status = "cancelled"
+            timer = _scheduled_timers.pop(task_id, None)
+            if timer:
+                try:
+                    timer.cancel()
+                except Exception:
+                    pass
+        # recompute scheduled_for
+        task.scheduled_for = task.run_at if task.run_at else None
+        _scheduled_tasks[task_id] = task
+        _persist_scheduled_tasks()
+    # if re-scheduled and not cancelled, set a new timer
+    if task.status == "scheduled":
+        _schedule_timer_for_task(task)
+    return task
+
+@app.delete("/api/scheduled-tasks/{task_id}")
+async def delete_scheduled_task(task_id: str):
+    with _scheduled_lock:
+        if task_id not in _scheduled_tasks:
+            raise HTTPException(status_code=404, detail="Task not found")
+        timer = _scheduled_timers.pop(task_id, None)
+        if timer:
+            try:
+                timer.cancel()
+            except Exception:
+                pass
+        del _scheduled_tasks[task_id]
+        _persist_scheduled_tasks()
+    return {"success": True}
+
+@app.post("/api/scheduled-tasks/{task_id}/repeat", response_model=ScheduledTask)
+async def repeat_scheduled_task(task_id: str):
+    if not agent_initialized or not agent:
+        raise HTTPException(status_code=503, detail="Agent not initialized")
+    with _scheduled_lock:
+        original = _scheduled_tasks.get(task_id)
+        if not original:
+            raise HTTPException(status_code=404, detail="Task not found")
+        # Determine next schedule: if run_at present, reuse same time (advance to next day if needed); else reuse delay_seconds
+        new_run_at = original.run_at
+        new_delay = original.delay_seconds
+        if original.run_at:
+            # if time today has passed, parser in _parse_run_at_to_delay already advances; we keep same string
+            pass
+        new_task = ScheduledTask(
+            id=str(uuid.uuid4()),
+            name=original.name,
+            query=original.query,
+            delay_seconds=new_delay,
+            run_at=new_run_at,
+            status="scheduled",
+            created_at=datetime.now().isoformat(),
+            scheduled_for=new_run_at
+        )
+        _scheduled_tasks[new_task.id] = new_task
+        _persist_scheduled_tasks()
+    _schedule_timer_for_task(new_task)
+    return new_task
 
 if __name__ == "__main__":
     import uvicorn
