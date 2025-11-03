@@ -76,9 +76,9 @@ function WorkflowSteps({ workflowSteps }: { workflowSteps: WorkflowStep[] }) {
     <div>
       <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
         <motion.div animate={{ rotate: isOpen ? 90 : 0 }} transition={{ duration: 0.2 }}>
-          <ArrowRight01Icon size={12} />
+          <ArrowRight01Icon size={12} className="text-white" />
         </motion.div>
-        <CpuIcon size={12} />
+        <CpuIcon size={12} className="text-white" />
         <span>View {workflowSteps.length} workflow steps</span>
       </button>
       <AnimatePresence mode="wait">
@@ -89,12 +89,12 @@ function WorkflowSteps({ workflowSteps }: { workflowSteps: WorkflowStep[] }) {
                 {workflowSteps.map((step, stepIndex) => (
                   <motion.div key={stepIndex} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2, delay: stepIndex * 0.05, ease: "easeOut" }} className="flex items-start gap-2 text-xs">
                     <div className="flex-shrink-0 mt-0.5">
-                      {step.type === "thinking" && <Loading01Icon size={12} className="text-blue-500" />}
-                      {step.type === "reasoning" && <BulbIcon size={12} className="text-yellow-500" />}
-                      {step.type === "tool_use" && <PlayIcon size={12} className="text-green-500" />}
-                      {step.type === "tool_result" && step.status === "Completed" && (<CheckmarkCircle01Icon size={12} className="text-green-500" />)}
-                      {step.type === "tool_result" && step.status === "Failed" && (<CancelCircleIcon size={12} className="text-red-500" />)}
-                      {step.type === "status" && <Loading02Icon size={12} className="text-gray-500" />}
+                      {step.type === "thinking" && <Loading01Icon size={12} className="text-white" />}
+                      {step.type === "reasoning" && <BulbIcon size={12} className="text-white" />}
+                      {step.type === "tool_use" && <PlayIcon size={12} className="text-white" />}
+                      {step.type === "tool_result" && step.status === "Completed" && (<CheckmarkCircle01Icon size={12} className="text-white" />)}
+                      {step.type === "tool_result" && step.status === "Failed" && (<CancelCircleIcon size={12} className="text-white" />)}
+                      {step.type === "status" && <Loading02Icon size={12} className="text-white" />}
                     </div>
                     <div className="flex-1">
                       <p className="text-muted-foreground">{step.message}</p>
@@ -181,7 +181,7 @@ function ChatContent() {
             createdAt: new Date()
           }
           try {
-            const response = await fetch(`http://127.0.0.1:8000/api/conversation`)
+            const response = await fetch(`http://127.0.0.1:8000/api/conversation/${sessionId}`)
             if (response.ok) {
               const data = await response.json()
               if (data.conversation && data.conversation.length > 0) {
@@ -408,7 +408,7 @@ function ChatContent() {
   const saveConversationToServer = async (sessionId: string, messages: Message[]) => {
     try {
       const conversation = messages.map(msg => ({ role: msg.role, content: msg.content, timestamp: msg.timestamp.toISOString(), workflowSteps: msg.workflowSteps?.map(step => ({ ...step, timestamp: step.timestamp.toISOString() })) }))
-      await fetch(`http://localhost:8000/api/conversation`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(conversation) })
+      await fetch(`http://localhost:8000/api/conversation/${sessionId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(conversation) })
     } catch {}
   }
 
@@ -421,15 +421,17 @@ function ChatContent() {
     try { const s = [newSession, ...chatSessions].filter(s => s.messages.length > 0); localStorage.setItem('chatSessions', JSON.stringify(s)) } catch {}
   }
 
-  const deleteChat = (sessionId: string) => {
+  const deleteChat = async (sessionId: string) => {
     if (chatSessions.length === 1) return
+    try { await fetch(`http://localhost:8000/api/conversation/${sessionId}`, { method: 'DELETE' }) } catch {}
     const updatedSessions = chatSessions.filter(s => s.id !== sessionId)
     setChatSessions(updatedSessions)
+    try { saveSessionsToStorage(updatedSessions) } catch {}
     if (currentSessionId === sessionId) { if (updatedSessions.length > 0) { setCurrentSessionId(updatedSessions[0].id) } else { setCurrentSessionId("") } }
   }
 
   const openRenameDialog = (sessionId: string) => { const session = chatSessions.find(s => s.id === sessionId); if (session) { setRenamingSessionId(sessionId); setNewChatTitle(session.title); setRenameDialogOpen(true) } }
-  const renameChat = () => { if (renamingSessionId && newChatTitle.trim()) { setChatSessions(prev => prev.map(session => session.id === renamingSessionId ? { ...session, title: newChatTitle.trim() } : session)); setRenameDialogOpen(false); setRenamingSessionId(null); setNewChatTitle("") } }
+  const renameChat = () => { if (renamingSessionId && newChatTitle.trim()) { const updated = (prev => prev.map(session => session.id === renamingSessionId ? { ...session, title: newChatTitle.trim() } : session))(chatSessions); setChatSessions(updated); try { saveSessionsToStorage(updated) } catch {}; setRenameDialogOpen(false); setRenamingSessionId(null); setNewChatTitle("") } }
   const sendMessage = async () => { if (!input.trim() || isLoading) return; executeTask(input) }
 
   const startVoiceMode = useCallback(async () => {
@@ -514,6 +516,10 @@ function ChatContent() {
               <Settings01Icon size={16} />
               Settings
             </Button>
+            <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/scheduled")}>
+              <Navigation03Icon size={16} />
+              Scheduled Tasks
+            </Button>
           </div>
         </AppSidebar>
         <div className={`${showSidebar ? 'pl-64' : 'pl-0'} flex-1 flex flex-col`}>
@@ -550,7 +556,7 @@ function ChatContent() {
             </div>
             </div>
           </motion.div>
-        <ScrollArea className="flex-1 px-2 sm:px-4" ref={scrollRef}>
+        <ScrollArea className="flex-1 px-2 sm:px-4 pb-28" ref={scrollRef}>
             <div className="max-w-4xl mx-auto py-4 sm:py-8">
             {messages.length === 0 && !isLoading && inputPosition === 'centered' && (
               <motion.div className="flex flex-col items-center justify-center min-h-[80vh] text-center" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
@@ -577,18 +583,18 @@ function ChatContent() {
                       {!isListening ? (
                         <motion.div key="normal-input" initial={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="flex items-center gap-3 w-full">
                           <motion.div initial={{ opacity: 1, scale: 1 }} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} transition={{ duration: 0.2 }}>
-                            <Button variant="ghost" size="sm" className={`h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border hover:shadow-lg hover:shadow-red-500/20 ${isListening ? 'border-red-500/50 bg-red-500/10' : isSpeaking ? 'border-blue-500/50 bg-blue-500/10' : 'border-white/20 hover:border-white/30'}`} disabled={isLoading} title={isListening ? "Stop voice mode" : "Start voice mode (say 'yuki' + command)"} onClick={handleMicClick}>
+                            <Button variant="ghost" size="sm" className={`h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border hover:shadow-lg hover:shadow-red-500/20 transition-shadow duration-300 ease-in-out ${isListening ? 'border-red-500/50 bg-red-500/10' : isSpeaking ? 'border-blue-500/50 bg-blue-500/10' : 'border-white/20 hover:border-white/30'}`} disabled={isLoading} title={isListening ? "Stop voice mode" : "Start voice mode (say 'yuki' + command)"} onClick={handleMicClick}>
                               {isListening ? (<motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 1, repeat: Infinity }}><VoiceIcon size={24} className="text-red-500" /></motion.div>) : isSpeaking ? (<motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 0.8, repeat: Infinity }}><VoiceIcon size={24} className="text-blue-500" /></motion.div>) : (<VoiceIcon size={24} className="text-white" />)}
                             </Button>
                           </motion.div>
                           <motion.div className="flex-1 relative" initial={{ opacity: 1, x: 0 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.3, ease: "easeInOut" }}>
-                            <Input ref={inputRef} placeholder="What can I do for you?" value={input} onChange={(e) => setInput(e.target.value)} onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()} disabled={isLoading} className="w-full text-base sm:text-lg bg-black/30 border border-white/20 text-gray-100 placeholder:text-gray-500 rounded-3xl shadow-lg focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus:ring-0 h-12 sm:h-14 backdrop-blur-sm hover:border-white/30 hover:shadow-lg hover:shadow-red-500/20" />
+                            <Input ref={inputRef} placeholder="What can I do for you?" value={input} onChange={(e) => setInput(e.target.value)} onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()} disabled={isLoading} className="w-full text-base sm:text-lg bg-black/30 border border-white/20 text-gray-100 placeholder:text-gray-500 rounded-3xl shadow-lg focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus:ring-0 h-12 sm:h-14 backdrop-blur-sm hover:border-white/30 hover:shadow-lg hover:shadow-red-500/20 transition-shadow duration-300 ease-in-out" />
                           </motion.div>
                           <motion.div initial={{ opacity: 1, x: 0 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.3, ease: "easeInOut" }}>
                             {isLoading ? (
                               <Button onClick={() => { if (!stopRequested && currentRequestId) { fetch("http://localhost:8000/api/query/stop", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ request_id: currentRequestId }) }).catch(console.error); setStopRequested(true) } }} variant="ghost" size="sm" className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-red-500/50"><span className="flex items-center justify-center w-full h-full text-red-500"><Cancel01Icon size={28} /></span></Button>
                             ) : (
-                              <Button onClick={sendMessage} disabled={!input.trim()} variant="ghost" size="sm" className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-white/20 hover:border-white/30 hover:shadow-lg hover:shadow-red-500/20"><span className="flex items-center justify-center w-full h-full"><Navigation03Icon size={36} /></span></Button>
+                              <Button onClick={sendMessage} disabled={!input.trim()} variant="ghost" size="sm" className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-white/20 hover:border-white/30 hover:shadow-lg hover:shadow-red-500/20 transition-shadow duration-300 ease-in-out"><span className="flex items-center justify-center w-full h-full"><Navigation03Icon size={36} /></span></Button>
                             )}
                           </motion.div>
                         </motion.div>
@@ -672,7 +678,7 @@ function ChatContent() {
           </ScrollArea>
         <AnimatePresence>
           {inputPosition === 'bottom' && (
-            <motion.div className="bg-black/20 backdrop-blur-sm p-4 sm:p-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4, delay: 0.4 }}>
+            <motion.div className="bg-black/20 backdrop-blur-sm p-4 sm:p-6 fixed bottom-0 right-0 z-20" style={{ left: showSidebar ? '16rem' : 0 }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4, delay: 0.4 }}>
               <div className="max-w-4xl mx-auto">
                 <div className="flex items-center gap-3">
                   <AnimatePresence mode="wait">
@@ -744,4 +750,5 @@ export default function ChatPage() {
     </Suspense>
   )
 }
+
 
