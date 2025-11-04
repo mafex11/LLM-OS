@@ -26,6 +26,16 @@ import {
   Home01Icon,
   Cancel01Icon,
   Tick02Icon,
+  ArrowRight02Icon,
+  Mic02Icon,
+  VolumeMute01Icon,
+  ArrowDown01Icon,
+  ArrowUp01Icon,
+  AiBrowserIcon,
+  Loading03Icon,
+  AiBrain01Icon,
+  TimeScheduleIcon,
+
 } from "hugeicons-react"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
@@ -254,27 +264,33 @@ export default function SettingsPage() {
                 </div>
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-2 bg-black/60"
+                className="group w-full justify-start gap-2  hover:bg-zinc-950"
                 onClick={() => document.getElementById('api-keys')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
               >
-                <Settings01Icon size={16} />
                 API Keys
+                <span className="ml-auto opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
+                  <ArrowRight02Icon size={14} />
+                </span>
               </Button>
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-2"
+                className="group w-full justify-start gap-2 hover:bg-zinc-950"
                 onClick={() => document.getElementById('audio-settings')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
               >
-                <Settings01Icon size={16} />
                 Audio Settings
+                <span className="ml-auto opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
+                  <ArrowRight02Icon size={14} />
+                </span>
               </Button>
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-2"
+                className="group w-full justify-start gap-2 hover:bg-zinc-950"
                 onClick={() => document.getElementById('system-status')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
               >
-                <Settings01Icon size={16} />
                 System Status
+                <span className="ml-auto opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
+                  <ArrowRight02Icon size={14} />
+                </span>
               </Button>
               </div>
             </ScrollArea>
@@ -293,7 +309,7 @@ export default function SettingsPage() {
               className="w-full justify-start gap-2 hover:bg-black/30"
               onClick={() => router.push("/agent-settings")}
             >
-              <BotIcon size={16} />
+              <AiBrain01Icon size={16} />
               Agent Settings
             </Button>
               <Button
@@ -303,6 +319,14 @@ export default function SettingsPage() {
               >
                 <Settings01Icon size={16} />
                 Settings
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-2 hover:bg-white/5"
+                onClick={() => router.push("/scheduled")}
+              >
+                <TimeScheduleIcon size={16} />
+                Scheduled Tasks
               </Button>
             </div>
         </AppSidebar>
@@ -347,8 +371,8 @@ export default function SettingsPage() {
                     {/* <Key01Icon size={20} /> */}
                     API Keys
                   </CardTitle>
-                  <CardDescription>
-                    Configure your API keys for Yuki AI services
+                  <CardDescription className="text-md font-thin text-white/40">
+                    Configure your API keys for Yuki services
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -367,7 +391,7 @@ export default function SettingsPage() {
                             placeholder="Enter your Google API key"
                             className="pr-10 rounded-full bg-transparent border border-white/40 hover:border-white/30 text-white outline-none focus placeholder:text-gray-500"
                           />
-                          <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+                          <div className="absolute right-0 top-0 h-full flex items-center pr-2 pt-0.5">
                             <motion.div
                               whileTap={{ scale: 0.85, rotate: 180 }}
                               transition={{ duration: 0.2 }}
@@ -376,7 +400,7 @@ export default function SettingsPage() {
                                 type="button"
                                 variant="default"
                                 size="icon"
-                                className="h-6 w-6 bg-transparent hover:bg-transparent  text-white rounded-full"
+                                className="h-6 w-6 bg-white hover:bg-gray-400  text-black rounded-full"
                                 onClick={() => setShowApiKeys({ ...showApiKeys, google_api_key: !showApiKeys.google_api_key })}
                               >
                                 <motion.div
@@ -397,7 +421,7 @@ export default function SettingsPage() {
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-gray-500">
                         Required for Gemini AI. Get your key from{" "}
                         <a 
                           href="https://makersuite.google.com/app/apikey" 
@@ -427,7 +451,7 @@ export default function SettingsPage() {
                             placeholder="Enter your ElevenLabs API key (optional)"
                             className="pr-10 rounded-full bg-transparent border border-white/40 hover:border-white/30 text-white outline-none focus:- placeholder:text-gray-500"
                           />
-                          <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+                          <div className="absolute right-0 top-0 h-full flex items-center pr-2 pt-0.5">
                             <motion.div
                               whileTap={{ scale: 0.85, rotate: 180 }}
                               transition={{ duration: 0.2 }}
@@ -436,7 +460,7 @@ export default function SettingsPage() {
                                 type="button"
                                 variant="default"
                                 size="icon"
-                                className="h-6 w-6 bg-transparent hover:bg-transparent text-white rounded-full"
+                                className="h-6 w-6 bg-white hover:bg-gray-400  text-black rounded-full"
                                 onClick={() => setShowApiKeys({ ...showApiKeys, elevenlabs_api_key: !showApiKeys.elevenlabs_api_key })}
                               >
                                 <motion.div
@@ -456,7 +480,7 @@ export default function SettingsPage() {
                           <Tick02Icon size={16} className={apiKeyInputs.elevenlabs_api_key ? 'text-green-700' : 'text-gray-500'} />
                         </div>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-gray-500">
                         Optional for text-to-speech. Get your key from{" "}
                         <a 
                           href="https://elevenlabs.io/" 
@@ -485,7 +509,7 @@ export default function SettingsPage() {
                             placeholder="Enter your Deepgram API key (optional)"
                             className="pr-10 rounded-full bg-transparent border border-white/20 hover:border-white/30 text-white outline-none focus:- placeholder:text-gray-500"
                           />
-                          <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+                          <div className="absolute right-0 top-0 h-full flex items-center pr-2 pt-0.5">
                             <motion.div
                               whileTap={{ scale: 0.85, rotate: 180 }}
                               transition={{ duration: 0.2 }}
@@ -494,7 +518,7 @@ export default function SettingsPage() {
                                 type="button"
                                 variant="default"
                                 size="icon"
-                                className="h-6 w-6 bg-transparent hover:bg-transparent text-white rounded-full"
+                                className="h-6 w-6 bg-white hover:bg-gray-400  text-black rounded-full"
                                 onClick={() => setShowApiKeys({ ...showApiKeys, deepgram_api_key: !showApiKeys.deepgram_api_key })}
                               >
                                 <motion.div
@@ -514,7 +538,7 @@ export default function SettingsPage() {
                           <Tick02Icon size={16} className={apiKeyInputs.deepgram_api_key ? 'text-green-700' : 'text-gray-500'} />
                         </div>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-gray-500">
                         Optional for voice control. Get your key from{" "}
                         <a 
                           href="https://deepgram.com/" 
@@ -528,8 +552,7 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="flex items-center justify-between pt-4">
-                      <div className="text-xs text-muted-foreground">
-                        Edit API keys above, then click Save to apply changes
+                      <div className="text-xs text-gray-500">
                       </div>
                       <div className="flex gap-2">
                         <Button
@@ -541,7 +564,7 @@ export default function SettingsPage() {
                               description: `Google: ${apiKeyInputs.google_api_key ? 'Working' : 'Not Found'}, ElevenLabs: ${apiKeyInputs.elevenlabs_api_key ? 'Working' : 'Not Found'}, Deepgram: ${apiKeyInputs.deepgram_api_key ? 'Working' : 'Not Found'}`,
                             })
                           }}
-                          className="text-xs rounded-full border-white/30 bg-white/5 hover:bg-white/10 shadow-[0_0_12px_rgba(255,255,255,0.35)] hover:shadow-[0_0_22px_rgba(255,255,255,0.55)] ring-1 ring-white/10 hover:ring-white/30 transition-all"
+                          className="text-xs rounded-full border-white/30 bg-zinc-950 hover:bg-zinc-950 hover:shadow-[0_0_22px_rgba(255,255,255,0.2)] ring-1 ring-white/10 hover:ring-white/30 transition-all"
                         >
                           Test Keys
                         </Button>
@@ -549,7 +572,7 @@ export default function SettingsPage() {
                           variant="outline"
                           size="sm"
                           onClick={resetApiKeys}
-                          className="text-xs rounded-full border-white/30 bg-white/5 hover:bg-white/10 shadow-[0_0_12px_rgba(255,255,255,0.35)] hover:shadow-[0_0_22px_rgba(255,255,255,0.55)] ring-1 ring-white/10 hover:ring-white/30 transition-all"
+                          className="text-xs rounded-full border-white/30 bg-zinc-950 hover:bg-zinc-950 hover:shadow-[0_0_22px_rgba(255,255,255,0.2)] ring-1 ring-white/10 hover:ring-white/30 transition-all"
                         >
                           Reset
                         </Button>
@@ -561,7 +584,7 @@ export default function SettingsPage() {
                         >
                           {savingKeys ? (
                             <>
-                              <Loading01Icon size={14} className="mr-1 animate-spin" />
+                              <Loading03Icon size={14} className="mr-1 animate-spin" />
                               Saving...
                             </>
                           ) : (
@@ -589,7 +612,7 @@ export default function SettingsPage() {
                       {/* <BotIcon size={20} /> */}
                       Audio Settings
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-md font-thin text-white/40">
                       Configure microphone and speaker settings for voice interactions
                     </CardDescription>
                   </CardHeader>
@@ -602,7 +625,11 @@ export default function SettingsPage() {
                         </Label>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <Settings01Icon size={16} />
+                            {audioDevices.hasPermission ? (
+                              <Tick02Icon size={16} className="text-green-400" />
+                            ) : (
+                              <Cancel01Icon size={16} className="text-red-400" />
+                            )}
                             <span className="text-sm">
                               {audioDevices.hasPermission ? "Granted" : "Not Granted"}
                             </span>
@@ -637,7 +664,7 @@ export default function SettingsPage() {
                                   </>
                                 ) : (
                                   <>
-                                    <BotIcon size={14} className="mr-1" />
+                                    <Mic02Icon size={14} className="mr-1" />
                                     Grant Permission
                                   </>
                                 )}
@@ -648,9 +675,9 @@ export default function SettingsPage() {
                               disabled={audioDevices.isLoading}
                               size="sm"
                               variant="outline"
-                              className="text-xs rounded-full border-white/30 bg-white/5 hover:bg-white/10 shadow-[0_0_12px_rgba(255,255,255,0.35)] hover:shadow-[0_0_22px_rgba(255,255,255,0.55)] ring-1 ring-white/10 hover:ring-white/30 transition-all focus:outline-none focus:ring-0 focus-visible:ring-0"
+                              className="text-xs rounded-full border-white/30 bg-zinc-950 hover:bg-zinc-950 hover:shadow-[0_0_22px_rgba(255,255,255,0.2)] ring-1 ring-white/10 hover:ring-white/30 transition-all"
                             >
-                              <Loading01Icon size={14} className="mr-1" />
+                              {/* <Loading01Icon size={14} className="mr-1" /> */}
                               Refresh
                             </Button>
                           </div>
@@ -674,28 +701,28 @@ export default function SettingsPage() {
                         >
                           <SelectTrigger 
                             id="microphone-input"
-                            className="rounded-full bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white focus:outline-none focus:ring-0 focus-visible:ring-0"
+                            className="rounded-full bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white focus:outline-none focus:ring-0 focus-visible:ring-0 "
                           >
                             <SelectValue placeholder="Select microphone..." />
                           </SelectTrigger>
-                          <SelectContent className="bg-black/90 border border-white/20">
+                          <SelectContent className="bg-zinc-950 border border-white/20 rounded-2xl">
                             {audioDevices.inputDevices
                               .filter(device => device.deviceId && device.deviceId.trim() !== '')
                               .map((device) => (
                               <SelectItem 
                                 key={device.deviceId} 
                                 value={device.deviceId}
-                                className="text-white hover:bg-white/10"
+                                className="text-white hover:bg-white/10 rounded-3xl pb-2"
                               >
-                                <div className="flex items-center gap-2">
-                                  <BotIcon size={14} />
+                                <div className="flex items-center gap-2 ">
+                                  <Mic02Icon size={14} />
                                   {device.label}
                                 </div>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-gray-500">
                           {audioDevices.inputDevices.length} microphone(s) detected
                         </p>
                       </div>
@@ -718,24 +745,24 @@ export default function SettingsPage() {
                           >
                             <SelectValue placeholder="Select speaker..." />
                           </SelectTrigger>
-                          <SelectContent className="bg-black/90 border border-white/20">
+                          <SelectContent className="bg-black/90 border border-white/20 rounded-2xl">
                             {audioDevices.outputDevices
                               .filter(device => device.deviceId && device.deviceId.trim() !== '')
                               .map((device) => (
                               <SelectItem 
                                 key={device.deviceId} 
                                 value={device.deviceId}
-                                className="text-white hover:bg-white/10"
+                                className="text-white hover:bg-white/10 rounded-3xl pb-2"
                               >
                                 <div className="flex items-center gap-2">
-                                  <ComputerIcon size={14} />
+                                  <VolumeMute01Icon size={16} />
                                   {device.label}
                                 </div>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-gray-500">
                           {audioDevices.outputDevices.length} speaker(s) detected
                         </p>
                       </div>
@@ -754,7 +781,7 @@ export default function SettingsPage() {
                                 description: `Input: ${audioDevices.inputDevices.find(d => d.deviceId === audioDevices.selectedInputDevice)?.label || 'None'}, Output: ${audioDevices.outputDevices.find(d => d.deviceId === audioDevices.selectedOutputDevice)?.label || 'None'}`,
                               })
                             }}
-                            className="text-xs rounded-full border-white/30 bg-white/5 hover:bg-white/10 shadow-[0_0_12px_rgba(255,255,255,0.35)] hover:shadow-[0_0_22px_rgba(255,255,255,0.55)] ring-1 ring-white/10 hover:ring-white/30 transition-all focus:outline-none focus:ring-0 focus-visible:ring-0"
+                            className="text-xs rounded-full border-white/30 bg-zinc-950 hover:bg-zinc-950 hover:shadow-[0_0_22px_rgba(255,255,255,0.2)] ring-1 ring-white/10 hover:ring-white/30 transition-all"
                           >
                             Test Audio
                           </Button>
@@ -777,7 +804,7 @@ export default function SettingsPage() {
                       {/* <ComputerIcon size={20} /> */}
                       System Status
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-md font-thin text-white/40">
                       Current status of Yuki AI services
                     </CardDescription>
                   </CardHeader>
@@ -792,70 +819,78 @@ export default function SettingsPage() {
                             : "rounded-full bg-red-500/20 text-red-300 border border-red-500/40 shadow-[0_0_14px_rgba(239,68,68,0.35)] hover:shadow-[0_0_24px_rgba(239,68,68,0.55)] ring-1 ring-red-500/20"
                           }
                         >
-                          {systemStatus?.agent_ready ? "✓ Ready" : "✗ Not Ready"}
+                          {systemStatus?.agent_ready ? "Available" : "No API Key"}
                         </Badge>
                       </div>
                       
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm">Running Programs</span>
+                          <button
+                            type="button"
+                            onClick={() => setShowRunningPrograms(!showRunningPrograms)}
+                            className="inline-flex items-center gap-2 text-left"
+                          >
+                            <span className="text-sm underline-offset-2 underline ">Running Programs</span>
+                            {systemStatus?.running_programs && systemStatus.running_programs.length > 0 && (
+                              showRunningPrograms ? (
+                                <ArrowUp01Icon size={17} />
+                              ) : (
+                                <ArrowDown01Icon size={17} />
+                              )
+                            )}
+                          </button>
                           <div className="flex items-center gap-2">
-                            <Badge variant="secondary" className="rounded-full bg-white/5 text-white border border-white/30 shadow-[0_0_10px_rgba(255,255,255,0.25)]">
+                            <Badge 
+                              variant="secondary" 
+                              className="rounded-full bg-white/10 text-white border border-white/30 shadow-[0_0_12px_rgba(255,255,255,0.35)]"
+                            >
                               {systemStatus?.running_programs?.length || 0} active
                             </Badge>
-                            {systemStatus?.running_programs && systemStatus.running_programs.length > 0 && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setShowRunningPrograms(!showRunningPrograms)}
-                                className="h-6 w-6 p-0 rounded-full bg-white/5 hover:bg-white/10 border border-white/30 shadow-[0_0_12px_rgba(255,255,255,0.35)] hover:shadow-[0_0_22px_rgba(255,255,255,0.55)] ring-1 ring-white/10 hover:ring-white/30 transition-all focus:outline-none focus:ring-0 focus-visible:ring-0"
-                              >
-                                {showRunningPrograms ? (
-                                  <ViewOffIcon size={14} />
-                                ) : (
-                                  <ViewIcon size={14} />
-                                )}
-                              </Button>
-                            )}
                           </div>
                         </div>
                         
-                        {showRunningPrograms && systemStatus?.running_programs && systemStatus.running_programs.length > 0 && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="space-y-2 pl-4 border-l border-white/10"
-                          >
-                            {systemStatus.running_programs.map((program, index) => (
-                              <motion.div
-                                key={program.id || index}
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ duration: 0.2, delay: index * 0.05 }}
-                                className="flex items-center justify-between p-2 rounded-md bg-black/20 border border-white/10"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <ComputerIcon size={14} className="text-blue-400" />
-                                  <div className="flex flex-col">
-                                    <span className="text-xs font-medium text-white">
-                                      {program.title || program.name}
-                                    </span>
-                                    {program.name !== program.title && (
-                                      <span className="text-xs text-gray-400">
-                                        {program.name}
+                        <AnimatePresence initial={false}>
+                          {showRunningPrograms && systemStatus?.running_programs && systemStatus.running_programs.length > 0 && (
+                            <motion.div
+                              key="running-programs-list"
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="space-y-2 pl-4  border-white/10 overflow-hidden"
+                            >
+                              {systemStatus.running_programs.map((program, index) => (
+                                <motion.div
+                                  key={program.id || index}
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  exit={{ opacity: 0, x: -10 }}
+                                  transition={{ duration: 0.2, delay: index * 0.05 }}
+                                  className="flex items-center justify-between p-2 rounded-full bg-black/20 border border-white/10"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-7 h-7 flex items-center justify-center rounded-full bg-white shadow-[0_0_12px_rgba(255,255,255,0.65)]">
+                                      <AiBrowserIcon size={16} className="text-black" />
+                                    </div>
+                                    <div className="flex gap-3">
+                                      <span className="text-xs font-thin text-white">
+                                        {program.title || program.name}
                                       </span>
-                                    )}
+                                      {program.name !== program.title && (
+                                        <span className="text-xs text-gray-400 font-thin">
+                                          {program.name}
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                                <Badge variant="outline" className="text-xs">
-                                  ID: {program.id.slice(0, 8)}...
-                                </Badge>
-                              </motion.div>
-                            ))}
-                          </motion.div>
-                        )}
+                                  <Badge variant="default" className="text-xs text-white bg-zinc-900">
+                                    ID: {program.id}
+                                  </Badge>
+                                </motion.div>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
 
                       <Separator />
@@ -869,7 +904,7 @@ export default function SettingsPage() {
                             : "rounded-full bg-red-500/20 text-red-300 border border-red-500/40 shadow-[0_0_14px_rgba(239,68,68,0.35)]"
                           }
                         >
-                          {apiKeyInputs.deepgram_api_key ? "✓ Available" : "⚠ No API Key"}
+                          {apiKeyInputs.deepgram_api_key ? "Available" : "No API Key"}
                         </Badge>
                       </div>
 
@@ -882,7 +917,7 @@ export default function SettingsPage() {
                             : "rounded-full bg-red-500/20 text-red-300 border border-red-500/40 shadow-[0_0_14px_rgba(239,68,68,0.35)]"
                           }
                         >
-                          {apiKeyInputs.elevenlabs_api_key ? "✓ Available" : "⚠ No API Key"}
+                          {apiKeyInputs.elevenlabs_api_key ? "Available" : "No API Key"}
                         </Badge>
                     </div>
                   </div>

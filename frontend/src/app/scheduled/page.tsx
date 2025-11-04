@@ -16,13 +16,15 @@ import {
   Delete02Icon,
   Home01Icon,
   Settings01Icon,
-  BotIcon,
+  AiBrain01Icon,
   SidebarLeft01Icon,
   SidebarRight01Icon,
   CheckmarkCircle01Icon,
   CancelCircleIcon,
   Cancel01Icon,
-  Tick02Icon
+  Tick02Icon,
+  ArrowRight02Icon,
+  TimeScheduleIcon
 } from "hugeicons-react"
 import { motion } from "framer-motion"
 import Image from "next/image"
@@ -154,28 +156,37 @@ export default function ScheduledTasksPage() {
             <ScrollArea className="flex-1 px-2 py-2">
               <div className="space-y-1">
                 <div className="px-3 py-2 text-sm font-normal text-muted-foreground">
-                  Sections
+                  Scheduled Tasks
                 </div>
                 <Button
                   variant="ghost"
-                  className="w-full justify-start gap-2 bg-black/60"
+                  className="group w-full justify-start gap-2 hover:bg-zinc-950"
                   onClick={() => document.getElementById('schedule-task')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                 >
                   Schedule Task
+                  <span className="ml-auto opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
+                    <ArrowRight02Icon size={14} />
+                  </span>
                 </Button>
                 <Button
                   variant="ghost"
-                  className="w-full justify-start gap-2"
+                  className="group w-full justify-start gap-2 hover:bg-zinc-950"
                   onClick={() => document.getElementById('upcoming-tasks')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                 >
                   Upcoming Tasks
+                  <span className="ml-auto opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
+                    <ArrowRight02Icon size={14} />
+                  </span>
                 </Button>
                 <Button
                   variant="ghost"
-                  className="w-full justify-start gap-2"
+                  className="group w-full justify-start gap-2 hover:bg-zinc-950"
                   onClick={() => document.getElementById('task-history')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                 >
                   Task History
+                  <span className="ml-auto opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
+                    <ArrowRight02Icon size={14} />
+                  </span>
                 </Button>
               </div>
             </ScrollArea>
@@ -185,12 +196,16 @@ export default function ScheduledTasksPage() {
                 Home
               </Button>
               <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-black/30" onClick={() => router.push("/agent-settings")}>
-                <BotIcon size={16} />
+                <AiBrain01Icon size={16} />
                 Agent Settings
               </Button>
               <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-black/30" onClick={() => router.push("/settings")}>
                 <Settings01Icon size={16} />
                 Settings
+              </Button>
+              <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/scheduled")}>
+                <TimeScheduleIcon size={16} />
+                Scheduled Tasks
               </Button>
             </div>
         </AppSidebar>
@@ -206,6 +221,7 @@ export default function ScheduledTasksPage() {
                 {showSidebar ? <SidebarLeft01Icon size={24} /> : <SidebarRight01Icon size={24} />}
               </div>
               <div className="flex items-center gap-2">
+              <TimeScheduleIcon size={16} />
                 <h1 className="text-lg font-normal hidden sm:block">Scheduled Tasks</h1>
               </div>
             </div>
@@ -213,9 +229,12 @@ export default function ScheduledTasksPage() {
           </motion.div>
           <ScrollArea className="flex-1 px-2 sm:px-4 pb-8">
             <div className="max-w-4xl mx-auto py-4 sm:py-8 space-y-6">
-              <Card id="schedule-task" className="bg-black/40 border border-white/20 ">
+                <Card id="schedule-task" className="bg-black/40 border border-white/20 ">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 font-normal text-white">Schedule Task</CardTitle>
+                  <CardTitle className="flex items-center gap-2 font-normal text-white">
+                    {/* <TimeScheduleIcon size={16} /> */}
+                    Schedule Task
+                  </CardTitle>
                   <CardDescription>Create a new scheduled task by selecting date and time</CardDescription>
                 </CardHeader>
                 <CardContent>

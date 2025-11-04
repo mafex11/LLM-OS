@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { AppSidebar } from "@/components/layout/Sidebar"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Loading01Icon, Settings01Icon, SidebarLeft01Icon, SidebarRight01Icon, Home01Icon, BotIcon } from "hugeicons-react"
+import { Loading01Icon, Settings01Icon, SidebarLeft01Icon, SidebarRight01Icon, Home01Icon, BotIcon, ArrowRight02Icon, TimeScheduleIcon, AiBrain01Icon } from "hugeicons-react"
 import { useToast } from "@/hooks/use-toast"
 
 export default function AgentSettingsPage() {
@@ -68,15 +68,17 @@ export default function AgentSettingsPage() {
           <ScrollArea className="flex-1 px-2 py-2">
             <div className="space-y-1">
               <div className="px-3 py-2 text-sm font-normal text-muted-foreground">
-                Settings
+                Agent Settings
               </div>
               <Button 
                 variant="ghost" 
-                className="w-full justify-start gap-2 bg-black/60"
+                className="group w-full justify-start gap-2 hover:bg-zinc-950"
                 onClick={() => document.getElementById('agent-settings')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
               >
-                <BotIcon size={16} />
                 Agent Settings
+                <span className="ml-auto opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
+                  <ArrowRight02Icon size={14} />
+                </span>
               </Button>
             </div>
           </ScrollArea>
@@ -87,12 +89,16 @@ export default function AgentSettingsPage() {
               Home
             </Button>
             <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-black/30" onClick={() => router.push("/agent-settings")}>
-              <BotIcon size={16} />
+              <AiBrain01Icon size={16} />
               Agent Settings
             </Button>
             <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-black/30" onClick={() => router.push("/settings")}>
               <Settings01Icon size={16} />
               Settings
+            </Button>
+            <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/scheduled")}>
+              <TimeScheduleIcon size={16} />
+              Scheduled Tasks
             </Button>
           </div>
         </AppSidebar>

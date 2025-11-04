@@ -27,7 +27,8 @@ import {
   MoreVerticalIcon, 
   PencilEdit02Icon,
   Home01Icon,
-  Cancel01Icon
+  Cancel01Icon,
+  AiBrain01Icon
 } from "hugeicons-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -522,7 +523,7 @@ function ChatContent() {
               Home
             </Button>
             <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/agent-settings")}>
-              <BotIcon size={16} />
+              <AiBrain01Icon size={16} />
               Agent Settings
             </Button>
             <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/settings")}>
