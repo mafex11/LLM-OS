@@ -24,6 +24,9 @@ class Desktop:
         self._apps_cache = None
         self._apps_cache_time = 0
         self.cache_timeout = 2.0  # Cache screenshots and apps for 2 seconds
+        # Debounce tracking for app switching to avoid ping-pong
+        self._last_switch_time = 0.0
+        self._last_switch_handle = None
         
     def get_state(self,use_vision:bool=False, target_app:str=None)->DesktopState:
         tree=Tree(self)
@@ -145,19 +148,70 @@ class Desktop:
         return app_name,response,status
     
     def switch_app(self,name:str):
+        import time
         apps={app.name:app for app in self.desktop_state.apps}
         matched_app:tuple[str,float]=process.extractOne(name,list(apps.keys()))
         if matched_app is None:
             return (f'Application {name.title()} not found.',1)
         app_name,_=matched_app
         app=apps.get(app_name)
+        target_handle = app.handle
+
+        # Debounce: if we very recently switched to the same handle and it's still foreground, skip
+        try:
+            fg = ctypes.windll.user32.GetForegroundWindow()
+        except Exception:
+            fg = None
+        now = time.time()
+        if (self._last_switch_handle == target_handle and
+            (now - self._last_switch_time) < 1.5 and
+            fg and fg == target_handle):
+            return (f'{app_name.title()} already in foreground.',0)
+
         if IsIconic(app.handle):
             ShowWindow(app.handle, cmdShow=9)
-            return (f'{app_name.title()} restored from minimized state.',0)
-        elif SetWindowTopmost(app.handle,isTopmost=True):
+            # Allow window to restore
+            sleep(0.2)
+
+        # Briefly set topmost to bring to front, then clear after confirmation
+        if not SetWindowTopmost(app.handle,isTopmost=True):
+            return (f'Failed to switch to {app_name.title()}.',1)
+
+        # Small settle time
+        sleep(0.2)
+
+        # Confirm foreground by handle with short poll
+        confirmed = False
+        try:
+            for _ in range(6):  # up to ~600ms
+                fg_hwnd = ctypes.windll.user32.GetForegroundWindow()
+                if fg_hwnd == target_handle:
+                    confirmed = True
+                    break
+                sleep(0.1)
+        except Exception:
+            pass
+
+        # Clear topmost so we don't fight other windows
+        try:
+            SetWindowTopmost(app.handle,isTopmost=False)
+        except Exception:
+            pass
+
+        # Update debounce state
+        self._last_switch_time = now if now else time.time()
+        self._last_switch_handle = target_handle
+
+        # Refresh desktop state once to avoid stale reads
+        try:
+            self.get_state(use_vision=False)
+        except Exception:
+            pass
+
+        if confirmed:
             return (f'{app_name.title()} switched to foreground.',0)
         else:
-            return (f'Failed to switch to {app_name.title()}.',1)
+            return (f'{app_name.title()} switch attempted.',0)
     
     def get_app_size(self,control:Control):
         window=control.BoundingRectangle

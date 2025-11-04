@@ -243,6 +243,11 @@ def run_voice_mode(agent):
             agent.resume()
             with task_lock:
                 task_running = False
+            try:
+                # Refresh desktop state to avoid stale UI after task actions
+                agent.desktop.get_state(use_vision=False)
+            except Exception:
+                pass
             print("\n✅ Task completed!")
             print("🎤 Listening for your next command...")
             sys.stdout.flush()
@@ -538,6 +543,11 @@ def main():
             agent.resume()
             with task_lock:
                 task_running = False
+            try:
+                # Refresh desktop state to avoid stale UI after task actions
+                agent.desktop.get_state(use_vision=False)
+            except Exception:
+                pass
             print()
             show_ready_indicator()
             sys.stdout.flush()

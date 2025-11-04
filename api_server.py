@@ -467,6 +467,12 @@ def _schedule_timer_for_task(task: ScheduledTask) -> None:
                     response = str(e)
             elif task.name:
                 app_name, response, status = agent.desktop.launch_app(task.name)
+                try:
+                    # Best-effort: ensure it comes to foreground once to avoid stale state
+                    if status == 0 and app_name:
+                        agent.desktop.switch_app(app_name)
+                except Exception:
+                    pass
             else:
                 status = 1
                 response = "Task missing name or query"
