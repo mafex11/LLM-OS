@@ -436,12 +436,15 @@ function ChatContent() {
   }
 
   const deleteChat = async (sessionId: string) => {
-    if (chatSessions.length === 1) return
     try { await fetch(`http://localhost:8000/api/conversation/${sessionId}`, { method: 'DELETE' }) } catch {}
     const updatedSessions = chatSessions.filter(s => s.id !== sessionId)
     setChatSessions(updatedSessions)
     try { saveSessionsToStorage(updatedSessions) } catch {}
-    if (currentSessionId === sessionId) { if (updatedSessions.length > 0) { setCurrentSessionId(updatedSessions[0].id) } else { setCurrentSessionId("") } }
+    if (updatedSessions.length > 0) {
+      if (currentSessionId === sessionId) { setCurrentSessionId(updatedSessions[0].id) }
+    } else {
+      createNewChat()
+    }
   }
 
   const openRenameDialog = (sessionId: string) => { const session = chatSessions.find(s => s.id === sessionId); if (session) { setRenamingSessionId(sessionId); setNewChatTitle(session.title); setRenameDialogOpen(true) } }
@@ -496,7 +499,7 @@ function ChatContent() {
                   <div className="flex-1 truncate cursor-pointer" onClick={() => { setCurrentSessionId(session.id); setNewlyGeneratedMessageIds(new Set()) }}>{session.title}</div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0 bg-transparent hover:bg-transparent focus:bg-transparent opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100" onClick={(e) => e.stopPropagation()}>
                         <MoreVerticalIcon size={12} />
                       </Button>
                     </DropdownMenuTrigger>
@@ -505,12 +508,10 @@ function ChatContent() {
                         <PencilEdit02Icon size={12} className="mr-2" />
                         Rename
                       </DropdownMenuItem>
-                      {chatSessions.length > 1 && (
-                        <DropdownMenuItem onClick={() => deleteChat(session.id)} className="text-red-600">
-                          <Delete02Icon size={12} className="mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      )}
+                      <DropdownMenuItem onClick={() => deleteChat(session.id)} className="text-red-600">
+                        <Delete02Icon size={12} className="mr-2" />
+                        Delete
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </motion.div>
