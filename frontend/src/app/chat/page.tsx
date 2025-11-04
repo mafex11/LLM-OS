@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, Suspense, useMemo, useCallback } from "react"
+import React, { useState, useEffect, useRef, Suspense, useMemo, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -37,7 +37,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useApiKeys } from "@/contexts/ApiKeyContext"
 import { motion, AnimatePresence } from "framer-motion"
 import { AppSidebar } from "@/components/layout/Sidebar"
-import Image from "next/image"
+// Avoid next/image in packaged Electron static export; use plain <img>
 import { TextGenerateEffect } from "@/components/ui/text-generate-effect"
 import { useToast } from "@/hooks/use-toast"
 
@@ -138,6 +138,7 @@ function ChatContent() {
   const [newlyGeneratedMessageIds, setNewlyGeneratedMessageIds] = useState<Set<string>>(new Set())
   const [scheduledCount, setScheduledCount] = useState<number>(0)
   const [scheduledFlag, setScheduledFlag] = useState<boolean>(false)
+  const [mounted, setMounted] = useState(false)
   const workflowRef = useRef<WorkflowStep[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -149,6 +150,10 @@ function ChatContent() {
 
   const currentSession = chatSessions.find(s => s.id === currentSessionId)
   const messages = useMemo(() => currentSession?.messages || [], [currentSession?.messages])
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     const initializeChat = async () => {
@@ -243,11 +248,22 @@ function ChatContent() {
     }
   }, [isInitialized])
 
+  const stopVoiceMode = useCallback(async () => { try { await fetch("http://127.0.0.1:8000/api/voice/stop", { method: "POST" }); setIsListening(false); setIsSpeaking(false); setShowVoiceInstructions(false) } catch {} }, [])
+
+  const createNewChat = useCallback(async () => {
+    if (voiceMode) { await stopVoiceMode(); setVoiceMode(false) }
+    const newSessionId = generateUniqueSessionId()
+    const newSession: ChatSession = { id: newSessionId, title: "New Chat", messages: [], createdAt: new Date() }
+    setChatSessions(prev => [newSession, ...prev])
+    setCurrentSessionId(newSessionId)
+    try { const s = [newSession, ...chatSessions].filter(s => s.messages.length > 0); localStorage.setItem('chatSessions', JSON.stringify(s)) } catch {}
+  }, [voiceMode, stopVoiceMode, chatSessions])
+
   useEffect(() => {
     if (isInitialized) {
       createNewChat()
     }
-  }, [isInitialized])
+  }, [isInitialized, createNewChat])
 
   useEffect(() => {
     if (isInitialized && chatSessions.length > 0) {
@@ -326,7 +342,7 @@ function ChatContent() {
     setCurrentRequestId(null)
     try {
       const conversationHistory = messages.map(msg => ({ role: msg.role, content: msg.content, timestamp: msg.timestamp.toISOString() }))
-      const response = await fetch("http://localhost:8000/api/query/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query: userMessage.content, use_vision: false, conversation_history: conversationHistory, api_key: getApiKey('google_api_key') }) })
+      const response = await fetch("http://127.0.0.1:8000/api/query/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query: userMessage.content, use_vision: false, conversation_history: conversationHistory, api_key: getApiKey('google_api_key') }) })
       if (!response.ok) throw new Error("Failed to send query")
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
@@ -381,8 +397,8 @@ function ChatContent() {
 
   useEffect(() => {
     if (!voiceMode) return
-    const pollVoiceStatus = async () => { try { const r = await fetch("http://localhost:8000/api/voice/status"); if (r.ok) { const s = await r.json(); setIsListening(s.is_listening); setIsSpeaking(s.is_speaking) } } catch {} }
-    const pollVoiceConversation = async () => { try { const r = await fetch("http://localhost:8000/api/voice/conversation"); if (r.ok) { const d = await r.json(); if (d.conversation && d.conversation.length > 0) { const voiceMessages = d.conversation.map((m: any) => ({ role: m.role, content: m.content, timestamp: new Date(m.timestamp * 1000), workflowSteps: m.workflowSteps ? m.workflowSteps.map((s: any) => ({ type: s.type, message: s.message, timestamp: new Date(s.timestamp * 1000), status: s.status, actionName: s.actionName })) : undefined })); const latestPlaceholder = [...voiceMessages].reverse().find((m: any) => m.role === 'assistant' && (!m.content || m.content.trim() === '') && m.workflowSteps && m.workflowSteps.length > 0); if (latestPlaceholder) { const steps: WorkflowStep[] = latestPlaceholder.workflowSteps.map((s: any) => ({ type: s.type, message: s.message, timestamp: new Date(s.timestamp), status: s.status, actionName: s.actionName })); setCurrentWorkflow(steps); setIsLoading(true) } const filtered = voiceMessages.filter((m: any) => !(m.role === 'assistant' && (!m.content || m.content.trim() === ''))); const newMsgs = filtered.filter((vm: any) => !messages.some(em => (em.role === vm.role && em.content === vm.content))); if (newMsgs.length > 0) { updateSessionMessages(currentSessionId, [...messages, ...newMsgs]); if (newMsgs.some((m: any) => m.role === 'assistant' && m.content && m.content.trim() !== '')) { setCurrentWorkflow([]); setIsLoading(false) } } } } } catch {} }
+    const pollVoiceStatus = async () => { try { const r = await fetch("http://127.0.0.1:8000/api/voice/status"); if (r.ok) { const s = await r.json(); setIsListening(s.is_listening); setIsSpeaking(s.is_speaking) } } catch {} }
+    const pollVoiceConversation = async () => { try { const r = await fetch("http://127.0.0.1:8000/api/voice/conversation"); if (r.ok) { const d = await r.json(); if (d.conversation && d.conversation.length > 0) { const voiceMessages = d.conversation.map((m: any) => ({ role: m.role, content: m.content, timestamp: new Date(m.timestamp * 1000), workflowSteps: m.workflowSteps ? m.workflowSteps.map((s: any) => ({ type: s.type, message: s.message, timestamp: new Date(s.timestamp * 1000), status: s.status, actionName: s.actionName })) : undefined })); const latestPlaceholder = [...voiceMessages].reverse().find((m: any) => m.role === 'assistant' && (!m.content || m.content.trim() === '') && m.workflowSteps && m.workflowSteps.length > 0); if (latestPlaceholder) { const steps: WorkflowStep[] = latestPlaceholder.workflowSteps.map((s: any) => ({ type: s.type, message: s.message, timestamp: new Date(s.timestamp), status: s.status, actionName: s.actionName })); setCurrentWorkflow(steps); setIsLoading(true) } const filtered = voiceMessages.filter((m: any) => !(m.role === 'assistant' && (!m.content || m.content.trim() === ''))); const newMsgs = filtered.filter((vm: any) => !messages.some(em => (em.role === vm.role && em.content === vm.content))); if (newMsgs.length > 0) { updateSessionMessages(currentSessionId, [...messages, ...newMsgs]); if (newMsgs.some((m: any) => m.role === 'assistant' && m.content && m.content.trim() !== '')) { setCurrentWorkflow([]); setIsLoading(false) } } } } } catch {} }
     const sInt = setInterval(pollVoiceStatus, 1000)
     const cInt = setInterval(pollVoiceConversation, 2000)
     return () => { clearInterval(sInt); clearInterval(cInt) }
@@ -407,14 +423,14 @@ function ChatContent() {
 
   // Poll scheduled tasks to show count in header icon
   useEffect(() => {
-    const poll = async () => { try { const r = await fetch('http://localhost:8000/api/scheduled-tasks'); if (r.ok) { const list = await r.json(); const upcoming = (list || []).filter((t: any) => ['scheduled','running'].includes((t.status||'').toLowerCase())); setScheduledCount(upcoming.length) } } catch {} }
+    const poll = async () => { try { const r = await fetch('http://127.0.0.1:8000/api/scheduled-tasks'); if (r.ok) { const list = await r.json(); const upcoming = (list || []).filter((t: any) => ['scheduled','running'].includes((t.status||'').toLowerCase())); setScheduledCount(upcoming.length) } } catch {} }
     poll()
     const id = setInterval(poll, 5000)
     return () => clearInterval(id)
   }, [])
 
   const fetchSystemStatus = async () => {
-    try { const r = await fetch("http://localhost:8000/api/status"); if (r.ok) setSystemStatus(await r.json()) } catch {}
+    try { const r = await fetch("http://127.0.0.1:8000/api/status"); if (r.ok) setSystemStatus(await r.json()) } catch {}
   }
 
   const saveSessionsToStorage = (sessions: ChatSession[]) => { try { const s = sessions.filter(session => session.messages.length > 0); localStorage.setItem('chatSessions', JSON.stringify(s)) } catch {} }
@@ -426,14 +442,7 @@ function ChatContent() {
     } catch {}
   }
 
-  const createNewChat = async () => {
-    if (voiceMode) { await stopVoiceMode(); setVoiceMode(false) }
-    const newSessionId = generateUniqueSessionId()
-    const newSession: ChatSession = { id: newSessionId, title: "New Chat", messages: [], createdAt: new Date() }
-    setChatSessions(prev => [newSession, ...prev])
-    setCurrentSessionId(newSessionId)
-    try { const s = [newSession, ...chatSessions].filter(s => s.messages.length > 0); localStorage.setItem('chatSessions', JSON.stringify(s)) } catch {}
-  }
+  
 
   const deleteChat = async (sessionId: string) => {
     try { await fetch(`http://localhost:8000/api/conversation/${sessionId}`, { method: 'DELETE' }) } catch {}
@@ -467,7 +476,7 @@ function ChatContent() {
 
   const stopSpeaking = async () => { try { await fetch("http://localhost:8000/api/tts/stop", { method: "POST" }) } catch {} }
   const stopCurrentQuery = async () => { if (!currentRequestId || stopRequested) return; setStopRequested(true); try { await fetch("http://localhost:8000/api/query/stop", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ request_id: currentRequestId }) }) } catch {} }
-  const stopVoiceMode = async () => { try { await fetch("http://localhost:8000/api/voice/stop", { method: "POST" }); setIsListening(false); setIsSpeaking(false); setShowVoiceInstructions(false) } catch {} }
+  
   const handleMicClick = async () => { if (voiceModeStarting) return; try { if (!voiceMode) { await startVoiceMode(); setVoiceMode(true) } else { await stopVoiceMode(); setVoiceMode(false) } } catch {} }
 
   return (
@@ -477,7 +486,7 @@ function ChatContent() {
         <AppSidebar isOpen={showSidebar}>
           <div className="p-4 border-b border-white/10 mx-2 space-y-4">
             <div className="flex items-center gap-2 px-2">
-              <Image src="/logo.svg" alt="Logo" width={30} height={30} className="flex-shrink-0 rounded-full" />
+              <img src="/logo.svg" alt="Logo" width={30} height={30} className="flex-shrink-0 rounded-full" />
               <span className="text-sm font-semibold">Yuki AI</span>
             </div>
             <Button onClick={createNewChat} className="w-full justify-start gap-2 hover:bg-black/20 backdrop-blur-sm border border-white/20 hover:border-white/30" variant="ghost">
@@ -652,7 +661,7 @@ function ChatContent() {
                   <motion.div key={index} className={`group ${message.role === "user" ? "flex justify-end" : ""}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
                     <div className={`flex gap-2 sm:gap-4 ${message.role === "user" ? "flex-row-reverse max-w-[80%]" : "w-full"}`}>
                       <div className="flex-shrink-0 mt-1">
-                        {message.role === "user" ? (<Image src="/logo.svg" alt="User" width={40} height={40} className="rounded-full" />) : (<div className="h-8 w-8"></div>)}
+                        {message.role === "user" ? (<img src="/logo.svg" alt="User" width={40} height={40} className="rounded-full" />) : (<div className="h-8 w-8"></div>)}
                       </div>
                       <div className="flex-1 space-y-2 min-w-0">
                         {message.role === "user" ? (
@@ -663,7 +672,7 @@ function ChatContent() {
                           <div className="space-y-2">
                             {message.workflowSteps && message.workflowSteps.length > 0 && (<WorkflowSteps workflowSteps={message.workflowSteps} />)}
                             <div className="prose dark:prose-invert max-w-none">
-                              {message.id && newlyGeneratedMessageIds.has(message.id) ? (
+                              {message.id && newlyGeneratedMessageIds.has(message.id) && mounted ? (
                                 <TextGenerateEffect words={message.content} className="text-sm sm:text-base leading-relaxed text-gray-100 font-normal [&>div>div]:text-sm [&>div>div]:sm:text-base [&>div>div]:leading-relaxed [&>div>div]:text-gray-100 [&>div>div]:font-normal [&>div]:mt-0" duration={0.3} filter={false} />
                               ) : (
                                 <p className="text-sm sm:text-base leading-relaxed text-gray-100 font-normal whitespace-pre-wrap">{message.content}</p>
@@ -682,7 +691,11 @@ function ChatContent() {
                     <div className="flex-shrink-0 mt-1"><div className="h-8 w-8"></div></div>
                     <div className="flex-1 space-y-2">
                       <div className="text-2xl font-thin text-gray-100">
-                        <TextGenerateEffect words="Thinking..." className="font-thin [&>div>div]:text-xl [&>div>div]:text-gray-100 [&>div>div]:font-thin [&>div]:mt-0" duration={0.2} filter={false} />
+                        {mounted ? (
+                          <TextGenerateEffect words="Thinking..." className="font-thin [&>div>div]:text-xl [&>div>div]:text-gray-100 [&>div>div]:font-thin [&>div]:mt-0" duration={0.2} filter={false} />
+                        ) : (
+                          <span>Thinking...</span>
+                        )}
                       </div>
                       {currentWorkflow.length > 0 && (() => {
                         const latestStep = currentWorkflow[currentWorkflow.length - 1]
@@ -769,10 +782,39 @@ function ChatContent() {
 }
 
 export default function ChatPage() {
+  class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; message?: string }>{
+    constructor(props: { children: React.ReactNode }) {
+      super(props)
+      this.state = { hasError: false }
+    }
+    static getDerivedStateFromError(error: unknown) {
+      return { hasError: true, message: error instanceof Error ? error.message : String(error) }
+    }
+    componentDidCatch(error: unknown, info: unknown) {
+      // Log to console so we can see which subtree fails in production
+      console.error('Chat ErrorBoundary caught:', error, info)
+    }
+    render() {
+      if (this.state.hasError) {
+        return (
+          <div className="flex h-screen items-center justify-center bg-black text-white p-6">
+            <div>
+              <div className="text-lg mb-2">Something went wrong rendering the chat UI.</div>
+              <div className="text-xs opacity-70">{this.state.message}</div>
+            </div>
+          </div>
+        )
+      }
+      return this.props.children
+    }
+  }
+
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-black"><div className="text-white">Loading...</div></div>}>
-      <ChatContent />
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense fallback={<div className="flex h-screen items-center justify-center bg-black"><div className="text-white">Loading...</div></div>}>
+        <ChatContent />
+      </Suspense>
+    </ErrorBoundary>
   )
 }
 

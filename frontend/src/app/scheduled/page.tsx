@@ -247,7 +247,7 @@ export default function ScheduledTasksPage() {
                          onChange={(e) => setTaskText(e.target.value)}
                          className="rounded-full bg-transparent border border-white/40 hover:border-white/30 text-white outline-none focus placeholder:text-gray-500"
                        />
-                       <p className="text-xs text-muted-foreground">Use natural language; the agent will execute this at the scheduled time. Include timing in your description, e.g., "in 20 minutes" or "in 50 seconds"</p>
+                      <p className="text-xs text-muted-foreground">Use natural language; the agent will execute this at the scheduled time. Include timing in your description, e.g., &quot;in 20 minutes&quot; or &quot;in 50 seconds&quot;</p>
                      </div>
 
                      {/* Natural-language timing only; no explicit date/time fields */}

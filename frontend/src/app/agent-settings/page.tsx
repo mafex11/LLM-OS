@@ -131,7 +131,7 @@ export default function AgentSettingsPage() {
                     <CardTitle className="flex items-center gap-2 font-normal text-white">
                       Agent Settings
                     </CardTitle>
-                    <CardDescription>Configure your agent's settings</CardDescription>
+                    <CardDescription>Configure your agent&apos;s settings</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">

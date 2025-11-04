@@ -39,57 +39,6 @@ export const useAudioDevices = () => {
     }
   }, [])
 
-  const requestPermission = useCallback(async () => {
-    setState(prev => ({ ...prev, isLoading: true, error: null }))
-    
-    try {
-      // Check if we're in Electron app
-      const isElectron = typeof window !== 'undefined' && window.electronAPI
-      
-      if (isElectron) {
-        // Use Electron API for microphone permission
-        const granted = await window.electronAPI.requestMicrophonePermission()
-        setState(prev => ({ 
-          ...prev, 
-          hasPermission: granted,
-          isLoading: false 
-        }))
-        
-        if (granted) {
-          await enumerateDevices()
-        }
-        
-        return granted
-      } else {
-        // Use browser API for microphone permission
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-        // Stop the stream immediately as we only needed it for permission
-        stream.getTracks().forEach(track => track.stop())
-        
-        const hasPermission = await checkPermission()
-        setState(prev => ({ 
-          ...prev, 
-          hasPermission,
-          isLoading: false 
-        }))
-        
-        if (hasPermission) {
-          await enumerateDevices()
-        }
-        
-        return hasPermission
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to request microphone permission'
-      setState(prev => ({ 
-        ...prev, 
-        error: errorMessage,
-        isLoading: false 
-      }))
-      return false
-    }
-  }, [checkPermission])
-
   const enumerateDevices = useCallback(async () => {
     setState(prev => ({ ...prev, isLoading: true, error: null }))
     
@@ -139,6 +88,57 @@ export const useAudioDevices = () => {
       }))
     }
   }, [])
+
+  const requestPermission = useCallback(async () => {
+    setState(prev => ({ ...prev, isLoading: true, error: null }))
+    
+    try {
+      // Check if we're in Electron app
+      const isElectron = typeof window !== 'undefined' && window.electronAPI
+      
+      if (isElectron) {
+        // Use Electron API for microphone permission
+        const granted = await window.electronAPI.requestMicrophonePermission()
+        setState(prev => ({ 
+          ...prev, 
+          hasPermission: granted,
+          isLoading: false 
+        }))
+        
+        if (granted) {
+          await enumerateDevices()
+        }
+        
+        return granted
+      } else {
+        // Use browser API for microphone permission
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        // Stop the stream immediately as we only needed it for permission
+        stream.getTracks().forEach(track => track.stop())
+        
+        const hasPermission = await checkPermission()
+        setState(prev => ({ 
+          ...prev, 
+          hasPermission,
+          isLoading: false 
+        }))
+        
+        if (hasPermission) {
+          await enumerateDevices()
+        }
+        
+        return hasPermission
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to request microphone permission'
+      setState(prev => ({ 
+        ...prev, 
+        error: errorMessage,
+        isLoading: false 
+      }))
+      return false
+    }
+  }, [checkPermission, enumerateDevices])
 
   const setSelectedInputDevice = useCallback((deviceId: string) => {
     setState(prev => ({ ...prev, selectedInputDevice: deviceId }))
