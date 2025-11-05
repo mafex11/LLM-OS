@@ -1,6 +1,7 @@
 "use client"
 
 import { ReactNode } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface AppSidebarProps {
   isOpen: boolean
@@ -12,20 +13,38 @@ interface AppSidebarProps {
 
 export function AppSidebar({ isOpen, width = 256, collapsedWidth = 64, children, collapsedContent }: AppSidebarProps) {
   return (
-    <aside
+    <motion.aside
       className="fixed left-0 top-0 h-screen z-40 border-r border-white/10 bg-black/20 backdrop-blur-sm overflow-hidden"
-      style={{ width: isOpen ? width : collapsedWidth }}
+      initial={false}
+      animate={{ width: isOpen ? width : collapsedWidth }}
+      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
     >
-      {isOpen ? (
-        <div className="flex h-full w-64 flex-col">
-          {children}
-        </div>
-      ) : (
-        <div className="flex h-full w-16 flex-col items-center py-4 gap-2">
-          {collapsedContent}
-        </div>
-      )}
-    </aside>
+      <AnimatePresence mode="wait">
+        {isOpen ? (
+          <motion.div
+            key="expanded"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="flex h-full w-64 flex-col"
+          >
+            {children}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="collapsed"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="flex h-full w-16 flex-col items-center py-4 gap-2"
+          >
+            {collapsedContent}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.aside>
   )
 }
 

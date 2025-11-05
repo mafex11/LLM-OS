@@ -134,7 +134,7 @@ export default function LandingPage() {
     </div>
 
     {/* Enhanced Example Commands */}
-    <div className="w-full max-w-7xl">
+    {/* <div className="w-full max-w-7xl">
       <p className="mb-4 text-center text-lg font-medium text-white/80">Try these:</p>
       <div className="flex flex-wrap items-center justify-center gap-3">
         {exampleCommands.map((command, index) => (
@@ -147,7 +147,7 @@ export default function LandingPage() {
           </button>
         ))}
       </div>
-    </div>
+    </div> */}
 
     {/* Additional Features Preview */}
 

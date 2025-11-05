@@ -67,7 +67,7 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
   const audioDevices = useAudioDevices()
   // Removed context dependency - using config file only
-  const [showSidebar, setShowSidebar] = useState(true)
+  const [showSidebar, setShowSidebar] = useState(false)
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null)
   const [showApiKeys, setShowApiKeys] = useState({
     google_api_key: false,
@@ -273,9 +273,6 @@ export default function SettingsPage() {
                 <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push("/scheduled")}>
                   <TimeScheduleIcon size={16} />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push("/agent-settings")}>
-                  <AiBrain01Icon size={16} />
-                </Button>
                 <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push("/settings")}>
                   <Settings01Icon size={16} />
                 </Button>
@@ -352,7 +349,7 @@ export default function SettingsPage() {
                 className="group w-full justify-start gap-2 hover:bg-black/30"
                 onClick={() => router.push("/")}
               >
-                <Home01Icon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
+                <Home01Icon size={16} className="transition-all duration-200 group-hover:rotate-[-10deg] group-hover:drop-shadow-[0_0_10px_rgba(96,165,250,0.5)]" />
                 Home
               </Button>
               <Button
@@ -360,7 +357,7 @@ export default function SettingsPage() {
                 className="group w-full justify-start gap-2 hover:bg-white/5"
                 onClick={() => router.push('/chat')}
               >
-                <MessageMultiple02Icon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
+                <MessageMultiple02Icon size={16} className="transition-all duration-200 group-hover:rotate-[-10deg] group-hover:drop-shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
                 Chat
               </Button>
               <Button
@@ -368,7 +365,7 @@ export default function SettingsPage() {
                 className="group w-full justify-start gap-2 hover:bg-white/5"
                 onClick={() => router.push("/scheduled")}
               >
-                <TimeScheduleIcon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
+                <TimeScheduleIcon size={16} className="transition-all duration-200 group-hover:rotate-[360deg] group-hover:drop-shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
                 Schedule Task
               </Button>
               
@@ -377,13 +374,17 @@ export default function SettingsPage() {
                 className="group w-full justify-start gap-2 hover:bg-black/30"
                 onClick={() => router.push("/settings")}
               >
-                <Settings01Icon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
+                <Settings01Icon size={16} className="transition-all duration-200 group-hover:rotate-[180deg] group-hover:drop-shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
                 Settings
               </Button>
             </div>
         </AppSidebar>
 
-        <div className={`${showSidebar ? 'pl-64' : 'pl-16'} flex-1 flex flex-col`}>
+        <motion.div 
+          className="flex-1 flex flex-col"
+          animate={{ paddingLeft: showSidebar ? '16rem' : '4rem' }}
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        >
         <motion.div 
           className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-10"
           initial={{ opacity: 0, y: -20 }}
@@ -1029,7 +1030,7 @@ export default function SettingsPage() {
             </div>
           </div>
         </ScrollArea>
-        </div>
+        </motion.div>
       </div>
 
       <Toaster />

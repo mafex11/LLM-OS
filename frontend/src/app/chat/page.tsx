@@ -126,7 +126,7 @@ function ChatContent() {
   const [stopRequested, setStopRequested] = useState(false)
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null)
   const [currentWorkflow, setCurrentWorkflow] = useState<WorkflowStep[]>([])
-  const [showSidebar, setShowSidebar] = useState(true)
+  const [showSidebar, setShowSidebar] = useState(false)
   const [renameDialogOpen, setRenameDialogOpen] = useState(false)
   const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null)
   const [newChatTitle, setNewChatTitle] = useState("")
@@ -621,25 +621,29 @@ function ChatContent() {
           </div>
           <div className="border-t border-white/10 mx-2 p-2 space-y-1">
             <Button variant="ghost" className="group w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/")}>
-              <Home01Icon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
+              <Home01Icon size={16} className="transition-all duration-200 group-hover:rotate-[-10deg] group-hover:drop-shadow-[0_0_10px_rgba(96,165,250,0.5)]" />
               Home
             </Button>
-            <Button variant="ghost" className="group w/full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/chat")}>
-              <MessageMultiple02Icon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
+            <Button variant="ghost" className="group w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/chat")}>
+              <MessageMultiple02Icon size={16} className="transition-all duration-200 group-hover:rotate-[-10deg] group-hover:drop-shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
               Chat
             </Button>
-            <Button variant="ghost" className="group w/full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/scheduled")}>
-              <TimeScheduleIcon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
+            <Button variant="ghost" className="group w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/scheduled")}>
+              <TimeScheduleIcon size={16} className="transition-all duration-200 group-hover:rotate-[360deg] group-hover:drop-shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
               Schedule Task
             </Button>
             
-            <Button variant="ghost" className="group w/full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/settings")}>
-              <Settings01Icon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
+            <Button variant="ghost" className="group w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/settings")}>
+              <Settings01Icon size={16} className="transition-all duration-200 group-hover:rotate-[180deg] group-hover:drop-shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
               Settings
             </Button>
           </div>
         </AppSidebar>
-        <div className={`${showSidebar ? 'pl-64' : 'pl-16'} flex-1 flex flex-col`}>
+        <motion.div 
+          className="flex-1 flex flex-col"
+          animate={{ paddingLeft: showSidebar ? '16rem' : '4rem' }}
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        >
           {showVoiceInstructions && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.3 }} className="bg-blue-500/10 border-b border-blue-500/20 px-4 py-3 backdrop-blur-sm">
               <div className="flex items-center justify-between">
@@ -806,7 +810,15 @@ function ChatContent() {
             </div>
           </div>
           {inputPosition === 'bottom' && (
-            <motion.div className="bg-black/20 backdrop-blur-sm p-4 sm:p-6 fixed bottom-0 right-0 z-20" style={{ left: showSidebar ? '16rem' : '4rem' }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 0.4 }}>
+            <motion.div 
+              className="bg-black/20 backdrop-blur-sm p-4 sm:p-6 fixed bottom-0 right-0 z-20" 
+              initial={{ opacity: 0 }} 
+              animate={{ 
+                opacity: 1,
+                left: showSidebar ? '16rem' : '4rem'
+              }} 
+              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1], delay: 0.4 }}
+            >
               <div className="max-w-4xl mx-auto">
                 <div className="flex items-center gap-3">
                     {!isListening ? (
@@ -849,7 +861,7 @@ function ChatContent() {
           </div>
             </motion.div>
           )}
-        </div>
+        </motion.div>
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
         <DialogContent>
           <DialogHeader>
