@@ -157,8 +157,7 @@ export default function SettingsPage() {
 
       if (response.ok) {
         // Also save to keytar if running in Electron
-        const isElectron = typeof window !== 'undefined' && window.desktop;
-        if (isElectron) {
+        if (typeof window !== 'undefined' && window.desktop) {
           try {
             await window.desktop.setSecret('google_api_key', apiKeyInputs.google_api_key || '');
             await window.desktop.setSecret('elevenlabs_api_key', apiKeyInputs.elevenlabs_api_key || '');
