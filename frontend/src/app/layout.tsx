@@ -31,12 +31,12 @@ export default function RootLayout({
               background: "radial-gradient(125% 125% at 50% 100%, #000000 30%, #1a0b0b 70%, #2b0707 100%)",
             }}
           />
-          <GridBackground />
+          {/* <GridBackground /> */}
         </div>
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
-          enableSystem={false}
+          defaultTheme="dark" 
+          enableSystem={false}  
           disableTransitionOnChange={false}
         >
           <ApiKeyProvider>

@@ -24,7 +24,8 @@ import {
   Cancel01Icon,
   Tick02Icon,
   ArrowRight02Icon,
-  TimeScheduleIcon
+  TimeScheduleIcon,
+  MessageMultiple02Icon
 } from "hugeicons-react"
 import { motion } from "framer-motion"
 import Image from "next/image"
@@ -139,11 +140,38 @@ export default function ScheduledTasksPage() {
   return (
     <div className="flex min-h-screen w-full ">
       <div className="relative z-10 w-full">
-        <AppSidebar isOpen={showSidebar}>
+        <AppSidebar
+          isOpen={showSidebar}
+          collapsedContent={(
+            <>
+              <div className="flex items-center justify-center mt-0">
+                <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => router.push('/chat')} title="Chat">
+                  <img src="/logo.svg" alt="Logo" width={24} height={24} className="rounded-full" />
+                </Button>
+              </div>
+              <div className="flex-1" />
+              <div className="mt-auto flex flex-col items-center gap-1 w-full">
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push("/")}>
+                  <Home01Icon size={16} />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push('/chat')}>
+                  <MessageMultiple02Icon size={16} />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push("/scheduled")}>
+                  <TimeScheduleIcon size={16} />
+                </Button>
+                
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push("/settings")}>
+                  <Settings01Icon size={16} />
+                </Button>
+              </div>
+            </>
+          )}
+        >
             <div className="p-4 border-b border-white/10 mx-2 space-y-4">
-              <div className="flex items-center gap-2 px-2">
-                <Image src="/logo.svg" alt="Logo" width={30} height={30} className="flex-shrink-0 rounded-full" />
-                <span className="text-sm font-semibold">Yuki AI</span>
+              <div className="flex items-center gap-3 px-2 cursor-pointer" onClick={() => router.push('/chat')}>
+                <img src="/logo.svg" alt="Logo" width={44} height={44} className="flex-shrink-0 rounded-full" />
+                <span className="text-lg font-semibold">Yuki AI</span>
               </div>
               <Button 
                 onClick={() => router.push("/chat")} 
@@ -191,25 +219,29 @@ export default function ScheduledTasksPage() {
               </div>
             </ScrollArea>
             <div className="border-t border-white/10 mx-2 p-2 space-y-1">
-              <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-black/30" onClick={() => router.push("/")}>
-                <Home01Icon size={16} />
+              <Button variant="ghost" className="group w-full justify-start gap-2 hover:bg-black/30" onClick={() => router.push("/")}>
+                <Home01Icon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
                 Home
               </Button>
-              <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-black/30" onClick={() => router.push("/agent-settings")}>
-                <AiBrain01Icon size={16} />
+              <Button variant="ghost" className="group w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push('/chat')}>
+                <MessageMultiple02Icon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
+                Chat
+              </Button>
+              <Button variant="ghost" className="group w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/scheduled")}>
+                <TimeScheduleIcon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
+                Schedule Task
+              </Button>
+              <Button variant="ghost" className="group w-full justify-start gap-2 hover:bg-black/30" onClick={() => router.push("/agent-settings")}>
+                <AiBrain01Icon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
                 Agent Settings
               </Button>
-              <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-black/30" onClick={() => router.push("/settings")}>
-                <Settings01Icon size={16} />
+              <Button variant="ghost" className="group w-full justify-start gap-2 hover:bg-black/30" onClick={() => router.push("/settings")}>
+                <Settings01Icon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
                 Settings
-              </Button>
-              <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/scheduled")}>
-                <TimeScheduleIcon size={16} />
-                Scheduled Tasks
               </Button>
             </div>
         </AppSidebar>
-        <div className={`${showSidebar ? 'pl-64' : 'pl-0'} flex-1 flex flex-col`}>
+        <div className={`${showSidebar ? 'pl-64' : 'pl-16'} flex-1 flex flex-col`}>
           <motion.div 
             className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-10"
             initial={{ opacity: 0, y: -20 }}
@@ -221,7 +253,7 @@ export default function ScheduledTasksPage() {
                 {showSidebar ? <SidebarLeft01Icon size={24} /> : <SidebarRight01Icon size={24} />}
               </div>
               <div className="flex items-center gap-2">
-              <TimeScheduleIcon size={16} />
+              <TimeScheduleIcon size={23} />
                 <h1 className="text-lg font-normal hidden sm:block">Scheduled Tasks</h1>
               </div>
             </div>

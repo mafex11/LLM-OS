@@ -20,7 +20,7 @@ import {
   BulbIcon, 
   VoiceIcon, 
   PlusSignIcon, 
-  MessageMultiple02Icon, 
+  MessageMultiple02Icon,
   Delete02Icon, 
   SidebarLeft01Icon, 
   SidebarRight01Icon, 
@@ -28,7 +28,8 @@ import {
   PencilEdit02Icon,
   Home01Icon,
   Cancel01Icon,
-  AiBrain01Icon
+  AiBrain01Icon,
+  TimeScheduleIcon
 } from "hugeicons-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -560,11 +561,41 @@ function ChatContent() {
     <div className="flex h-screen relative">
       <div className="absolute inset-0 z-0" style={{ background: "radial-gradient(125% 125% at 50% 100%, #000000 40%, #2b0707 100%)" }} />
       <div className="relative z-10 w-full h-full">
-        <AppSidebar isOpen={showSidebar}>
+        <AppSidebar
+          isOpen={showSidebar}
+          collapsedContent={(
+            <>
+              <div className="flex items-center justify-center mt-0">
+                <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => router.push('/chat')} title="Chat">
+                  <img src="/logo.svg" alt="Logo" width={24} height={24} className="rounded-full" />
+                </Button>
+              </div>
+              <Button onClick={createNewChat} variant="ghost" size="icon" className="h-10 w-10 mx-auto mt-4 hover:bg-black/20 border border-white/20 hover:border-white/30">
+                <PlusSignIcon size={16} />
+              </Button>
+              <div className="flex-1" />
+              <div className="mt-auto flex flex-col items-center gap-1 w-full">
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push("/")}>
+                  <Home01Icon size={16} />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push('/chat')}>
+                  <MessageMultiple02Icon size={16} />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push("/scheduled")}>
+                  <TimeScheduleIcon size={16} />
+                </Button>
+                
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push("/settings")}>
+                  <Settings01Icon size={16} />
+                </Button>
+              </div>
+            </>
+          )}
+        >
           <div className="p-4 border-b border-white/10 mx-2 space-y-4">
-            <div className="flex items-center gap-2 px-2">
-              <img src="/logo.svg" alt="Logo" width={30} height={30} className="flex-shrink-0 rounded-full" />
-              <span className="text-sm font-semibold">Yuki AI</span>
+            <div className="flex items-center gap-3 px-2 cursor-pointer" onClick={() => router.push('/chat')}>
+              <img src="/logo.svg" alt="Logo" width={44} height={44} className="flex-shrink-0 rounded-full" />
+              <span className="text-lg font-semibold">Yuki AI</span>
             </div>
             <Button onClick={createNewChat} className="w-full justify-start gap-2 hover:bg-black/20 backdrop-blur-sm border border-white/20 hover:border-white/30" variant="ghost">
               <PlusSignIcon size={16} />
@@ -574,7 +605,7 @@ function ChatContent() {
           <div className="flex-1 px-2 py-2 overflow-auto">
             <div className="space-y-1">
               {chatSessions.map((session, index) => (
-                <motion.div key={session.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2, delay: index * 0.05 }} className={`group relative overflow-hidden flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${currentSessionId === session.id ? "bg-black/60" : "hover:bg-black/30"}`}>
+                <motion.div key={session.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2, delay: index * 0.05 }} className={`group relative overflow-hidden flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors w-full ${currentSessionId === session.id ? "bg-black/60" : "hover:bg-black/30"}`}>
                   {currentSessionId === session.id && (
                     <div className="pointer-events-none absolute inset-0 border-1 border-black/20">
                       <motion.div className="absolute inset-y-0 left-0 w-2 bg-white/60 rounded-r-full blur-2xl" initial={{ opacity: 0.8 }} animate={{ opacity: [0.7, 1, 0.7] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }} />
@@ -589,25 +620,26 @@ function ChatContent() {
             </div>
           </div>
           <div className="border-t border-white/10 mx-2 p-2 space-y-1">
-            <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/")}>
-              <Home01Icon size={16} />
+            <Button variant="ghost" className="group w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/")}>
+              <Home01Icon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
               Home
             </Button>
-            <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/agent-settings")}>
-              <AiBrain01Icon size={16} />
-              Agent Settings
+            <Button variant="ghost" className="group w/full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/chat")}>
+              <MessageMultiple02Icon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
+              Chat
             </Button>
-            <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/settings")}>
-              <Settings01Icon size={16} />
+            <Button variant="ghost" className="group w/full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/scheduled")}>
+              <TimeScheduleIcon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
+              Schedule Task
+            </Button>
+            
+            <Button variant="ghost" className="group w/full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/settings")}>
+              <Settings01Icon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
               Settings
-            </Button>
-            <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/scheduled")}>
-              <Navigation03Icon size={16} />
-              Scheduled Tasks
             </Button>
           </div>
         </AppSidebar>
-        <div className={`${showSidebar ? 'pl-64' : 'pl-0'} flex-1 flex flex-col`}>
+        <div className={`${showSidebar ? 'pl-64' : 'pl-16'} flex-1 flex flex-col`}>
           {showVoiceInstructions && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.3 }} className="bg-blue-500/10 border-b border-blue-500/20 px-4 py-3 backdrop-blur-sm">
               <div className="flex items-center justify-between">
@@ -774,7 +806,7 @@ function ChatContent() {
             </div>
           </div>
           {inputPosition === 'bottom' && (
-            <motion.div className="bg-black/20 backdrop-blur-sm p-4 sm:p-6 fixed bottom-0 right-0 z-20" style={{ left: showSidebar ? '16rem' : 0 }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 0.4 }}>
+            <motion.div className="bg-black/20 backdrop-blur-sm p-4 sm:p-6 fixed bottom-0 right-0 z-20" style={{ left: showSidebar ? '16rem' : '4rem' }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 0.4 }}>
               <div className="max-w-4xl mx-auto">
                 <div className="flex items-center gap-3">
                     {!isListening ? (

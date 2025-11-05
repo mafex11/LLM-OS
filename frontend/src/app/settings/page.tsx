@@ -35,6 +35,7 @@ import {
   Loading03Icon,
   AiBrain01Icon,
   TimeScheduleIcon,
+  MessageMultiple02Icon,
 
 } from "hugeicons-react"
 import { useToast } from "@/hooks/use-toast"
@@ -241,12 +242,41 @@ export default function SettingsPage() {
   return (
     <div className="flex min-h-screen w-full ">
       <div className="relative z-10 w-full">
-        <AppSidebar isOpen={showSidebar}>
+        <AppSidebar
+          isOpen={showSidebar}
+          collapsedContent={(
+            <>
+              <div className="flex items-center justify-center mt-0">
+                <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => router.push('/chat')} title="Chat">
+                  <img src="/logo.svg" alt="Logo" width={24} height={24} className="rounded-full" />
+                </Button>
+              </div>
+              <div className="flex-1" />
+              <div className="mt-auto flex flex-col items-center gap-1 w-full">
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push("/")}>
+                  <Home01Icon size={16} />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push('/chat')}>
+                  <MessageMultiple02Icon size={16} />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push("/scheduled")}>
+                  <TimeScheduleIcon size={16} />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push("/agent-settings")}>
+                  <AiBrain01Icon size={16} />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push("/settings")}>
+                  <Settings01Icon size={16} />
+                </Button>
+              </div>
+            </>
+          )}
+        >
             {/* Sidebar Header */}
             <div className="p-4 border-b border-white/10 mx-2 space-y-4">
-              <div className="flex items-center gap-2 px-2">
-                <Image src="/logo.svg" alt="Logo" width={30} height={30} className="flex-shrink-0 rounded-full" />
-                <span className="text-sm font-semibold">Yuki AI</span>
+              <div className="flex items-center gap-3 px-2 cursor-pointer" onClick={() => router.push('/chat')}>
+                <img src="/logo.svg" alt="Logo" width={44} height={44} className="flex-shrink-0 rounded-full" />
+                <span className="text-lg font-semibold">Yuki AI</span>
               </div>
               <Button 
                 onClick={() => router.push("/chat")} 
@@ -298,40 +328,41 @@ export default function SettingsPage() {
             <div className="border-t border-white/10 mx-2 p-2 space-y-1">
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-2 hover:bg-black/30"
+                className="group w-full justify-start gap-2 hover:bg-black/30"
                 onClick={() => router.push("/")}
               >
-                <Home01Icon size={16} />
+                <Home01Icon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
                 Home
               </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-2 hover:bg-black/30"
-              onClick={() => router.push("/agent-settings")}
-            >
-              <AiBrain01Icon size={16} />
-              Agent Settings
-            </Button>
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-2 hover:bg-black/30"
-                onClick={() => router.push("/settings")}
+                className="group w-full justify-start gap-2 hover:bg-white/5"
+                onClick={() => router.push('/chat')}
               >
-                <Settings01Icon size={16} />
-                Settings
+                <MessageMultiple02Icon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
+                Chat
               </Button>
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-2 hover:bg-white/5"
+                className="group w-full justify-start gap-2 hover:bg-white/5"
                 onClick={() => router.push("/scheduled")}
               >
-                <TimeScheduleIcon size={16} />
-                Scheduled Tasks
+                <TimeScheduleIcon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
+                Schedule Task
+              </Button>
+              
+              <Button
+                variant="ghost"
+                className="group w-full justify-start gap-2 hover:bg-black/30"
+                onClick={() => router.push("/settings")}
+              >
+                <Settings01Icon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
+                Settings
               </Button>
             </div>
         </AppSidebar>
 
-        <div className={`${showSidebar ? 'pl-64' : 'pl-0'} flex-1 flex flex-col`}>
+        <div className={`${showSidebar ? 'pl-64' : 'pl-16'} flex-1 flex flex-col`}>
         <motion.div 
           className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-10"
           initial={{ opacity: 0, y: -20 }}
@@ -346,12 +377,7 @@ export default function SettingsPage() {
               {showSidebar ? <SidebarLeft01Icon size={24} /> : <SidebarRight01Icon size={24} />}
             </div>
             <div className="flex items-center gap-2">
-              <motion.div
-                animate={{ rotate: [0, 10, -10, 0] }}
-                transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-              >
-                <Settings01Icon size={24} />
-              </motion.div>
+              <Settings01Icon size={24} />
               <h1 className="text-lg font-normal hidden sm:block">Settings</h1>
             </div>
           </div>
@@ -598,7 +624,62 @@ export default function SettingsPage() {
               </Card>
               </motion.div>
 
-              {/* Agent Settings moved to /agent-settings */}
+              {/* Agent Settings */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.25 }}
+              >
+                <Card id="agent-settings" className="bg-black/40 border border-white/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 font-normal text-white">
+                      Agent Settings
+                    </CardTitle>
+                    <CardDescription className="text-md font-thin text-white/40">
+                      Configure agent behavior
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="space-y-2 max-w-full">
+                        <Label htmlFor="max-steps" className="text-sm font-normal">Max tool calls per run</Label>
+                        <Input
+                          id="max-steps"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          value={maxStepsInput}
+                          onChange={(e) => {
+                            const raw = e.target.value
+                            const isDigitsOnly = /^\d*$/.test(raw)
+                            setMaxStepsInput(raw)
+                            if (!isDigitsOnly) { setMaxStepsInvalid(true); return }
+                            setMaxStepsInvalid(false)
+                            const num = raw === "" ? 0 : Number(raw)
+                            setMaxSteps(num)
+                          }}
+                          onBlur={() => {
+                            const num = Number(maxStepsInput.replace(/[^\d]/g, ""))
+                            const bounded = isNaN(num) ? 1 : Math.max(1, Math.min(200, Math.floor(num)))
+                            setMaxSteps(bounded)
+                            setMaxStepsInput(String(bounded))
+                            setMaxStepsInvalid(false)
+                          }}
+                          className={`rounded-full bg-transparent border ${maxStepsInvalid ? 'border-red-500/60 shadow-[0_0_12px_rgba(239,68,68,0.45)]' : 'border-white/20'} hover:border-white/30 focus:border-white/40 text-white focus:outline-none focus:ring-0 focus-visible:ring-0`}
+                        />
+                        {maxStepsInvalid && (<p className="text-xs text-red-400">Numbers only. Range 1–200.</p>)}
+                        <p className="text-xs text-muted-foreground w-full">Control how many tool calls the agent can make per run.</p>
+                      </div>
+
+                      <div className="flex items-center justify-end">
+                        <Button onClick={saveAgentSettings} disabled={savingAgentSettings} size="sm" className="text-xs rounded-full bg-white text-black hover:bg_white/90 shadow-[0_0_14px_rgba(255,255,255,0.45)] hover:shadow-[0_0_24px_rgba(255,255,255,0.65)] ring-1 ring-white/60 hover:ring-white/80 transition-all">
+                          {savingAgentSettings ? (<>Saving...</>) : (<>Save Agent Settings</>)}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
 
               {/* Audio Settings Card */}
               <motion.div
