@@ -20,6 +20,12 @@ declare global {
       }>>;
       onMicrophonePermissionChanged: (callback: (granted: boolean) => void) => void;
     };
+    desktop?: {
+      setSecret: (key: string, value: string) => Promise<boolean>;
+      getSecret: (key: string) => Promise<string>;
+      setConfigPath: (dir: string) => Promise<boolean>;
+      getConfigPath: () => Promise<string>;
+    };
   }
 }
 

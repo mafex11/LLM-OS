@@ -16,7 +16,6 @@ import {
   Delete02Icon,
   Home01Icon,
   Settings01Icon,
-  AiBrain01Icon,
   SidebarLeft01Icon,
   SidebarRight01Icon,
   CheckmarkCircle01Icon,
@@ -231,10 +230,6 @@ export default function ScheduledTasksPage() {
                 <TimeScheduleIcon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
                 Schedule Task
               </Button>
-              <Button variant="ghost" className="group w-full justify-start gap-2 hover:bg-black/30" onClick={() => router.push("/agent-settings")}>
-                <AiBrain01Icon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
-                Agent Settings
-              </Button>
               <Button variant="ghost" className="group w-full justify-start gap-2 hover:bg-black/30" onClick={() => router.push("/settings")}>
                 <Settings01Icon size={16} className="transition-transform duration-200 group-hover:rotate-[30deg]" />
                 Settings
@@ -321,7 +316,7 @@ export default function ScheduledTasksPage() {
               </Card>
               <Card id="upcoming-tasks" className="bg-black/40 border border-white/20 ">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 font-normal text-white">Upcoming</CardTitle>
+                  <CardTitle className="flex items-center gap-2 font-normal text-white">Upcoming Tasks</CardTitle>
                   <CardDescription>Tasks that are scheduled or currently running</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -415,7 +410,7 @@ export default function ScheduledTasksPage() {
 
               <Card id="task-history" className="bg-black/40 border border-white/20 ">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 font-normal text-white">History</CardTitle>
+                  <CardTitle className="flex items-center gap-2 font-normal text-white">Task History</CardTitle>
                   <CardDescription>Completed, failed, or cancelled tasks with quick repeat</CardDescription>
                 </CardHeader>
                 <CardContent>

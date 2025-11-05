@@ -146,7 +146,7 @@ export default function SettingsPage() {
     setSavingKeys(true)
     
     try {
-      // Save to backend config file only
+      // Save to backend config file
       const response = await fetch("http://localhost:8000/api/config/keys", {
         method: "POST",
         headers: {
@@ -156,6 +156,18 @@ export default function SettingsPage() {
       })
 
       if (response.ok) {
+        // Also save to keytar if running in Electron
+        const isElectron = typeof window !== 'undefined' && window.desktop;
+        if (isElectron) {
+          try {
+            await window.desktop.setSecret('google_api_key', apiKeyInputs.google_api_key || '');
+            await window.desktop.setSecret('elevenlabs_api_key', apiKeyInputs.elevenlabs_api_key || '');
+            await window.desktop.setSecret('deepgram_api_key', apiKeyInputs.deepgram_api_key || '');
+          } catch (keytarError) {
+            console.warn('Failed to save API keys to keytar (this is OK if not in Electron):', keytarError);
+          }
+        }
+        
         toast({
           title: "API Keys Saved",
           description: "All API keys have been saved successfully!",
@@ -298,6 +310,16 @@ export default function SettingsPage() {
                 onClick={() => document.getElementById('api-keys')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
               >
                 API Keys
+                <span className="ml-auto opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
+                  <ArrowRight02Icon size={14} />
+                </span>
+              </Button>
+              <Button
+                variant="ghost"
+                className="group w-full justify-start gap-2 hover:bg-zinc-950"
+                onClick={() => document.getElementById('agent-settings')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              >
+                Agent Settings
                 <span className="ml-auto opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
                   <ArrowRight02Icon size={14} />
                 </span>
