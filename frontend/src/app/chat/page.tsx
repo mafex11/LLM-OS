@@ -85,7 +85,7 @@ function WorkflowSteps({ workflowSteps }: { workflowSteps: WorkflowStep[] }) {
       <AnimatePresence mode="wait">
         {isOpen && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: "easeInOut", opacity: { duration: 0.2 } }} className="mt-3 overflow-hidden">
-            <div className="space-y-2 pl-4 border-l-2 border-muted">
+            <div className="space-y-2 p-2 pl-4 border-l-2 border-muted max-h-72 overflow-y-auto">
               <AnimatePresence mode="popLayout">
                 {workflowSteps.map((step, stepIndex) => (
                   <motion.div key={stepIndex} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2, delay: stepIndex * 0.05, ease: "easeOut" }} className="flex items-start gap-2 text-xs">
@@ -139,8 +139,8 @@ function ChatContent() {
   const [scheduledCount, setScheduledCount] = useState<number>(0)
   const [scheduledFlag, setScheduledFlag] = useState<boolean>(false)
   const [mounted, setMounted] = useState(false)
+  const [didCreateOnLoad, setDidCreateOnLoad] = useState(false)
   const workflowRef = useRef<WorkflowStep[]>([])
-  const scrollRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -248,7 +248,22 @@ function ChatContent() {
     }
   }, [isInitialized])
 
-  const stopVoiceMode = useCallback(async () => { try { await fetch("http://127.0.0.1:8000/api/voice/stop", { method: "POST" }); setIsListening(false); setIsSpeaking(false); setShowVoiceInstructions(false) } catch {} }, [])
+  const stopVoiceMode = useCallback(async () => {
+    console.log('[Voice Mode] stopVoiceMode called')
+    try {
+      console.log('[Voice Mode] Sending stop request to backend...')
+      const response = await fetch("http://127.0.0.1:8000/api/voice/stop", { method: "POST" })
+      console.log('[Voice Mode] Stop response status:', response.status, response.ok)
+      const data = await response.json().catch(() => ({}))
+      console.log('[Voice Mode] Stop response data:', data)
+      setIsListening(false)
+      setIsSpeaking(false)
+      setShowVoiceInstructions(false)
+      console.log('[Voice Mode] State updated: listening=false, speaking=false, instructions=false')
+    } catch (error) {
+      console.error('[Voice Mode] Error stopping voice mode:', error)
+    }
+  }, [])
 
   const createNewChat = useCallback(async () => {
     if (voiceMode) { await stopVoiceMode(); setVoiceMode(false) }
@@ -259,11 +274,16 @@ function ChatContent() {
     try { const s = [newSession, ...chatSessions].filter(s => s.messages.length > 0); localStorage.setItem('chatSessions', JSON.stringify(s)) } catch {}
   }, [voiceMode, stopVoiceMode, chatSessions])
 
+  // On first load only, create a fresh empty chat session
   useEffect(() => {
-    if (isInitialized) {
-      createNewChat()
+    if (isInitialized && !didCreateOnLoad) {
+      setDidCreateOnLoad(true)
+      const newSessionId = generateUniqueSessionId()
+      const newSession: ChatSession = { id: newSessionId, title: "New Chat", messages: [], createdAt: new Date() }
+      setChatSessions(prev => [newSession, ...prev])
+      setCurrentSessionId(newSessionId)
     }
-  }, [isInitialized, createNewChat])
+  }, [isInitialized, didCreateOnLoad])
 
   useEffect(() => {
     if (isInitialized && chatSessions.length > 0) {
@@ -276,7 +296,10 @@ function ChatContent() {
     }
   }, [chatSessions, isInitialized])
 
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }) }, [messages, currentWorkflow])
+  // Only auto-scroll when messages change to avoid ref churn in ScrollArea during workflow streaming
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
 
   useEffect(() => {
     if (newlyGeneratedMessageIds.size > 0) {
@@ -461,25 +484,79 @@ function ChatContent() {
   const sendMessage = async () => { if (!input.trim() || isLoading) return; executeTask(input) }
 
   const startVoiceMode = useCallback(async () => {
-    if (voiceModeStarting) return
+    console.log('[Voice Mode] startVoiceMode called, voiceModeStarting:', voiceModeStarting)
+    if (voiceModeStarting) {
+      console.log('[Voice Mode] Already starting, returning early')
+      return
+    }
     setVoiceModeStarting(true)
+    console.log('[Voice Mode] Set voiceModeStarting to true')
     try {
-      const response = await fetch("http://localhost:8000/api/voice/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ api_key: getApiKey('google_api_key') }) })
+      const apiKey = getApiKey('google_api_key')
+      console.log('[Voice Mode] API key retrieved:', apiKey ? 'present' : 'missing')
+      const requestBody = { api_key: apiKey }
+      console.log('[Voice Mode] Sending start request to backend:', { url: 'http://localhost:8000/api/voice/start', method: 'POST', body: requestBody })
+      const response = await fetch("http://localhost:8000/api/voice/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody) })
+      console.log('[Voice Mode] Start response status:', response.status, response.ok)
+      const responseData = await response.json().catch(() => ({}))
+      console.log('[Voice Mode] Start response data:', responseData)
       if (response.ok) {
-        setIsListening(true); setShowVoiceInstructions(true)
+        console.log('[Voice Mode] Response OK, setting state: listening=true, instructions=true')
+        setIsListening(true)
+        setShowVoiceInstructions(true)
         toast({ title: "Voice Mode Started", description: "Say 'yuki' followed by your command (e.g., 'yuki, open my calendar')" })
-      } else { throw new Error("Failed to start voice mode") }
+        console.log('[Voice Mode] Toast notification shown')
+      } else {
+        const errorMsg = responseData.detail || responseData.message || "Failed to start voice mode"
+        console.error('[Voice Mode] Response not OK:', errorMsg)
+        throw new Error(errorMsg)
+      }
     } catch (error) {
-      toast({ title: "Error Starting Voice Mode", description: error instanceof Error ? error.message : "Could not connect to voice system. Please check your API keys.", variant: "destructive" }); setVoiceMode(false)
-    } finally { setVoiceModeStarting(false) }
+      console.error('[Voice Mode] Error in startVoiceMode:', error)
+      const errorMessage = error instanceof Error ? error.message : "Could not connect to voice system. Please check your API keys."
+      console.log('[Voice Mode] Showing error toast:', errorMessage)
+      toast({ title: "Error Starting Voice Mode", description: errorMessage, variant: "destructive" })
+      setVoiceMode(false)
+      console.log('[Voice Mode] Set voiceMode to false due to error')
+    } finally {
+      setVoiceModeStarting(false)
+      console.log('[Voice Mode] Set voiceModeStarting to false in finally block')
+    }
   }, [getApiKey, toast, voiceModeStarting])
 
   const stopSpeaking = async () => { try { await fetch("http://localhost:8000/api/tts/stop", { method: "POST" }) } catch {} }
   const stopCurrentQuery = async () => { if (!currentRequestId || stopRequested) return; setStopRequested(true); try { await fetch("http://localhost:8000/api/query/stop", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ request_id: currentRequestId }) }) } catch {} }
   
-  const handleMicClick = async () => { if (voiceModeStarting) return; try { if (!voiceMode) { await startVoiceMode(); setVoiceMode(true) } else { await stopVoiceMode(); setVoiceMode(false) } } catch {} }
+  const handleMicClick = async () => {
+    console.log('[Voice Mode] handleMicClick called, current state:', { voiceMode, voiceModeStarting, isListening, isSpeaking })
+    if (voiceModeStarting) {
+      console.log('[Voice Mode] Click ignored - voice mode is already starting')
+      return
+    }
+    try {
+      if (!voiceMode) {
+        console.log('[Voice Mode] Voice mode is OFF, starting voice mode...')
+        await startVoiceMode()
+        console.log('[Voice Mode] startVoiceMode completed, setting voiceMode to true')
+        setVoiceMode(true)
+        console.log('[Voice Mode] voiceMode state set to true')
+      } else {
+        console.log('[Voice Mode] Voice mode is ON, stopping voice mode...')
+        await stopVoiceMode()
+        console.log('[Voice Mode] stopVoiceMode completed, setting voiceMode to false')
+        setVoiceMode(false)
+        console.log('[Voice Mode] voiceMode state set to false')
+      }
+    } catch (error) {
+      console.error('[Voice Mode] Error in handleMicClick:', error)
+    }
+  }
 
   return (
+    // Gate rendering to avoid Presence/layout effects during hydration
+    !mounted ? (
+      <div className="flex h-screen w-full bg-black"></div>
+    ) : (
     <div className="flex h-screen relative">
       <div className="absolute inset-0 z-0" style={{ background: "radial-gradient(125% 125% at 50% 100%, #000000 40%, #2b0707 100%)" }} />
       <div className="relative z-10 w-full h-full">
@@ -494,7 +571,7 @@ function ChatContent() {
               New Chat
             </Button>
           </div>
-          <ScrollArea className="flex-1 px-2 py-2">
+          <div className="flex-1 px-2 py-2 overflow-auto">
             <div className="space-y-1">
               {chatSessions.map((session, index) => (
                 <motion.div key={session.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2, delay: index * 0.05 }} className={`group relative overflow-hidden flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${currentSessionId === session.id ? "bg-black/60" : "hover:bg-black/30"}`}>
@@ -506,27 +583,11 @@ function ChatContent() {
                     </div>
                   )}
                   <div className="flex-1 truncate cursor-pointer" onClick={() => { setCurrentSessionId(session.id); setNewlyGeneratedMessageIds(new Set()) }}>{session.title}</div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0 bg-transparent hover:bg-transparent focus:bg-transparent opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100" onClick={(e) => e.stopPropagation()}>
-                        <MoreVerticalIcon size={12} />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openRenameDialog(session.id)}>
-                        <PencilEdit02Icon size={12} className="mr-2" />
-                        Rename
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => deleteChat(session.id)} className="text-red-600">
-                        <Delete02Icon size={12} className="mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {/* Menu temporarily removed to avoid Radix Presence loop */}
                 </motion.div>
               ))}
             </div>
-          </ScrollArea>
+          </div>
           <div className="border-t border-white/10 mx-2 p-2 space-y-1">
             <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/")}>
               <Home01Icon size={16} />
@@ -547,9 +608,8 @@ function ChatContent() {
           </div>
         </AppSidebar>
         <div className={`${showSidebar ? 'pl-64' : 'pl-0'} flex-1 flex flex-col`}>
-        <AnimatePresence>
           {showVoiceInstructions && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3 }} className="bg-blue-500/10 border-b border-blue-500/20 px-4 py-3 backdrop-blur-sm">
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.3 }} className="bg-blue-500/10 border-b border-blue-500/20 px-4 py-3 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }}>
@@ -569,7 +629,6 @@ function ChatContent() {
               </div>
             </motion.div>
           )}
-        </AnimatePresence>
         <motion.div className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-10" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
             <div className="flex items-center gap-3">
               <div className="cursor-pointer p-2 hover:bg-black/20 rounded-lg transition-colors" onClick={() => setShowSidebar(!showSidebar)}>
@@ -590,7 +649,7 @@ function ChatContent() {
               )}
             </div>
           </motion.div>
-        <ScrollArea className="flex-1 px-2 sm:px-4 pb-28" ref={scrollRef}>
+        <div className="flex-1 px-2 sm:px-4 pb-28 overflow-auto">
             <div className="max-w-4xl mx-auto py-4 sm:py-8">
             {messages.length === 0 && !isLoading && inputPosition === 'centered' && (
               <motion.div className="flex flex-col items-center justify-center min-h-[80vh] text-center" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
@@ -656,7 +715,6 @@ function ChatContent() {
               </motion.div>
             )}
               <div className="space-y-6">
-              <AnimatePresence mode="popLayout">
                 {messages.map((message, index) => (
                   <motion.div key={index} className={`group ${message.role === "user" ? "flex justify-end" : ""}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
                     <div className={`flex gap-2 sm:gap-4 ${message.role === "user" ? "flex-row-reverse max-w-[80%]" : "w-full"}`}>
@@ -684,7 +742,6 @@ function ChatContent() {
                     </div>
                   </motion.div>
                 ))}
-              </AnimatePresence>
                 {isLoading && (
                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
                   <div className="flex gap-2 sm:gap-4">
@@ -700,9 +757,11 @@ function ChatContent() {
                       {currentWorkflow.length > 0 && (() => {
                         const latestStep = currentWorkflow[currentWorkflow.length - 1]
                         return (
-                          <div className="flex items-start gap-2 text-sm pl-6">
-                            <Loading02Icon size={20} className="animate-spin text-white mt-0.5" />
-                            <p className="text-muted-foreground text-base">{latestStep.message}</p>
+                          <div className="p-2 pl-6">
+                            <div className="flex items-start gap-2 text-sm">
+                              <Loading02Icon size={20} className="animate-spin text-white mt-0.5" />
+                              <p className="text-muted-foreground text-base">{latestStep.message}</p>
+                            </div>
                           </div>
                         )
                       })()}
@@ -713,13 +772,11 @@ function ChatContent() {
                 <div ref={messagesEndRef} />
               </div>
             </div>
-          </ScrollArea>
-        <AnimatePresence>
+          </div>
           {inputPosition === 'bottom' && (
-            <motion.div className="bg-black/20 backdrop-blur-sm p-4 sm:p-6 fixed bottom-0 right-0 z-20" style={{ left: showSidebar ? '16rem' : 0 }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4, delay: 0.4 }}>
+            <motion.div className="bg-black/20 backdrop-blur-sm p-4 sm:p-6 fixed bottom-0 right-0 z-20" style={{ left: showSidebar ? '16rem' : 0 }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 0.4 }}>
               <div className="max-w-4xl mx-auto">
                 <div className="flex items-center gap-3">
-                  <AnimatePresence mode="wait">
                     {!isListening ? (
                       <motion.div key="normal-input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="flex items-center gap-3 w-full">
                         <motion.div initial={{ opacity: 1, scale: 1 }} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} transition={{ duration: 0.2 }}>
@@ -755,13 +812,11 @@ function ChatContent() {
                         </motion.div>
                       </motion.div>
                     )}
-                  </AnimatePresence>
             </div>
                 <p className="text-xs text-gray-500 text-center mt-2 hidden sm:block">Press Enter to send, Shift+Enter for new line, Ctrl+Shift+V for voice mode</p>
           </div>
             </motion.div>
           )}
-        </AnimatePresence>
         </div>
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
         <DialogContent>
@@ -778,6 +833,7 @@ function ChatContent() {
       </Dialog>
       </div>
     </div>
+    )
   )
 }
 

@@ -1091,56 +1091,87 @@ async def clear_default_conversation():
 @app.post("/api/voice/start")
 async def start_voice_mode(request: VoiceModeRequest):
     """Start voice mode using backend STT/TTS"""
+    print("[Voice Mode Backend] /api/voice/start endpoint called")
+    print(f"[Voice Mode Backend] Request body: {request}")
+    print(f"[Voice Mode Backend] Agent initialized: {agent_initialized}, Agent exists: {agent is not None}")
+    
     if not agent_initialized or not agent:
+        print("[Voice Mode Backend] ERROR: Agent not initialized")
         raise HTTPException(status_code=503, detail="Agent not initialized")
     
     try:
         global _voice_starting
+        print(f"[Voice Mode Backend] Current _voice_starting flag: {_voice_starting}")
         # If a start is already in progress, return early
         if _voice_starting:
+            print("[Voice Mode Backend] Voice mode already starting, returning early")
             return {"success": True, "message": "Voice mode starting"}
         _voice_starting = True
+        print("[Voice Mode Backend] Set _voice_starting to True")
         # Check if STT dependencies are available (without creating global instance)
+        print("[Voice Mode Backend] Checking STT dependencies...")
         try:
             from windows_use.agent.stt_service import DEEPGRAM_AVAILABLE
+            print(f"[Voice Mode Backend] DEEPGRAM_AVAILABLE: {DEEPGRAM_AVAILABLE}")
             if not DEEPGRAM_AVAILABLE:
+                print("[Voice Mode Backend] ERROR: Deepgram SDK not available")
                 raise HTTPException(status_code=400, detail="Deepgram SDK not available. Install with: pip install deepgram-sdk")
             
             # Check for API key from config file
             config_file = os.path.join(CONFIG_PATH, "api_keys.json")
+            print(f"[Voice Mode Backend] Checking config file: {config_file}")
             deepgram_key = ""
             
             if os.path.exists(config_file):
+                print("[Voice Mode Backend] Config file exists, reading...")
                 try:
                     with open(config_file, "r", encoding="utf-8") as f:
                         config_data = json.load(f)
                         deepgram_key = config_data.get("deepgram_api_key", "")
-                except:
+                        print(f"[Voice Mode Backend] Deepgram API key found: {'present' if deepgram_key else 'missing'}")
+                except Exception as e:
+                    print(f"[Voice Mode Backend] Error reading config file: {e}")
                     pass
+            else:
+                print("[Voice Mode Backend] Config file does not exist")
             
             if not deepgram_key or deepgram_key.strip() == "":
+                print("[Voice Mode Backend] ERROR: Deepgram API key not configured")
                 raise HTTPException(status_code=400, detail="Deepgram API key not configured. Please set it in the settings page.")
         except ImportError as e:
+            print(f"[Voice Mode Backend] ERROR: STT service import error: {e}")
             raise HTTPException(status_code=400, detail=f"STT service import error: {str(e)}")
         
         # Reuse existing STT service if already present
+        print("[Voice Mode Backend] Initializing STT service...")
         from windows_use.agent.stt_service import STTService
         voice_stt_service = None
         if hasattr(agent, 'stt_service') and agent.stt_service:
+            print("[Voice Mode Backend] Reusing existing STT service")
             voice_stt_service = agent.stt_service
         else:
+            print("[Voice Mode Backend] Creating new STT service with trigger word 'yuki'")
             voice_stt_service = STTService(enable_stt=True, trigger_word="yuki")
+            print(f"[Voice Mode Backend] STT service enabled: {voice_stt_service.enabled}")
             if not voice_stt_service.enabled:
+                print("[Voice Mode Backend] ERROR: STT service could not be initialized")
                 _voice_starting = False
                 raise HTTPException(status_code=400, detail="STT service could not be initialized. Check your Deepgram API key.")
             agent.stt_service = voice_stt_service
+            print("[Voice Mode Backend] STT service assigned to agent")
         
         # Enable TTS for voice mode if not already enabled
+        print("[Voice Mode Backend] Checking TTS service...")
         if not hasattr(agent, 'tts_service') or not agent.tts_service or not agent.tts_service.enabled:
+            print("[Voice Mode Backend] TTS not enabled, initializing...")
             from windows_use.agent.tts_service import TTSService
             tts_service = TTSService(enable_tts=True)
+            print(f"[Voice Mode Backend] TTS service enabled: {tts_service.enabled}")
             if tts_service.enabled:
                 agent.tts_service = tts_service
+                print("[Voice Mode Backend] TTS service assigned to agent")
+        else:
+            print("[Voice Mode Backend] TTS service already enabled")
         
         # Set up transcription callback to handle voice input with trigger word detection
         def on_transcription(transcript: str):
@@ -1401,48 +1432,77 @@ async def start_voice_mode(request: VoiceModeRequest):
         voice_stt_service.on_transcription = on_transcription
         
         # Start listening with proper error handling
+        print("[Voice Mode Backend] Starting listening...")
         try:
             # If already listening, treat as idempotent success
-            if getattr(voice_stt_service, 'is_listening', False):
+            is_listening = getattr(voice_stt_service, 'is_listening', False)
+            print(f"[Voice Mode Backend] Current listening status: {is_listening}")
+            if is_listening:
+                print("[Voice Mode Backend] Already listening, returning success")
                 return {"success": True, "message": "Voice mode already started"}
             
+            print("[Voice Mode Backend] Calling start_listening()...")
             listening_result = voice_stt_service.start_listening()
+            print(f"[Voice Mode Backend] start_listening() returned: {listening_result}")
             
             if listening_result:
+                print("[Voice Mode Backend] Successfully started listening")
                 return {"success": True, "message": "Voice mode started"}
             else:
+                print("[Voice Mode Backend] ERROR: start_listening() returned False")
                 raise HTTPException(status_code=500, detail="Failed to start listening")
         except Exception as mic_error:
+            print(f"[Voice Mode Backend] ERROR: Microphone access failed: {mic_error}")
             # Clean up the STT service if it was created
             if hasattr(voice_stt_service, 'cleanup'):
+                print("[Voice Mode Backend] Cleaning up STT service...")
                 voice_stt_service.cleanup()
             raise HTTPException(status_code=500, detail=f"Microphone access failed: {str(mic_error)}")
         
     except Exception as e:
+        print(f"[Voice Mode Backend] ERROR: Exception in start_voice_mode: {e}")
+        print(f"[Voice Mode Backend] Exception type: {type(e)}")
+        import traceback
+        print(f"[Voice Mode Backend] Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error starting voice mode: {str(e)}")
     finally:
         _voice_starting = False
+        print("[Voice Mode Backend] Set _voice_starting to False in finally block")
 
 @app.post("/api/voice/stop")
 async def stop_voice_mode():
     """Stop voice mode"""
+    print("[Voice Mode Backend] /api/voice/stop endpoint called")
+    print(f"[Voice Mode Backend] Agent initialized: {agent_initialized}, Agent exists: {agent is not None}")
+    
     if not agent_initialized or not agent:
+        print("[Voice Mode Backend] ERROR: Agent not initialized")
         raise HTTPException(status_code=503, detail="Agent not initialized")
     
     try:
         # Stop any running voice STT service
+        print("[Voice Mode Backend] Checking for STT service...")
         if hasattr(agent, 'stt_service') and agent.stt_service:
+            print("[Voice Mode Backend] STT service found, stopping listening...")
             agent.stt_service.stop_listening()
+            print("[Voice Mode Backend] Listening stopped, clearing STT service reference")
             agent.stt_service = None
+        else:
+            print("[Voice Mode Backend] No STT service found")
         
         # Clear voice conversation history and reset processing lock
         global voice_conversation, _voice_processing_lock
+        print(f"[Voice Mode Backend] Clearing conversation (length: {len(voice_conversation)}) and resetting lock")
         voice_conversation.clear()
         _voice_processing_lock = False
         
+        print("[Voice Mode Backend] Successfully stopped voice mode")
         return {"success": True, "message": "Voice mode stopped"}
         
     except Exception as e:
+        print(f"[Voice Mode Backend] ERROR: Exception in stop_voice_mode: {e}")
+        import traceback
+        print(f"[Voice Mode Backend] Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error stopping voice mode: {str(e)}")
 
 @app.get("/api/voice/status")
