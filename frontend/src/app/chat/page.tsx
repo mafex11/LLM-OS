@@ -266,14 +266,50 @@ function ChatContent() {
     }
   }, [])
 
+  // Stop all running tasks (query and voice mode) when switching chats
+  const stopAllRunningTasks = useCallback(async () => {
+    // Stop current query if running
+    if (currentRequestId && !stopRequested) {
+      setStopRequested(true)
+      try {
+        await fetch("http://localhost:8000/api/query/stop", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ request_id: currentRequestId })
+        })
+      } catch (error) {
+        console.error("Error stopping query:", error)
+      }
+    }
+    
+    // Stop voice mode if active
+    if (voiceMode) {
+      try {
+        await stopVoiceMode()
+        setVoiceMode(false)
+      } catch (error) {
+        console.error("Error stopping voice mode:", error)
+      }
+    }
+    
+    // Reset loading and workflow states
+    setIsLoading(false)
+    setCurrentWorkflow([])
+    workflowRef.current = []
+    setCurrentRequestId(null)
+    setStopRequested(false)
+  }, [currentRequestId, stopRequested, voiceMode, stopVoiceMode])
+
   const createNewChat = useCallback(async () => {
-    if (voiceMode) { await stopVoiceMode(); setVoiceMode(false) }
+    // Stop all running tasks before creating new chat
+    await stopAllRunningTasks()
+    
     const newSessionId = generateUniqueSessionId()
     const newSession: ChatSession = { id: newSessionId, title: "New Chat", messages: [], createdAt: new Date() }
     setChatSessions(prev => [newSession, ...prev])
     setCurrentSessionId(newSessionId)
     try { const s = [newSession, ...chatSessions].filter(s => s.messages.length > 0); localStorage.setItem('chatSessions', JSON.stringify(s)) } catch {}
-  }, [voiceMode, stopVoiceMode, chatSessions])
+  }, [stopAllRunningTasks, chatSessions])
 
   // On first load only, create a fresh empty chat session
   useEffect(() => {
@@ -613,7 +649,12 @@ function ChatContent() {
                       <motion.div className="absolute top-0 bottom-0 -left-16 w-40 bg-gradient-to-r from-white/60 to-transparent blur-2xl" animate={{ x: [0, 56, 0], opacity: [0.6, 1, 0.6] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} />
                     </div>
                   )}
-                  <div className="flex-1 truncate cursor-pointer" onClick={() => { setCurrentSessionId(session.id); setNewlyGeneratedMessageIds(new Set()) }}>{session.title}</div>
+                  <div className="flex-1 truncate cursor-pointer" onClick={async () => { 
+                    // Stop all running tasks when switching chats
+                    await stopAllRunningTasks()
+                    setCurrentSessionId(session.id)
+                    setNewlyGeneratedMessageIds(new Set())
+                  }}>{session.title}</div>
                   {/* Menu temporarily removed to avoid Radix Presence loop */}
                 </motion.div>
               ))}

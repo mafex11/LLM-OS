@@ -890,6 +890,38 @@ async def stop_query(request: StopRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to stop: {e}")
 
+@app.post("/api/query/stop-all")
+async def stop_all_queries():
+    """Stop all currently running queries."""
+    if not agent_initialized:
+        raise HTTPException(status_code=503, detail="Agent not initialized")
+    
+    stopped_count = 0
+    errors = []
+    
+    # Make a copy of the dict to avoid modification during iteration
+    requests_to_stop = dict(inflight_requests)
+    
+    for req_id, info in requests_to_stop.items():
+        try:
+            agent_to_stop = info.get("agent")
+            if agent_to_stop and hasattr(agent_to_stop, "stop"):
+                agent_to_stop.stop()
+                stopped_count += 1
+        except Exception as e:
+            errors.append(f"Failed to stop request {req_id}: {e}")
+    
+    # Clean up stopped requests
+    for req_id in requests_to_stop.keys():
+        inflight_requests.pop(req_id, None)
+    
+    return {
+        "success": True,
+        "message": f"Stopped {stopped_count} request(s)",
+        "stopped_count": stopped_count,
+        "errors": errors if errors else None
+    }
+
 # Get running programs
 @app.get("/api/programs", response_model=List[AppInfo])
 async def get_running_programs_endpoint():

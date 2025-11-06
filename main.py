@@ -170,7 +170,7 @@ def display_running_programs(programs):
 
 def run_voice_mode(agent):
     """Run agent in continuous voice listening mode with async task execution and trigger word detection"""
-    print("\n🎤 Voice Mode Activated with Trigger Word Detection")
+    print("\nVoice Mode Activated with Trigger Word Detection")
     print("=" * 50)
     
     # Initialize STT service with trigger word
@@ -713,7 +713,7 @@ def main():
                 if is_stt_available():
                     if run_voice_mode(agent):
                         # Returned from voice mode, continue text mode
-                        print("\n⌨️ Text input mode resumed")
+                        print("\n⌨Text input mode resumed")
                         print("Ready for your next command...")
                     continue
                 else:
