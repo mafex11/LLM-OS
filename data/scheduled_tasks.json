@@ -8,6 +8,40 @@
     "status": "completed",
     "created_at": "2025-11-03T22:28:15.006055",
     "scheduled_for": null,
-    "last_error": null
+    "last_error": null,
+    "repeat": null,
+    "days_of_week": null,
+    "last_run_at": null,
+    "last_run_status": null
+  },
+  "e325b73d-f2b4-4009-b0d6-f71e5ebe9fff": {
+    "id": "e325b73d-f2b4-4009-b0d6-f71e5ebe9fff",
+    "name": null,
+    "query": "open calculator in 10 seconds",
+    "delay_seconds": 10,
+    "run_at": null,
+    "status": "completed",
+    "created_at": "2025-11-07T21:27:13",
+    "scheduled_for": null,
+    "last_error": null,
+    "repeat": null,
+    "days_of_week": null,
+    "last_run_at": "2025-11-07T21:27:43",
+    "last_run_status": "completed"
+  },
+  "95e90847-391e-4f5b-b9e3-161805e334e8": {
+    "id": "95e90847-391e-4f5b-b9e3-161805e334e8",
+    "name": "calculator",
+    "query": null,
+    "delay_seconds": 10,
+    "run_at": null,
+    "status": "completed",
+    "created_at": "2025-11-07T21:27:31",
+    "scheduled_for": null,
+    "last_error": null,
+    "repeat": null,
+    "days_of_week": null,
+    "last_run_at": "2025-11-07T21:27:47",
+    "last_run_status": "completed"
   }
 }

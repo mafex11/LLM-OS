@@ -10,6 +10,8 @@ import { AppSidebar } from "@/components/layout/Sidebar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { 
   PlusSignIcon,
   PencilEdit02Icon,
@@ -27,17 +29,21 @@ import {
   MessageMultiple02Icon
 } from "hugeicons-react"
 import { motion } from "framer-motion"
-import Image from "next/image"
 
 type ScheduledTask = {
   id: string
   name: string
+  query?: string | null
   delay_seconds?: number | null
   run_at?: string | null
   status: string
   created_at: string
   scheduled_for?: string | null
   last_error?: string | null
+  repeat?: "daily" | "weekly" | null
+  days_of_week?: number[] | null
+  last_run_at?: string | null
+  last_run_status?: string | null
 }
 
 export default function ScheduledTasksPage() {
@@ -52,10 +58,141 @@ export default function ScheduledTasksPage() {
   const [delaySeconds, setDelaySeconds] = useState<string>("")
   const [runAt, setRunAt] = useState<string>("")
   const [taskText, setTaskText] = useState("")
-  const [delayMinutes, setDelayMinutes] = useState<string>("")
   const [dateInput, setDateInput] = useState<string>("")
   const [timeInput, setTimeInput] = useState<string>("")
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+  const [repeatOption, setRepeatOption] = useState<"none" | "daily" | "weekly">("none")
+  const [repeatDays, setRepeatDays] = useState<number[]>([])
+  const [repeatTime, setRepeatTime] = useState<string>("")
+  const [repeatHour, setRepeatHour] = useState<string>("09")
+  const [repeatMinute, setRepeatMinute] = useState<string>("00")
+  const [dialogRepeat, setDialogRepeat] = useState<"none" | "daily" | "weekly">("none")
+  const [dialogDays, setDialogDays] = useState<number[]>([])
+  const [dialogHour, setDialogHour] = useState<string>("09")
+  const [dialogMinute, setDialogMinute] = useState<string>("00")
+  const [dialogTime, setDialogTime] = useState<string>("09:00")
+
+  const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+  
+  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"))
+  const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"))
+  
+  const updateRepeatTime = (hour: string, minute: string) => {
+    setRepeatHour(hour)
+    setRepeatMinute(minute)
+    setRepeatTime(`${hour}:${minute}`)
+  }
+  
+  const updateDialogTime = (hour: string, minute: string) => {
+    setDialogHour(hour)
+    setDialogMinute(minute)
+    const timeStr = `${hour}:${minute}`
+    setDialogTime(timeStr)
+    setRunAt(timeStr)
+  }
+  
+  const parseTimeString = (timeStr: string): [string, string] => {
+    if (!timeStr) return ["09", "00"]
+    const match = timeStr.match(/^(\d{1,2}):(\d{2})/)
+    if (match) {
+      const h = String(parseInt(match[1])).padStart(2, "0")
+      const m = String(parseInt(match[2])).padStart(2, "0")
+      return [h, m]
+    }
+    return ["09", "00"]
+  }
+
+  const formatTimeLabel = (value?: string | null) => {
+    if (!value) return "";
+    const safe = value.trim()
+    const iso = Date.parse(safe)
+    if (!Number.isNaN(iso)) {
+      return new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+    }
+    const match = safe.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/)
+    if (match) {
+      const hours = Number(match[1])
+      const minutes = Number(match[2])
+      const seconds = match[3] ? Number(match[3]) : 0
+      const temp = new Date()
+      temp.setHours(hours, minutes, seconds, 0)
+      return temp.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+    }
+    return safe
+  }
+
+  const parseNextRunDate = (task: ScheduledTask): Date | null => {
+    const candidates: (string | null | undefined)[] = [task.scheduled_for, task.run_at]
+    for (const value of candidates) {
+      if (!value) continue
+      const trimmed = value.trim()
+      const iso = Date.parse(trimmed)
+      if (!Number.isNaN(iso)) {
+        return new Date(iso)
+      }
+      const match = trimmed.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/)
+      if (match) {
+        const hours = Number(match[1])
+        const minutes = Number(match[2])
+        const seconds = match[3] ? Number(match[3]) : 0
+        const now = new Date()
+        const candidate = new Date()
+        candidate.setHours(hours, minutes, seconds, 0)
+        if (candidate <= now) {
+          candidate.setDate(candidate.getDate() + 1)
+        }
+        return candidate
+      }
+    }
+    if (task.delay_seconds != null) {
+      const created = Date.parse(task.created_at)
+      if (!Number.isNaN(created)) {
+        return new Date(created + task.delay_seconds * 1000)
+      }
+    }
+    return null
+  }
+
+  const formatCountdown = (target: Date) => {
+    const diffMs = Math.max(0, target.getTime() - Date.now())
+    const totalSeconds = Math.floor(diffMs / 1000)
+    const hours = Math.floor(totalSeconds / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    const seconds = totalSeconds % 60
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`
+    }
+    if (minutes > 0) {
+      return `${minutes}m ${seconds}s`
+    }
+    return `${seconds}s`
+  }
+
+  const describeNextRun = (task: ScheduledTask) => {
+    const nextRun = parseNextRunDate(task)
+    if (!nextRun) return "Next run time pending"
+    return `Next run ${nextRun.toLocaleString()} (${formatCountdown(nextRun)})`
+  }
+
+  const describeRepeat = (task: ScheduledTask) => {
+    if (task.repeat === "daily") {
+      return `Repeats daily at ${formatTimeLabel(task.run_at)}`
+    }
+    if (task.repeat === "weekly" || (task.days_of_week && task.days_of_week.length)) {
+      const days = (task.days_of_week || [0, 1, 2, 3, 4, 5, 6])
+        .sort((a, b) => a - b)
+        .map((d) => dayLabels[d] || `Day ${d}`)
+      return `Repeats on ${days.join(", ")} at ${formatTimeLabel(task.run_at)}`
+    }
+    return null
+  }
+
+  const describeLastRun = (task: ScheduledTask) => {
+    if (!task.last_run_at) return null
+    const statusLabel = task.last_run_status ? task.last_run_status.toLowerCase() : "completed"
+    const when = new Date(task.last_run_at).toLocaleString()
+    return `Last run ${when} (${statusLabel})`
+  }
 
   const fetchTasks = async () => {
     try {
@@ -76,29 +213,53 @@ export default function ScheduledTasksPage() {
     setRunAt("")
     setDateInput("")
     setTimeInput("")
+    setDialogRepeat("none")
+    setDialogDays([])
+    setDialogHour("09")
+    setDialogMinute("00")
+    setDialogTime("09:00")
     setDialogOpen(true)
   }
 
   const openEdit = (task: ScheduledTask) => {
     setEditingTask(task)
-    setName(task.name)
+    setName(task.name || "")
     setDelaySeconds(task.delay_seconds != null ? String(task.delay_seconds) : "")
-    setRunAt(task.run_at || "")
+    const runAtVal = task.run_at || ""
+    setRunAt(runAtVal)
+    const [h, m] = parseTimeString(runAtVal)
+    setDialogHour(h)
+    setDialogMinute(m)
+    setDialogTime(`${h}:${m}`)
+    const repeatValue = task.repeat ? task.repeat : (task.days_of_week && task.days_of_week.length ? "weekly" : "none")
+    setDialogRepeat(repeatValue || "none")
+    setDialogDays(task.days_of_week || [])
     setDialogOpen(true)
   }
 
   const saveTask = async () => {
     if (!name.trim()) return
+    const repeatVal = dialogRepeat
+    const weeklyNeedsDays = repeatVal === "weekly" && dialogDays.length === 0
+    if (repeatVal !== "none" && (!dialogHour || !dialogMinute)) return
+    if (weeklyNeedsDays) return
     setLoading(true)
     try {
       const body: any = { name }
       const delayVal = delaySeconds.trim()
       const runAtVal = runAt.trim()
-      if (dateInput && timeInput) {
+      if (repeatVal !== "none") {
+        body.repeat = repeatVal
+        body.run_at = `${dialogHour}:${dialogMinute}`
+        if (repeatVal === "weekly") {
+          body.days_of_week = dialogDays
+        }
+      } else if (dateInput && timeInput) {
         body.run_at = `${dateInput}T${timeInput}:00`
       } else {
         if (delayVal) body.delay_seconds = Number(delayVal)
         if (runAtVal) body.run_at = runAtVal
+        if (dialogDays.length > 0) body.days_of_week = []
       }
       if (editingTask) {
         const r = await fetch(`http://localhost:8000/api/scheduled-tasks/${editingTask.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
@@ -266,7 +427,7 @@ export default function ScheduledTasksPage() {
                     {/* <TimeScheduleIcon size={16} /> */}
                     Schedule Task
                   </CardTitle>
-                  <CardDescription>Create a new scheduled task by selecting date and time</CardDescription>
+                  <CardDescription>Create a new scheduled task, daily reminder, or weekly alarm</CardDescription>
                 </CardHeader>
                 <CardContent>
                    <div className="space-y-6">
@@ -278,10 +439,105 @@ export default function ScheduledTasksPage() {
                          onChange={(e) => setTaskText(e.target.value)}
                          className="rounded-full bg-transparent border border-white/40 hover:border-white/30 text-white outline-none focus placeholder:text-gray-500"
                        />
-                      <p className="text-xs text-muted-foreground">Use natural language; the agent will execute this at the scheduled time. Include timing in your description, e.g., &quot;in 20 minutes&quot; or &quot;in 50 seconds&quot;</p>
+                      <p className="text-xs text-muted-foreground">Use natural language or set a repeat schedule below.</p>
                      </div>
-
-                     {/* Natural-language timing only; no explicit date/time fields */}
+                     <div className="space-y-3">
+                       <div className="grid gap-3 sm:grid-cols-2">
+                         <div className="space-y-2">
+                           <Label className="text-sm font-normal pl-2">Repeat</Label>
+                           <Select
+                             value={repeatOption}
+                             onValueChange={(value) => {
+                               const next = value as "none" | "daily" | "weekly"
+                               setRepeatOption(next)
+                               if (next === "none") {
+                                 setRepeatTime("")
+                                 setRepeatDays([])
+                                 setRepeatHour("09")
+                                 setRepeatMinute("00")
+                               } else {
+                                 updateRepeatTime(repeatHour || "09", repeatMinute || "00")
+                               }
+                             }}
+                           >
+                             <SelectTrigger className="h-11 rounded-full bg-transparent border border-white/40 text-white">
+                               <SelectValue placeholder="One-time" />
+                             </SelectTrigger>
+                             <SelectContent className="bg-zinc-950 border border-white/30 rounded-2xl ">
+                               <SelectItem value="none">One-time</SelectItem>
+                               <SelectItem value="daily">Every day</SelectItem>
+                               <SelectItem value="weekly">Specific days</SelectItem>
+                             </SelectContent>
+                           </Select>
+                         </div>
+                         {repeatOption !== "none" && (
+                           <div className="space-y-2">
+                             <Label className="text-sm font-normal pl-2">Time of day</Label>
+                             <Input
+                               type="text"
+                               placeholder="HH:MM (e.g., 09:30)"
+                               value={repeatTime}
+                               onChange={(e) => {
+                                 const value = e.target.value
+                                 const match = value.match(/^(\d{0,2}):?(\d{0,2})/)
+                                 if (match) {
+                                   let h = match[1] || ""
+                                   let m = match[2] || ""
+                                   if (h.length === 2 && m.length === 0 && !value.includes(":")) {
+                                     m = h.slice(1)
+                                     h = h.slice(0, 1)
+                                   }
+                                   if (h && parseInt(h) > 23) h = "23"
+                                   if (m && parseInt(m) > 59) m = "59"
+                                   const hourStr = h.padStart(2, "0").slice(0, 2)
+                                   const minStr = m.padStart(2, "0").slice(0, 2)
+                                   if (hourStr.length === 2 && minStr.length === 2) {
+                                     setRepeatTime(`${hourStr}:${minStr}`)
+                                     setRepeatHour(hourStr)
+                                     setRepeatMinute(minStr)
+                                   } else if (value.includes(":") || minStr.length > 0) {
+                                     setRepeatTime(hourStr + (minStr ? `:${minStr}` : ":"))
+                                   } else {
+                                     setRepeatTime(hourStr)
+                                   }
+                                 } else if (value === "") {
+                                   setRepeatTime("")
+                                 }
+                               }}
+                               onBlur={(e) => {
+                                 const [h, m] = parseTimeString(e.target.value)
+                                 updateRepeatTime(h, m)
+                               }}
+                               className="h-11 rounded-full bg-transparent border border-white/40 hover:border-white/30 text-white outline-none focus placeholder:text-gray-500"
+                             />
+                           </div>
+                         )}
+                       </div>
+                       {repeatOption === "weekly" && (
+                         <div className="space-y-2">
+                           <Label className="text-sm font-normal pl-2">Days of week</Label>
+                           <ToggleGroup
+                             type="multiple"
+                             value={repeatDays.map((d) => String(d))}
+                             onValueChange={(values) => {
+                               const mapped = values.map((v) => Number(v)).sort((a, b) => a - b)
+                               setRepeatDays(mapped)
+                             }}
+                             className="flex justify-start flex-wrap gap-2"
+                           >
+                             {dayLabels.map((label, idx) => (
+                               <ToggleGroupItem
+                                 key={idx}
+                                 value={String(idx)}
+                                 className="rounded-full border hover:bg-white/10 hover:text-white border-white/30 bg-white/5 px-4 py-2 text-xs text-white data-[state=on]:bg-white data-[state=on]:text-black"
+                               >
+                                 {label}
+                               </ToggleGroupItem>
+                             ))}
+                           </ToggleGroup>
+                         </div>
+                       )}
+                     </div>
 
                     <div className="flex items-center justify-between pt-2">
                        <div className="text-xs text-muted-foreground"></div>
@@ -289,25 +545,53 @@ export default function ScheduledTasksPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => { setTaskText("") }}
+                          onClick={() => {
+                            setTaskText("")
+                            setRepeatOption("none")
+                            setRepeatDays([])
+                            setRepeatTime("")
+                            setRepeatHour("09")
+                            setRepeatMinute("00")
+                          }}
                           className="text-xs rounded-full border-white/30 bg-white/5 hover:bg-white/10 shadow-[0_0_12px_rgba(255,255,255,0.35)] hover:shadow-[0_0_22px_rgba(255,255,255,0.55)] ring-1 ring-white/10 hover:ring-white/30"
                         >
                           Reset
                         </Button>
                         <Button 
                           onClick={async () => {
-                             if (!taskText.trim()) return
+                            const trimmed = taskText.trim()
+                            const timeVal = repeatTime.trim()
+                            if (!trimmed) return
+                            if (repeatOption !== "none" && !timeVal) return
+                            if (repeatOption === "weekly" && repeatDays.length === 0) return
                             setLoading(true)
                             try {
-                               const body: any = { query: taskText }
-                               const r = await fetch("http://localhost:8000/api/scheduled-tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+                              const body: any = { query: trimmed }
+                              if (repeatOption !== "none") {
+                                body.run_at = timeVal
+                                body.repeat = repeatOption
+                                if (repeatOption === "weekly") {
+                                  body.days_of_week = repeatDays
+                                }
+                              }
+                              const r = await fetch("http://localhost:8000/api/scheduled-tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
                               if (r.ok) {
-                                 setTaskText("")
+                                setTaskText("")
+                                setRepeatOption("none")
+                                setRepeatDays([])
+                                setRepeatTime("")
+                                setRepeatHour("09")
+                                setRepeatMinute("00")
                                 await fetchTasks()
                               }
                             } finally { setLoading(false) }
                           }}
-                           disabled={loading || !taskText.trim()}
+                           disabled={
+                            loading ||
+                            !taskText.trim() ||
+                            (repeatOption !== "none" && (!repeatHour || !repeatMinute)) ||
+                            (repeatOption === "weekly" && repeatDays.length === 0)
+                          }
                           size="sm"
                           className="text-xs rounded-full bg-white text-black hover:bg-white/90 shadow-[0_0_14px_rgba(255,255,255,0.45)] hover:shadow-[0_0_24px_rgba(255,255,255,0.65)] ring-1 ring-white/60 hover:ring-white/80"
                         >
@@ -339,29 +623,17 @@ export default function ScheduledTasksPage() {
                                   className={`${expandedIds.has(t.id) ? 'text-sm text-white whitespace-pre-wrap break-words text-left' : 'text-sm text-white truncate text-left cursor-pointer hover:underline'}`}
                                   title="Click to expand"
                                 >
-                                  {(t as any).query || t.name}
+                                  {t.query || t.name}
                                 </button>
-                                <div className="text-xs text-white/60 truncate">
-                                  {(() => {
-                                    const now = Date.now()
-                                    if (t.run_at) {
-                                      const target = new Date(t.run_at).getTime()
-                                      const diff = Math.max(0, target - now)
-                                      const mins = Math.floor(diff / 60000)
-                                      const secs = Math.floor((diff % 60000) / 1000)
-                                      return `Executes in ${mins}m ${secs}s`
-                                    }
-                                    if (t.delay_seconds != null) {
-                                      const created = new Date(t.created_at).getTime()
-                                      const target = created + (t.delay_seconds * 1000)
-                                      const diff = Math.max(0, target - now)
-                                      const mins = Math.floor(diff / 60000)
-                                      const secs = Math.floor((diff % 60000) / 1000)
-                                      return `Executes in ${mins}m ${secs}s`
-                                    }
-                                    return "Scheduled"
-                                  })()}
-                                </div>
+                                <div className="text-xs text-white/60 truncate">{describeNextRun(t)}</div>
+                                {(() => {
+                                  const repeat = describeRepeat(t)
+                                  return repeat ? <div className="text-xs text-white/60 truncate">{repeat}</div> : null
+                                })()}
+                                {(() => {
+                                  const lastRun = describeLastRun(t)
+                                  return lastRun ? <div className="text-xs text-white/50 truncate">{lastRun}</div> : null
+                                })()}
                                 {t.last_error && <div className="text-xs text-red-400 truncate">{t.last_error}</div>}
                               </div>
                             </div>
@@ -427,8 +699,24 @@ export default function ScheduledTasksPage() {
                           <div className="flex items-center justify-between bg-black/20 border border-white/10 rounded-full px-5 py-4 w-full overflow-hidden min-h-[64px]">
                             <div className="flex items-center gap-3 min-w-0">
                               <div className="flex flex-col min-w-0 flex-1 justify-center">
-                                <div className="text-sm text-white truncate">{(t as any).query || t.name}</div>
-                                <div className="text-xs text-white/60 truncate">{t.run_at ? `At ${t.run_at}` : (t.delay_seconds != null ? `In ${t.delay_seconds}s` : "")}</div>
+                                <div className="text-sm text-white truncate">{t.query || t.name}</div>
+                                {(() => {
+                                  const repeat = describeRepeat(t)
+                                  if (repeat) {
+                                    return <div className="text-xs text-white/60 truncate">{repeat}</div>
+                                  }
+                                  if (t.run_at) {
+                                    return <div className="text-xs text-white/60 truncate">Ran at {t.run_at}</div>
+                                  }
+                                  if (t.delay_seconds != null) {
+                                    return <div className="text-xs text-white/60 truncate">Delay {t.delay_seconds}s</div>
+                                  }
+                                  return <div className="text-xs text-white/60 truncate">Scheduled</div>
+                                })()}
+                                {(() => {
+                                  const lastRun = describeLastRun(t)
+                                  return lastRun ? <div className="text-xs text-white/50 truncate">{lastRun}</div> : null
+                                })()}
                                 {t.last_error && <div className="text-xs text-red-400 truncate">{t.last_error}</div>}
                               </div>
                             </div>
@@ -491,16 +779,137 @@ export default function ScheduledTasksPage() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{editingTask ? "Edit Scheduled Task" : "New Scheduled Task"}</DialogTitle>
-              <DialogDescription>Provide an app name, then either a delay in seconds or a time like 10:00.</DialogDescription>
+              <DialogDescription>Provide a task name, then set a delay, specific time, or repeat schedule.</DialogDescription>
             </DialogHeader>
-            <div className="space-y-3">
-              <Input placeholder="Application name (e.g., calculator, chrome)" value={name} onChange={(e) => setName(e.target.value)} />
-              <Input placeholder="Delay seconds (e.g., 10)" value={delaySeconds} onChange={(e) => setDelaySeconds(e.target.value)} />
-              <Input placeholder="Run at (HH:MM or ISO 2025-11-03T10:00:00)" value={runAt} onChange={(e) => setRunAt(e.target.value)} />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-normal">Task name</Label>
+                <Input placeholder="Application name or reminder" value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label className="text-sm font-normal">Delay (seconds)</Label>
+                  <Input
+                    placeholder="Delay seconds (e.g., 10)"
+                    value={delaySeconds}
+                    onChange={(e) => setDelaySeconds(e.target.value)}
+                    disabled={dialogRepeat !== "none"}
+                  />
+                </div>
+                {dialogRepeat === "none" ? (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-normal">Run at</Label>
+                    <Input
+                      placeholder="HH:MM or ISO 2025-11-03T10:00:00"
+                      value={runAt}
+                      onChange={(e) => setRunAt(e.target.value)}
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-normal">Time of day</Label>
+                    <Input
+                      type="text"
+                      placeholder="HH:MM (e.g., 09:30)"
+                      value={dialogTime}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        const match = value.match(/^(\d{0,2}):?(\d{0,2})/)
+                        if (match) {
+                          let h = match[1] || ""
+                          let m = match[2] || ""
+                          if (h.length === 2 && m.length === 0 && !value.includes(":")) {
+                            m = h.slice(1)
+                            h = h.slice(0, 1)
+                          }
+                          if (h && parseInt(h) > 23) h = "23"
+                          if (m && parseInt(m) > 59) m = "59"
+                          const hourStr = h.padStart(2, "0").slice(0, 2)
+                          const minStr = m.padStart(2, "0").slice(0, 2)
+                          if (hourStr.length === 2 && minStr.length === 2) {
+                            setDialogTime(`${hourStr}:${minStr}`)
+                            setDialogHour(hourStr)
+                            setDialogMinute(minStr)
+                            setRunAt(`${hourStr}:${minStr}`)
+                          } else if (value.includes(":") || minStr.length > 0) {
+                            setDialogTime(hourStr + (minStr ? `:${minStr}` : ":"))
+                          } else {
+                            setDialogTime(hourStr)
+                          }
+                        } else if (value === "") {
+                          setDialogTime("")
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const [h, m] = parseTimeString(e.target.value)
+                        updateDialogTime(h, m)
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-normal">Repeat</Label>
+                <Select
+                  value={dialogRepeat}
+                  onValueChange={(value) => {
+                    const next = value as "none" | "daily" | "weekly"
+                    setDialogRepeat(next)
+                    if (next === "none") {
+                      setDialogDays([])
+                    } else {
+                      updateDialogTime(dialogHour, dialogMinute)
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="One-time" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-950 border border-white/20 rounded-2xl">
+                    <SelectItem value="none">One-time</SelectItem>
+                    <SelectItem value="daily">Every day</SelectItem>
+                    <SelectItem value="weekly">Specific days</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {dialogRepeat === "weekly" && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-normal">Days of week</Label>
+                  <ToggleGroup
+                    type="multiple"
+                    value={dialogDays.map((d) => String(d))}
+                    onValueChange={(values) => {
+                      const mapped = values.map((v) => Number(v)).sort((a, b) => a - b)
+                      setDialogDays(mapped)
+                    }}
+                    className="flex flex-wrap gap-2"
+                  >
+                    {dayLabels.map((label, idx) => (
+                      <ToggleGroupItem
+                        key={idx}
+                        value={String(idx)}
+                        className="rounded-full border border-white/30 bg-white/5 px-4 py-2 text-xs text-white data-[state=on]:bg-white data-[state=on]:text-black"
+                      >
+                        {label}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-              <Button onClick={saveTask} disabled={loading || !name.trim()}>Save</Button>
+              <Button
+                onClick={saveTask}
+                disabled={
+                  loading ||
+                  !name.trim() ||
+                  (dialogRepeat !== "none" && (!dialogHour || !dialogMinute)) ||
+                  (dialogRepeat === "weekly" && dialogDays.length === 0)
+                }
+              >
+                Save
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

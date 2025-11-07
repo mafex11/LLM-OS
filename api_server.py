@@ -112,17 +112,16 @@ async def lifespan(app: FastAPI):
     try:
         _load_scheduled_tasks()
         with _scheduled_lock:
+            pending = []
             for task in list(_scheduled_tasks.values()):
-                # Only reschedule tasks that are still pending
                 if task.status in ("scheduled", "running"):
-                    # recompute scheduled_for
-                    if task.delay_seconds is not None:
-                        task.scheduled_for = None
-                    elif task.run_at:
-                        # keep as provided
-                        task.scheduled_for = task.run_at
+                    task.status = "scheduled"
                     _scheduled_tasks[task.id] = task
-                    _schedule_timer_for_task(task)
+                    pending.append(task)
+            if pending:
+                _persist_scheduled_tasks()
+        for task in pending:
+            _schedule_timer_for_task(task)
     except Exception as e:
         logger.warning(f"Scheduled tasks reload failed: {e}")
     
@@ -346,6 +345,10 @@ class ScheduledTask(BaseModel):
     created_at: str
     scheduled_for: Optional[str] = None
     last_error: Optional[str] = None
+    repeat: Optional[str] = None  # none, daily, weekly
+    days_of_week: Optional[List[int]] = None  # 0=Monday ... 6=Sunday
+    last_run_at: Optional[str] = None
+    last_run_status: Optional[str] = None
 
 # In-memory registry and persistence for scheduled tasks
 _scheduled_tasks: Dict[str, ScheduledTask] = {}
@@ -353,10 +356,136 @@ _scheduled_timers: Dict[str, threading.Timer] = {}
 _scheduled_lock = threading.Lock()
 SCHEDULED_TASKS_FILE = os.path.join(DATA_PATH, "scheduled_tasks.json")
 
+def _normalize_iso_datetime(value: Optional[str]) -> Optional[datetime]:
+    if not value:
+        return None
+    text = value.strip()
+    if not text:
+        return None
+    try_text = text.replace("Z", "+00:00") if text.endswith("Z") else text
+    try:
+        dt = datetime.fromisoformat(try_text)
+    except ValueError:
+        return None
+    if dt.tzinfo:
+        return dt.astimezone().replace(tzinfo=None)
+    return dt
+
+
+def _is_time_only(text: str) -> bool:
+    if not text:
+        return False
+    lowered = text.strip().lower()
+    return bool(re.fullmatch(r"\d{1,2}:\d{2}(?::\d{2})?\s*(am|pm)?", lowered))
+
+
+def _parse_time_of_day_components(value: Optional[str]) -> Optional[tuple[int, int, int]]:
+    if not value:
+        return None
+    text = value.strip()
+    if not text:
+        return None
+    dt = _normalize_iso_datetime(text)
+    if dt:
+        return dt.hour, dt.minute, dt.second
+    match = re.fullmatch(r"(\d{1,2})(?::(\d{2}))?(?::(\d{2}))?\s*(am|pm)?", text.lower())
+    if not match:
+        return None
+    hour = int(match.group(1))
+    minute = int(match.group(2) or 0)
+    second = int(match.group(3) or 0)
+    period = match.group(4)
+    if period:
+        hour = hour % 12 + (12 if period == "pm" else 0)
+    if hour >= 24 or minute >= 60 or second >= 60:
+        return None
+    return hour, minute, second
+
+
+def _resolve_run_datetime(run_at: Optional[str], base: datetime, allow_rollover: bool) -> Optional[datetime]:
+    if not run_at:
+        return None
+    direct = _normalize_iso_datetime(run_at)
+    if direct:
+        if direct <= base and not allow_rollover:
+            return None
+        if direct <= base and allow_rollover:
+            # advance by whole days until future
+            delta_days = int(((base - direct).total_seconds() // 86400) + 1)
+            direct = direct + timedelta(days=max(1, delta_days))
+        return direct
+    components = _parse_time_of_day_components(run_at)
+    if not components:
+        return None
+    candidate = base.replace(
+        hour=components[0],
+        minute=components[1],
+        second=components[2],
+        microsecond=0,
+    )
+    if allow_rollover and candidate <= base:
+        candidate += timedelta(days=1)
+    if candidate <= base and not allow_rollover:
+        return None
+    return candidate
+
+
+def _should_repeat(task: ScheduledTask) -> bool:
+    repeat = (task.repeat or "").strip().lower()
+    return bool(repeat in {"daily", "weekly"} or (task.days_of_week and len(task.days_of_week) > 0))
+
+
+def _compute_next_run_datetime(task: ScheduledTask, reference: Optional[datetime] = None) -> Optional[datetime]:
+    ref = (reference or datetime.now()).replace(microsecond=0)
+    repeat = (task.repeat or "").strip().lower()
+    days = sorted({int(d) % 7 for d in (task.days_of_week or [])}) if task.days_of_week else []
+    if repeat == "daily" and not days:
+        days = list(range(7))
+    if repeat == "weekly" and not days:
+        days = list(range(7))
+    if repeat in {"daily", "weekly"} or days:
+        components = _parse_time_of_day_components(task.run_at)
+        if not components:
+            return None
+        start_date = ref.date()
+        # search up to 14 days ahead to find next valid slot
+        for offset in range(0, 14):
+            candidate_date = start_date + timedelta(days=offset)
+            if days and candidate_date.weekday() not in days:
+                continue
+            candidate = datetime.combine(candidate_date, datetime.min.time()).replace(
+                hour=components[0],
+                minute=components[1],
+                second=components[2],
+                microsecond=0,
+            )
+            if candidate <= ref:
+                continue
+            return candidate
+        return None
+    if task.delay_seconds is not None:
+        created = _normalize_iso_datetime(task.created_at) or ref
+        target = created + timedelta(seconds=int(task.delay_seconds))
+        if target <= ref:
+            return ref
+        return target
+    if task.run_at:
+        allow_roll = _is_time_only(task.run_at)
+        return _resolve_run_datetime(task.run_at, ref, allow_roll)
+    return None
+
+
 def _parse_run_at_to_delay(run_at_text: str) -> Optional[float]:
     text = (run_at_text or "").strip()
     if not text:
         return None
+    now = datetime.now().replace(microsecond=0)
+    allow_roll = _is_time_only(text)
+    dt = _resolve_run_datetime(text, now, allow_roll)
+    if not dt:
+        return None
+    return max(0.0, (dt - now).total_seconds())
+
 
 def _extract_time_from_text(text: str) -> tuple[Optional[int], Optional[str]]:
     """Extract delay_seconds or run_at from natural language like 'in 20 minutes', 'in around 50 seconds', 'at 10:30 am'.
@@ -429,80 +558,105 @@ def _load_scheduled_tasks() -> None:
 def _schedule_timer_for_task(task: ScheduledTask) -> None:
     if not agent_initialized or not agent:
         return
-    # compute delay
-    delay: Optional[float] = None
-    if task.delay_seconds is not None:
-        delay = max(0.0, float(task.delay_seconds))
-    elif task.run_at:
-        delay = _parse_run_at_to_delay(task.run_at)
-    if delay is None:
-        with _scheduled_lock:
-            t = _scheduled_tasks.get(task.id)
-            if t:
-                t.status = "failed"
-                t.last_error = "Invalid schedule time"
-                _scheduled_tasks[task.id] = t
-                _persist_scheduled_tasks()
-        return
+    now = datetime.now().replace(microsecond=0)
+    with _scheduled_lock:
+        stored = _scheduled_tasks.get(task.id)
+        if not stored:
+            return
+        next_run = _normalize_iso_datetime(stored.scheduled_for)
+        if not next_run or next_run <= now:
+            next_run = _compute_next_run_datetime(stored, reference=now)
+        if not next_run:
+            stored.status = "failed"
+            stored.last_error = "Invalid schedule time"
+            _scheduled_tasks[task.id] = stored
+            _persist_scheduled_tasks()
+            return
+        stored.scheduled_for = next_run.isoformat()
+        if stored.status not in {"running", "completed", "failed", "cancelled"}:
+            stored.status = "scheduled"
+        _scheduled_tasks[task.id] = stored
+        _persist_scheduled_tasks()
+        old_timer = _scheduled_timers.pop(task.id, None)
+    if old_timer:
+        try:
+            old_timer.cancel()
+        except Exception:
+            pass
+
+    delay = max(0.0, (next_run - now).total_seconds())
 
     def _run():
+        status_code = 0
+        response_message = ""
+        with _scheduled_lock:
+            current = _scheduled_tasks.get(task.id)
+            _scheduled_timers.pop(task.id, None)
+            if not current or current.status == "cancelled":
+                return
+            current.status = "running"
+            _scheduled_tasks[task.id] = current
+            _persist_scheduled_tasks()
         try:
-            with _scheduled_lock:
-                t = _scheduled_tasks.get(task.id)
-                if not t or t.status in ("cancelled",):
-                    return
-                t.status = "running"
-                _scheduled_tasks[task.id] = t
-                _persist_scheduled_tasks()
-            # Launch app
-            status = 0
-            response = ""
-            if task.query and task.query.strip():
+            if current.query and current.query.strip():
                 try:
-                    # Run full agent query
-                    agent.invoke(task.query)
-                    status = 0
+                    agent.invoke(current.query)
                 except Exception as e:
-                    status = 1
-                    response = str(e)
-            elif task.name:
-                app_name, response, status = agent.desktop.launch_app(task.name)
-                try:
-                    # Best-effort: ensure it comes to foreground once to avoid stale state
-                    if status == 0 and app_name:
-                        agent.desktop.switch_app(app_name)
-                except Exception:
-                    pass
+                    status_code = 1
+                    response_message = str(e)
+            elif current.name:
+                app_name, response_message, launch_status = agent.desktop.launch_app(current.name)
+                if launch_status != 0:
+                    status_code = launch_status or 1
+                else:
+                    try:
+                        if app_name:
+                            agent.desktop.switch_app(app_name)
+                    except Exception:
+                        pass
             else:
-                status = 1
-                response = "Task missing name or query"
-            with _scheduled_lock:
-                t = _scheduled_tasks.get(task.id)
-                if t:
-                    t.status = "completed" if status == 0 else "failed"
-                    if status != 0:
-                        t.last_error = response
-                    _scheduled_tasks[task.id] = t
-                    _persist_scheduled_tasks()
+                status_code = 1
+                response_message = "Task missing name or query"
         except Exception as e:
+            status_code = 1
+            response_message = str(e)
+        finally:
+            finished_at = datetime.now().replace(microsecond=0)
+            reschedule = False
+            task_snapshot: Optional[ScheduledTask] = None
             with _scheduled_lock:
-                t = _scheduled_tasks.get(task.id)
-                if t:
-                    t.status = "failed"
-                    t.last_error = str(e)
-                    _scheduled_tasks[task.id] = t
+                current = _scheduled_tasks.get(task.id)
+                if not current:
+                    return
+                current.last_run_at = finished_at.isoformat()
+                if status_code == 0:
+                    current.last_error = None
+                    current.last_run_status = "completed"
+                else:
+                    current.last_error = response_message
+                    current.last_run_status = "failed"
+                if current.status == "cancelled":
+                    _scheduled_tasks[task.id] = current
                     _persist_scheduled_tasks()
+                    return
+                if _should_repeat(current):
+                    current.status = "scheduled"
+                    current.scheduled_for = None
+                    _scheduled_tasks[task.id] = current
+                    _persist_scheduled_tasks()
+                    reschedule = True
+                    task_snapshot = current
+                else:
+                    current.status = "completed" if status_code == 0 else "failed"
+                    current.scheduled_for = None
+                    _scheduled_tasks[task.id] = current
+                    _persist_scheduled_tasks()
+            if reschedule and task_snapshot:
+                _schedule_timer_for_task(task_snapshot)
 
     timer = threading.Timer(delay, _run)
     timer.daemon = True
     with _scheduled_lock:
-        # cancel existing
-        old = _scheduled_timers.pop(task.id, None)
-        if old:
-            try:
-                old.cancel()
-            except Exception:
-                pass
         _scheduled_timers[task.id] = timer
     timer.start()
 
@@ -1735,6 +1889,8 @@ class CreateTaskRequest(BaseModel):
     query: Optional[str] = None
     delay_seconds: Optional[int] = None
     run_at: Optional[str] = None
+    repeat: Optional[str] = None
+    days_of_week: Optional[List[int]] = None
 
 class UpdateTaskRequest(BaseModel):
     name: Optional[str] = None
@@ -1742,6 +1898,8 @@ class UpdateTaskRequest(BaseModel):
     delay_seconds: Optional[int] = None
     run_at: Optional[str] = None
     status: Optional[str] = None  # allow cancel
+    repeat: Optional[str] = None
+    days_of_week: Optional[List[int]] = None
 
 @app.get("/api/scheduled-tasks", response_model=List[ScheduledTask])
 async def list_scheduled_tasks():
@@ -1754,6 +1912,25 @@ async def create_scheduled_task(req: CreateTaskRequest):
         raise HTTPException(status_code=503, detail="Agent not initialized")
     delay_seconds = req.delay_seconds
     run_at = (req.run_at or '').strip() if req.run_at else None
+    repeat_value = (req.repeat or '').strip().lower() if req.repeat else None
+    if repeat_value and repeat_value not in {"daily", "weekly"}:
+        raise HTTPException(status_code=400, detail="Repeat must be 'daily' or 'weekly'")
+    if repeat_value and delay_seconds is not None:
+        raise HTTPException(status_code=400, detail="Repeat schedules use run_at, not delay_seconds")
+    days_normalized: Optional[List[int]] = None
+    if req.days_of_week is not None:
+        try:
+            cleaned = sorted({int(d) % 7 for d in req.days_of_week})
+        except Exception:
+            raise HTTPException(status_code=400, detail="days_of_week must be integers between 0 and 6")
+        if any(d < 0 or d > 6 for d in cleaned):
+            raise HTTPException(status_code=400, detail="days_of_week entries must be between 0 (Monday) and 6 (Sunday)")
+        days_normalized = cleaned or None
+    if repeat_value:
+        if not run_at:
+            raise HTTPException(status_code=400, detail="Repeat schedules require run_at")
+        if repeat_value == "weekly" and not days_normalized:
+            raise HTTPException(status_code=400, detail="Weekly repeat requires days_of_week")
     # If no explicit scheduling provided, try to parse from query
     if (delay_seconds is None) and (not run_at or not run_at.strip()):
         if req.query and req.query.strip():
@@ -1764,11 +1941,10 @@ async def create_scheduled_task(req: CreateTaskRequest):
             raise HTTPException(status_code=400, detail="Provide delay_seconds/run_at or include timing in the query (e.g., 'in 20 minutes' or 'at 10:30 am')")
     if (not req.name or not req.name.strip()) and (not req.query or not req.query.strip()):
         raise HTTPException(status_code=400, detail="Provide a name or a query for the task")
-    # compute scheduled_for for display
-    scheduled_for = None
-    if run_at and run_at.strip():
-        scheduled_for = run_at.strip()
-    created = datetime.now().isoformat()
+    created_dt = datetime.now().replace(microsecond=0)
+    created = created_dt.isoformat()
+    if repeat_value:
+        delay_seconds = None
     task_id = str(uuid.uuid4())
     task = ScheduledTask(
         id=task_id,
@@ -1778,46 +1954,114 @@ async def create_scheduled_task(req: CreateTaskRequest):
         run_at=run_at,
         status="scheduled",
         created_at=created,
-        scheduled_for=scheduled_for
+        scheduled_for=None,
+        repeat=repeat_value,
+        days_of_week=days_normalized,
+        last_run_at=None,
+        last_run_status=None
     )
+    next_run = _compute_next_run_datetime(task)
+    if not next_run:
+        raise HTTPException(status_code=400, detail="Could not determine next run time from provided schedule")
+    task.scheduled_for = next_run.isoformat()
     with _scheduled_lock:
         _scheduled_tasks[task_id] = task
         _persist_scheduled_tasks()
     _schedule_timer_for_task(task)
-    return task
+    with _scheduled_lock:
+        return _scheduled_tasks[task_id]
 
 @app.patch("/api/scheduled-tasks/{task_id}", response_model=ScheduledTask)
 async def update_scheduled_task(task_id: str, req: UpdateTaskRequest):
     if not agent_initialized or not agent:
         raise HTTPException(status_code=503, detail="Agent not initialized")
     with _scheduled_lock:
-        task = _scheduled_tasks.get(task_id)
-        if not task:
-            raise HTTPException(status_code=404, detail="Task not found")
-        if req.name is not None:
-            task.name = req.name
-        if req.query is not None:
-            task.query = req.query
-        if req.delay_seconds is not None or (req.run_at is not None):
+        existing = _scheduled_tasks.get(task_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    task_data = existing.model_dump()
+    task = ScheduledTask(**task_data)
+    reschedule_needed = False
+    cancel_task = False
+
+    if req.name is not None:
+        task.name = req.name.strip() if req.name else None
+    if req.query is not None:
+        task.query = req.query.strip() if req.query else None
+
+    if req.repeat is not None:
+        repeat_value = (req.repeat or '').strip().lower()
+        if repeat_value and repeat_value not in {"daily", "weekly"}:
+            raise HTTPException(status_code=400, detail="Repeat must be 'daily' or 'weekly'")
+        task.repeat = repeat_value or None
+        if task.repeat:
+            task.delay_seconds = None
+        else:
+            task.days_of_week = None
+        reschedule_needed = True
+
+    if req.days_of_week is not None:
+        if req.days_of_week:
+            try:
+                cleaned = sorted({int(d) % 7 for d in req.days_of_week})
+            except Exception:
+                raise HTTPException(status_code=400, detail="days_of_week must contain integers")
+            if any(d < 0 or d > 6 for d in cleaned):
+                raise HTTPException(status_code=400, detail="days_of_week entries must be between 0 and 6")
+            task.days_of_week = cleaned
+        else:
+            task.days_of_week = None
+        reschedule_needed = True
+
+    if req.delay_seconds is not None or (req.run_at is not None):
+        if task.repeat and req.delay_seconds is not None:
+            raise HTTPException(status_code=400, detail="Repeat schedules cannot use delay_seconds")
+        if req.delay_seconds is not None:
             task.delay_seconds = req.delay_seconds
+        if req.run_at is not None:
             task.run_at = req.run_at.strip() if req.run_at else None
-            task.status = "scheduled"
-        if req.status == "cancelled":
-            task.status = "cancelled"
-            timer = _scheduled_timers.pop(task_id, None)
-            if timer:
-                try:
-                    timer.cancel()
-                except Exception:
-                    pass
-        # recompute scheduled_for
-        task.scheduled_for = task.run_at if task.run_at else None
+        reschedule_needed = True
+
+    if req.status == "cancelled":
+        cancel_task = True
+        task.status = "cancelled"
+        task.scheduled_for = None
+    elif reschedule_needed:
+        task.status = "scheduled"
+
+    if task.repeat == "weekly" and (not task.days_of_week or len(task.days_of_week) == 0):
+        raise HTTPException(status_code=400, detail="Weekly repeat requires days_of_week")
+    if task.repeat and not (task.run_at and task.run_at.strip()):
+        raise HTTPException(status_code=400, detail="Repeat schedules require run_at")
+
+    if not cancel_task and reschedule_needed:
+        next_run = _compute_next_run_datetime(task)
+        if not next_run:
+            raise HTTPException(status_code=400, detail="Could not determine next run time from provided schedule")
+        task.scheduled_for = next_run.isoformat()
+    elif not cancel_task and task.scheduled_for:
+        parsed = _normalize_iso_datetime(task.scheduled_for)
+        if parsed:
+            task.scheduled_for = parsed.isoformat()
+
+    timer_to_cancel = None
+    with _scheduled_lock:
         _scheduled_tasks[task_id] = task
         _persist_scheduled_tasks()
-    # if re-scheduled and not cancelled, set a new timer
-    if task.status == "scheduled":
+        if cancel_task:
+            timer_to_cancel = _scheduled_timers.pop(task_id, None)
+    if timer_to_cancel:
+        try:
+            timer_to_cancel.cancel()
+        except Exception:
+            pass
+
+    if not cancel_task and task.status == "scheduled":
         _schedule_timer_for_task(task)
-    return task
+
+    with _scheduled_lock:
+        return _scheduled_tasks[task_id]
 
 @app.delete("/api/scheduled-tasks/{task_id}")
 async def delete_scheduled_task(task_id: str):
@@ -1843,25 +2087,30 @@ async def repeat_scheduled_task(task_id: str):
         if not original:
             raise HTTPException(status_code=404, detail="Task not found")
         # Determine next schedule: if run_at present, reuse same time (advance to next day if needed); else reuse delay_seconds
-        new_run_at = original.run_at
-        new_delay = original.delay_seconds
-        if original.run_at:
-            # if time today has passed, parser in _parse_run_at_to_delay already advances; we keep same string
-            pass
+        created = datetime.now().replace(microsecond=0)
         new_task = ScheduledTask(
             id=str(uuid.uuid4()),
             name=original.name,
             query=original.query,
-            delay_seconds=new_delay,
-            run_at=new_run_at,
+            delay_seconds=original.delay_seconds if not original.repeat else None,
+            run_at=original.run_at,
             status="scheduled",
-            created_at=datetime.now().isoformat(),
-            scheduled_for=new_run_at
+            created_at=created.isoformat(),
+            scheduled_for=None,
+            repeat=original.repeat,
+            days_of_week=original.days_of_week,
+            last_run_at=None,
+            last_run_status=None
         )
+        next_run = _compute_next_run_datetime(new_task)
+        if not next_run:
+            raise HTTPException(status_code=400, detail="Could not determine next run time for repeat task")
+        new_task.scheduled_for = next_run.isoformat()
         _scheduled_tasks[new_task.id] = new_task
         _persist_scheduled_tasks()
     _schedule_timer_for_task(new_task)
-    return new_task
+    with _scheduled_lock:
+        return _scheduled_tasks[new_task.id]
 
 if __name__ == "__main__":
     import uvicorn

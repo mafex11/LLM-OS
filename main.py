@@ -170,7 +170,7 @@ def display_running_programs(programs):
 
 def run_voice_mode(agent):
     """Run agent in continuous voice listening mode with async task execution and trigger word detection"""
-    print("\nVoice Mode Activated with Trigger Word Detection")
+    print("Voice Mode Activated with Trigger Word Detection")
     print("=" * 50)
     
     # Initialize STT service with trigger word
@@ -187,11 +187,14 @@ def run_voice_mode(agent):
     
     print("STT Status: Enabled and ready")
     print("STT Service initialized with balanced latency mode")
-    print("\n🎤 Voice Commands with Trigger Word:")
+    print("\nVoice Commands with Trigger Word:")
     print("  - Say 'yuki' followed by your command (e.g., 'yuki, open my calendar')")
     print("  - Only commands preceded by 'yuki' will be processed")
     print("  - Say 'yuki' alone to activate command mode, then speak your command")
-    print("  - Say 'switch to text' to switch to keyboard input")
+    print("  - IMPORTANT: System continues listening during task execution")
+    print("  - Say 'yuki stop' at any time to stop the current task")
+    print("  - You can ask questions mid-task - task will pause, answer, then resume")
+    print("  - Say 'switch to text' or 'turn off voice mode' to switch to keyboard input")
     print("  - Say 'clear conversation' to clear history")
     print("  - Say 'quit' or 'exit' to exit")
     print("=" * 50)
@@ -210,10 +213,20 @@ def run_voice_mode(agent):
             with task_lock:
                 task_running = True
             
-            print(f"\n🤖 Working on: {task_query[:50]}{'...' if len(task_query) > 50 else ''}")
+            print(f"\nWorking on: {task_query[:50]}{'...' if len(task_query) > 50 else ''}")
+            
+            # Reset stop event at start of new task
+            agent._stop_event.clear()
             
             # Execute the agent task
+            # This will raise RuntimeError if stop is requested at any checkpoint
             response = agent.invoke(task_query)
+            
+            # Check if task was stopped (after invoke returns)
+            if agent.is_stopped():
+                print("\n[STOPPED] Task was stopped by user.")
+                agent.resume()  # Clear any pause state
+                return
             
             # Handle response
             try:
@@ -230,7 +243,7 @@ def run_voice_mode(agent):
                     if agent.tts_service and agent.tts_service.enabled:
                         agent.tts_service.speak_async(question)
                     
-                    print("\n🎤 Listening for your answer...")
+                    print("\nListening for your answer...")
                 # Response is already printed by agent service
                 
             except Exception:
@@ -238,18 +251,35 @@ def run_voice_mode(agent):
                 safe = safe.encode('ascii', errors='ignore').decode('ascii')
                 print(f"\n{safe}")
                 
+        except RuntimeError as e:
+            if "stopped by user" in str(e).lower() or "execution stopped" in str(e).lower():
+                print("\n[STOPPED] Task stopped successfully by user.")
+            else:
+                # Re-raise if it's a different RuntimeError
+                raise
+        except Exception as e:
+            # Handle any other exceptions
+            if "stopped" in str(e).lower():
+                print(f"\n[STOPPED] Task interrupted: {e}")
+            else:
+                raise
         finally:
             # Mark task as finished and ensure agent is resumed
             agent.resume()
+            # Clear pause state
             with task_lock:
                 task_running = False
+            # Reset stop event for next task (but only if we're not stopping)
+            if not agent.is_stopped():
+                agent._stop_event.clear()
             try:
                 # Refresh desktop state to avoid stale UI after task actions
                 agent.desktop.get_state(use_vision=False)
             except Exception:
                 pass
-            print("\n✅ Task completed!")
-            print("🎤 Listening for your next command...")
+            if not agent.is_stopped():
+                print("\nTask completed!")
+            print("Listening for your next command...")
             sys.stdout.flush()
             sys.stderr.flush()
     
@@ -268,7 +298,7 @@ def run_voice_mode(agent):
             answer_text = getattr(result, 'content', None) or str(result)
             
             # Print the answer
-            print(f"\n💬 {answer_text}\n")
+            print(f"\n{answer_text}\n")
             
             # Speak the answer if TTS is enabled
             if agent.tts_service and agent.tts_service.enabled:
@@ -279,30 +309,88 @@ def run_voice_mode(agent):
             print(f"\n{answer_text}\n")
     
     def on_transcription(transcript: str):
-        """Callback when transcription is received (only triggered commands after 'yuki')"""
+        """
+        Callback when transcription is received (only triggered commands after 'yuki')
+        This callback is called from the STT service thread and can be invoked
+        even while a task is running, allowing commands like 'yuki stop' to interrupt tasks.
+        """
         nonlocal switch_to_text, task_thread
         
         # Check if we're waiting for a command after trigger word detection
         if stt_service.is_waiting_for_command():
-            print(f"\n🎤 Command received: {transcript}")
-            print("🎤 Listening for your next command...")
+            print(f"\nCommand received: {transcript}")
+            print("Listening for your next command...")
         else:
-            print(f"\n🎤 Trigger word detected, command received: {transcript}")
+            print(f"\nTrigger word detected, command received: {transcript}")
         
         # Log STT input
         agent_logger.log_stt(transcript)
         
+        # Normalize transcript for command matching
+        transcript_lower = transcript.strip().lower()
+        
+        # IMPORTANT: Process commands immediately and return quickly
+        # so the STT service can continue listening for more commands
+        
         # Check for mode switch command
-        if 'switch to text' in transcript.lower() or 'text mode' in transcript.lower():
+        if any(phrase in transcript_lower for phrase in [
+            'switch to text', 
+            'text mode', 
+            'turn off voice mode',
+            'turn off voice',
+            'disable voice mode',
+            'exit voice mode'
+        ]):
             switch_to_text = True
             stt_service.stop_listening()
-            print("\n⌨️ Switching to text input mode...")
+            print("\nSwitching to text input mode...")
             return
         
-        query_lower = transcript.strip().lower()
+        # Check for task stop command first (before quit/exit handling)
+        # Handle variations: "stop", "yuki stop", "yuki, stop", etc.
+        # The STT service should extract just "stop" after "yuki", but handle both cases
+        is_stop_command = False
+        if transcript_lower == 'stop':
+            is_stop_command = True
+        elif 'stop' in transcript_lower:
+            # Check if it's a stop command (not "stop speaking" or similar)
+            words = transcript_lower.split()
+            if words[-1] == 'stop' or (len(words) == 2 and words[0] in {'yuki', 'hey', 'hi'} and words[1] == 'stop'):
+                is_stop_command = True
         
-        # Handle special commands
-        if query_lower in ['quit', 'exit', 'stop', 'goodbye']:
+        if is_stop_command:
+            # Check task state quickly with minimal lock time
+            with task_lock:
+                is_running = task_running
+            
+            if is_running:
+                print(f"\n[STOP COMMAND DETECTED] Stopping current task...")
+                # Stop the agent execution - this sets the stop event
+                # This is a fast, non-blocking operation that sets a flag
+                # The agent will check this at the next checkpoint and raise RuntimeError
+                agent.stop()
+                
+                # Clear any queued mid-query items (quick operation)
+                while not mid_query_queue.empty():
+                    try:
+                        mid_query_queue.get_nowait()
+                        mid_query_queue.task_done()
+                    except queue.Empty:
+                        break
+                
+                # Note: Don't reset task_running here - let the thread handle it
+                # The thread will catch the RuntimeError and set task_running = False in finally
+                print("Stop signal sent. Task will stop at next checkpoint...")
+                print("Still listening for commands...")
+            else:
+                print("No task is currently running.")
+                print("Listening for your next command...")
+            
+            # Return immediately so STT service can continue listening
+            return
+        
+        # Handle special commands (use transcript_lower, not query_lower)
+        if transcript_lower in ['quit', 'exit', 'goodbye']:
             print("Goodbye!")
             stt_service.stop_listening()
             try:
@@ -312,27 +400,27 @@ def run_voice_mode(agent):
             import sys
             sys.exit(0)
         
-        elif query_lower == 'clear conversation':
+        elif transcript_lower == 'clear conversation':
             agent.clear_conversation()
             print("Conversation history cleared!")
-            print("🎤 Listening for your next command...")
+            print("Listening for your next command...")
             return
         
-        elif query_lower == 'programs':
+        elif transcript_lower == 'programs':
             print("Refreshing running programs...")
             programs = get_running_programs()
             agent.running_programs = programs
             display_running_programs(programs)
-            print("🎤 Listening for your next command...")
+            print("Listening for your next command...")
             return
         
-        elif 'stop speaking' in query_lower or 'be quiet' in query_lower:
+        elif 'stop speaking' in transcript_lower or 'be quiet' in transcript_lower:
             if agent.is_speaking():
                 agent.stop_speaking()
                 print("Stopped speaking.")
             else:
                 print("Agent is not currently speaking.")
-            print("🎤 Listening for your next command...")
+            print("Listening for your next command...")
             return
         
         # Decide how to handle the query based on task state
@@ -341,7 +429,8 @@ def run_voice_mode(agent):
         
         if is_running:
             # Task is running - pause, answer, resume
-            print("⏸️  Pausing current task to answer your question...")
+            # This allows mid-task queries while the task is executing
+            print("Pausing current task to answer your question...")
             mid_query_queue.put(transcript)
             agent.pause()
             
@@ -351,13 +440,16 @@ def run_voice_mode(agent):
                 answer_mid_query(q)
                 mid_query_queue.task_done()
             
-            # Auto-resume
-            print("▶️  Resuming original task...")
-            agent.resume()
+            # Auto-resume only if task wasn't stopped
+            if not agent.is_stopped():
+                print("Resuming original task...")
+                agent.resume()
+            else:
+                print("Task was stopped, not resuming.")
         else:
             # No task running - start new task in background
             if task_thread and task_thread.is_alive():
-                print("⚠️  Previous task still finishing up, please wait...")
+                print("Previous task still finishing up, please wait...")
                 return
             
             task_thread = threading.Thread(target=run_task_async, args=(transcript,), daemon=True)
@@ -367,19 +459,19 @@ def run_voice_mode(agent):
     stt_service.on_transcription = on_transcription
     
     # Start listening
-    print("\n🎤 Starting continuous listening...")
+    print("\nStarting continuous listening...")
     if not stt_service.start_listening():
         print("ERROR: Failed to start listening!")
         return False
     
-    print("🎤 Listening for your command...")
+    print("Listening for your command...")
     
     # Keep listening until user switches to text mode
     try:
         while not switch_to_text:
             # Check if we're waiting for a command after trigger word detection
             if stt_service.is_waiting_for_command():
-                print("\n🎤 Waiting for your command... (say 'yuki' to reset)")
+                print("\nWaiting for your command... (say 'yuki' to reset)")
                 # Wait a bit longer when waiting for command
                 time.sleep(1.0)
             else:
@@ -390,7 +482,7 @@ def run_voice_mode(agent):
     
     # Wait for any running task to complete before switching modes
     if task_thread and task_thread.is_alive():
-        print("⏳ Waiting for current task to complete...")
+        print("Waiting for current task to complete...")
         task_thread.join(timeout=5.0)
     
     return True
@@ -485,10 +577,11 @@ def main():
     
     print("\nCommands:")
     print("  - Type your query to interact with the agent")
-    print("  - 💡 NEW: Tasks run in background - you can ask questions anytime!")
+    print("  - NEW: Tasks run in background - you can ask questions anytime!")
     print("  - Mid-task queries will pause, answer, then auto-resume")
     if stt_available:
         print("  - Type 'voice' or 'switch to voice' to enable voice control")
+    print("  - Type 'stop' to stop the current task")
     print("  - Type 'clear' to clear conversation history")
     print("  - Type 'tts on/off' to enable/disable text-to-speech")
     print("  - Type 'stop speaking' to stop current speech")
@@ -514,8 +607,18 @@ def main():
             with task_lock:
                 task_running = True
             
+            # Reset stop event at start of new task
+            agent._stop_event.clear()
+            
             # Execute the agent task
+            # This will raise RuntimeError if stop is requested at any checkpoint
             response = agent.invoke(task_query)
+            
+            # Check if task was stopped (after invoke returns)
+            if agent.is_stopped():
+                print("\n[STOPPED] Task was stopped by user.")
+                agent.resume()  # Clear any pause state
+                return
             
             # Handle response
             try:
@@ -538,17 +641,34 @@ def main():
                 safe = safe.encode('ascii', errors='ignore').decode('ascii')
                 print(f"\n{safe}")
                 
+        except RuntimeError as e:
+            if "stopped by user" in str(e).lower() or "execution stopped" in str(e).lower():
+                print("\n[STOPPED] Task stopped successfully by user.")
+            else:
+                # Re-raise if it's a different RuntimeError
+                raise
+        except Exception as e:
+            # Handle any other exceptions
+            if "stopped" in str(e).lower():
+                print(f"\n[STOPPED] Task interrupted: {e}")
+            else:
+                raise
         finally:
             # Mark task as finished and ensure agent is resumed
             agent.resume()
+            # Clear pause state
             with task_lock:
                 task_running = False
+            # Reset stop event for next task (but only if we're not stopping)
+            if not agent.is_stopped():
+                agent._stop_event.clear()
             try:
                 # Refresh desktop state to avoid stale UI after task actions
                 agent.desktop.get_state(use_vision=False)
             except Exception:
                 pass
-            print()
+            if not agent.is_stopped():
+                print()
             show_ready_indicator()
             sys.stdout.flush()
             sys.stderr.flush()
@@ -606,6 +726,28 @@ def main():
                 agent.clear_conversation()
                 print("Conversation history cleared!")
                 continue
+            elif query.lower() == 'stop':
+                with task_lock:
+                    is_running = task_running
+                
+                if is_running:
+                    print("[STOP COMMAND DETECTED] Stopping current task...")
+                    # Stop the agent execution - this sets the stop event
+                    # The agent will check this at the next checkpoint and raise RuntimeError
+                    agent.stop()
+                    # Clear any queued mid-query items
+                    while not mid_query_queue.empty():
+                        try:
+                            mid_query_queue.get_nowait()
+                            mid_query_queue.task_done()
+                        except queue.Empty:
+                            break
+                    # Note: Don't reset task_running here - let the thread handle it
+                    # The thread will catch the RuntimeError and set task_running = False in finally
+                    print("Stop signal sent. Task will stop at next checkpoint...")
+                else:
+                    print("No task is currently running.")
+                continue
             elif query.lower() == 'speed on':
                 agent.desktop.cache_timeout = 1.0  # More aggressive caching
                 print("Speed optimizations enabled!")
@@ -625,11 +767,12 @@ def main():
                 print("• Scrolling and navigating")
                 print("• Taking screenshots")
                 print("• Running PowerShell commands")
-                print("\n💡 Mid-Task Interruption:")
+                print("\nMid-Task Interruption:")
                 print("• Tasks run in the background automatically")
                 print("• You can ask questions anytime - even during task execution!")
                 print("• Your question pauses the task, gets answered, then auto-resumes")
                 print("• Example: While 'open 10 notepad windows' is running, ask 'what's the weather?'")
+                print("• Type 'stop' (or say 'yuki stop' in voice mode) to stop the current task")
                 print("\nThe agent remembers our conversation, so you can ask follow-up questions!")
                 print("Try: 'Open notepad' then 'Type hello world'")
                 print("\nMemory Commands:")
@@ -643,7 +786,7 @@ def main():
                 if is_stt_available():
                     print("\nVoice Control:")
                     print("• 'voice' or 'switch to voice' - Enable voice control mode")
-                    print("• Say 'switch to text' when in voice mode to return to typing")
+                    print("• Say 'switch to text' or 'turn off voice mode' when in voice mode to return to typing")
                     print("• Start with 'python main.py --voice' for voice-first mode")
                     print("• Voice mode also supports mid-task interruption!")
                 print("\nSystem Commands:")
@@ -757,7 +900,7 @@ def main():
             
             if is_running:
                 # Task is running - pause, answer, resume
-                print("\n⏸️  Pausing current task to answer your question...")
+                print("\n⏸Pausing current task to answer your question...")
                 mid_query_queue.put(query)
                 agent.pause()
                 
@@ -768,7 +911,7 @@ def main():
                     mid_query_queue.task_done()
                 
                 # Auto-resume
-                print("\n▶️  Resuming original task...\n")
+                print("\n▶Resuming original task...\n")
                 agent.resume()
                 show_ready_indicator()
                 sys.stdout.flush()
@@ -777,12 +920,12 @@ def main():
                 # No task running - start new task in background
                 print()  # Add spacing
                 if task_thread and task_thread.is_alive():
-                    print("⚠️  Previous task still finishing up, please wait...")
+                    print("Previous task still finishing up, please wait...")
                     continue
                 
                 task_thread = threading.Thread(target=run_task_async_text, args=(query,), daemon=True)
                 task_thread.start()
-                print("🤖 Working on it in the background. You can type questions anytime.")
+                print("Working on it in the background. You can type questions anytime.")
             
         except KeyboardInterrupt:
             print("\n\nGoodbye!")

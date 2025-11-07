@@ -32,7 +32,7 @@ class TTSService:
     """
     
     def __init__(self, api_key: Optional[str] = None, voice_id: str = "21m00Tcm4TlvDq8ikWAM", 
-                 model_id: str = "eleven_monolingual_v1", enable_tts: bool = True):
+                 model_id: str = "eleven_turbo_v2", enable_tts: bool = True):
         """
         Initialize TTS service
         
