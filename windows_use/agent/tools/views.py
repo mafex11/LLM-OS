@@ -73,3 +73,13 @@ class Schedule(SharedBaseModel):
     name:str=Field(...,description="The application name to launch from Start menu (e.g., 'calculator', 'chrome').",examples=["calculator","chrome"]) 
     delay_seconds:int|None=Field(default=None,description="How many seconds from now to run. Use this for phrases like 'in 10 seconds'.")
     run_at:str|None=Field(default=None,description="Absolute local time to run, accepts HH:MM (24h) or ISO-8601 like '2025-11-03T10:00:00'. For phrases like 'at 10 am'.")
+
+class Activity(SharedBaseModel):
+    query:str=Field(...,description="The user's question about their activity, productivity, or focus. Examples: 'How focused was I today?', 'Did I do well?', 'What apps did I use most?', 'How much time did I spend on work?'",examples=["How focused was I today?","Did I do well?","What apps did I use the most today?"])
+    date:str|None=Field(default=None,description="Specific date to query (YYYY-MM-DD format). If not provided, defaults to today.",examples=["2025-01-15"])
+
+class Timeline(SharedBaseModel):
+    query:str=Field(...,description="The user's question about what they were doing at a specific time. Examples: 'What was I doing at 4pm?', 'What did I do between 2pm and 5pm?', 'How did I do today?', 'What was I working on this afternoon?'",examples=["What was I doing at 4pm?","What did I do between 2pm and 5pm?","How did I do today?"])
+    date:str|None=Field(default=None,description="Specific date to query (YYYY-MM-DD format). If not provided, defaults to today.",examples=["2025-01-15"])
+    start_time:str|None=Field(default=None,description="Start time in HH:MM format (24-hour). Extract from query if user mentions specific times like '4pm', '16:00', '4-6pm', etc.",examples=["16:00","14:00"])
+    end_time:str|None=Field(default=None,description="End time in HH:MM format (24-hour). Extract from query if user mentions time ranges like '4-6pm', 'between 2pm and 5pm', etc.",examples=["18:00","17:00"])

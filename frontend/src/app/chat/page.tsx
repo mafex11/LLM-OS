@@ -29,7 +29,8 @@ import {
   Home01Icon,
   Cancel01Icon,
   AiBrain01Icon,
-  TimeScheduleIcon
+  TimeScheduleIcon,
+  ComputerIcon
 } from "hugeicons-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -617,10 +618,12 @@ function ChatContent() {
                 <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push('/chat')}>
                   <MessageMultiple02Icon size={16} />
                 </Button>
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push("/activity")}>
+                  <ComputerIcon size={16} />
+                </Button>
                 <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push("/scheduled")}>
                   <TimeScheduleIcon size={16} />
                 </Button>
-                
                 <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push("/settings")}>
                   <Settings01Icon size={16} />
                 </Button>
@@ -669,11 +672,14 @@ function ChatContent() {
               <MessageMultiple02Icon size={16} className="transition-all duration-200 group-hover:rotate-[-10deg] group-hover:drop-shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
               Chat
             </Button>
+            <Button variant="ghost" className="group w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/activity")}>
+              <ComputerIcon size={16} className="transition-all duration-200 group-hover:rotate-[-10deg] group-hover:drop-shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
+              Activity
+            </Button>
             <Button variant="ghost" className="group w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/scheduled")}>
               <TimeScheduleIcon size={16} className="transition-all duration-200 group-hover:rotate-[360deg] group-hover:drop-shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
               Schedule Task
             </Button>
-            
             <Button variant="ghost" className="group w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/settings")}>
               <Settings01Icon size={16} className="transition-all duration-200 group-hover:rotate-[180deg] group-hover:drop-shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
               Settings

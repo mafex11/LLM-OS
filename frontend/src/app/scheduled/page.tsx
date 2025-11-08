@@ -26,7 +26,8 @@ import {
   Tick02Icon,
   ArrowRight02Icon,
   TimeScheduleIcon,
-  MessageMultiple02Icon
+  MessageMultiple02Icon,
+  ComputerIcon
 } from "hugeicons-react"
 import { motion } from "framer-motion"
 
@@ -317,10 +318,12 @@ export default function ScheduledTasksPage() {
                 <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push('/chat')}>
                   <MessageMultiple02Icon size={16} />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push("/scheduled")}>
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push("/activity")}>
+                  <ComputerIcon size={16} />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5 bg-white/10" onClick={() => router.push("/scheduled")}>
                   <TimeScheduleIcon size={16} />
                 </Button>
-                
                 <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5" onClick={() => router.push("/settings")}>
                   <Settings01Icon size={16} />
                 </Button>
@@ -387,7 +390,11 @@ export default function ScheduledTasksPage() {
                 <MessageMultiple02Icon size={16} className="transition-all duration-200 group-hover:rotate-[-10deg] group-hover:drop-shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
                 Chat
               </Button>
-              <Button variant="ghost" className="group w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/scheduled")}>
+              <Button variant="ghost" className="group w-full justify-start gap-2 hover:bg-white/5" onClick={() => router.push("/activity")}>
+                <ComputerIcon size={16} className="transition-all duration-200 group-hover:rotate-[-10deg] group-hover:drop-shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
+                Activity
+              </Button>
+              <Button variant="ghost" className="group w-full justify-start gap-2 hover:bg-white/5 bg-white/10" onClick={() => router.push("/scheduled")}>
                 <TimeScheduleIcon size={16} className="transition-all duration-200 group-hover:rotate-[360deg] group-hover:drop-shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
                 Schedule Task
               </Button>

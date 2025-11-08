@@ -32,7 +32,7 @@ frontend/.turbo/
 frontend/.vercel/
 frontend/.svelte-kit/
 /desktop
-
+/data
 # Logs
 *.log
 logs/

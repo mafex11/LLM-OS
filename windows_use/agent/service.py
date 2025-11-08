@@ -64,10 +64,11 @@ class Agent:
     def __init__(self,instructions:list[str]=[],additional_tools:list[BaseTool]=[],browser:Literal['edge','chrome','firefox']='edge', llm: BaseChatModel=None,consecutive_failures:int=3,max_steps:int=20,use_vision:bool=False,enable_conversation:bool=True,literal_mode:bool=True,enable_tts:bool=False,tts_voice_id:str="21m00Tcm4TlvDq8ikWAM"):
         self.name='Yuki AI'
         self.description='An agent that can interact with GUI elements on Windows' 
+        from windows_use.agent.tools.service import activity_tool, timeline_tool
         self.registry = Registry([
             click_tool,type_tool, launch_tool, shell_tool, clipboard_tool,
             done_tool, shortcut_tool, scroll_tool, drag_tool, move_tool,
-            key_tool, wait_tool, scrape_tool, switch_tool, resize_tool, human_tool, system_tool, schedule_tool
+            key_tool, wait_tool, scrape_tool, switch_tool, resize_tool, human_tool, system_tool, schedule_tool, activity_tool, timeline_tool
         ] + additional_tools)
         self.instructions=instructions
         self.browser=browser
@@ -100,6 +101,12 @@ class Agent:
         # Cooperative stop controller
         self._stop_event = threading.Event()
         self._stop_event.clear()
+        # Activity tracking
+        self.activity_tracker = None
+        self.screenshot_service = None
+        self.activity_analyzer = None
+        self.notification_callback = None  # Notification callback for activity tracking
+        self._initialize_tracking()
 
     def pause(self):
         """Request a cooperative pause. Running steps will wait at checkpoints."""
@@ -153,27 +160,6 @@ class Agent:
         agent_logger.log_conversation_cleared()
         
     
-    def _should_use_precise_detection(self, query: str, action_name: str = None) -> str:
-        """
-        Determine if we should use precise detection for a specific application.
-        Returns the target app name or None.
-        """
-        query_lower = query.lower()
-        
-        # Calculator detection
-        if any(keyword in query_lower for keyword in ['calculator', 'calc', 'calculate', 'math', 'add', 'subtract', 'multiply', 'divide']):
-            return 'calculator'
-        
-        # Notepad detection
-        if any(keyword in query_lower for keyword in ['notepad', 'text editor', 'write', 'type text']):
-            return 'notepad'
-        
-        # Browser detection
-        if any(keyword in query_lower for keyword in ['browser', 'chrome', 'firefox', 'edge', 'website', 'url']):
-            return 'browser'
-        
-        return None
-
     def _is_chrome_focused(self) -> bool:
         """Check if Chrome is currently focused"""
         try:
@@ -306,9 +292,7 @@ class Agent:
                 if (not hasattr(self.desktop, '_last_state_time') or 
                     current_time - getattr(self.desktop, '_last_state_time', 0) > 1.0):
                     self.show_status("Refreshing", "Desktop State", "Getting updated coordinates for planning")
-                    # Use precise detection if we're working with a specific app
-                    target_app = self._should_use_precise_detection(state.get('input', ''))
-                    fresh_desktop_state = self.desktop.get_state(use_vision=self.use_vision, target_app=target_app)
+                    fresh_desktop_state = self.desktop.get_state(use_vision=self.use_vision)
                     self.desktop._last_state_time = current_time
                 else:
                     fresh_desktop_state = self.desktop.desktop_state
@@ -376,14 +360,11 @@ class Agent:
         
         # Only refresh desktop state before coordinate-based actions if it's stale
         if name in ['Click Tool', 'Type Tool', 'Scroll Tool', 'Drag Tool', 'Move Tool']:
-            # Use precise detection for specific applications
-            target_app = self._should_use_precise_detection(str(params))
-            
             # Only refresh if we don't have recent desktop state
             current_time = time.time()
             if (not hasattr(self.desktop, '_last_state_time') or 
                 current_time - getattr(self.desktop, '_last_state_time', 0) > 1.5):
-                self.desktop.get_state(use_vision=self.use_vision, target_app=target_app)
+                self.desktop.get_state(use_vision=self.use_vision)
                 self.desktop._last_state_time = current_time
                 self.show_status("Refreshing", "Desktop State", "Getting updated coordinates")
         
@@ -796,6 +777,73 @@ Convert the raw answer above into a natural, conversational response:"""
         # Log user query to file
         agent_logger.log_user_query(query)
         
+        # Check if this is an activity tracking query
+        query_lower = query.lower().strip()
+        activity_keywords = [
+            "how focused", "did i do well", "how productive", "how much time",
+            "what apps", "activity", "productivity", "focus score",
+            "how long", "time spent", "today's activity", "my activity"
+        ]
+        
+        if any(keyword in query_lower for keyword in activity_keywords) and self.activity_tracker:
+            # Handle activity query directly
+            try:
+                from datetime import datetime
+                import json
+                
+                # Get today's date
+                today = datetime.now().strftime("%Y-%m-%d")
+                
+                # Get activities and summary
+                storage = self.activity_tracker.storage
+                activities = storage.get_activities(today)
+                summary = storage.get_daily_summary(today)
+                
+                # Generate summary if doesn't exist
+                if not summary and self.activity_analyzer:
+                    screenshots = storage.get_screenshot_metadata(today)
+                    summary = self.activity_analyzer.calculate_daily_summary(activities, screenshots)
+                    storage.save_daily_summary(summary)
+                
+                # Generate response using LLM
+                if summary and self.llm:
+                    prompt = f"""The user asked: "{query}"
+
+Activity summary for {today}:
+{json.dumps(summary, indent=2)}
+
+Provide a natural, conversational response answering the user's question about their activity and productivity.
+Be specific with numbers and insights. Be encouraging and helpful."""
+                    
+                    from langchain_core.messages import HumanMessage
+                    response = self.llm.invoke([HumanMessage(content=prompt)])
+                    answer = response.content if hasattr(response, 'content') else str(response)
+                    
+                    return AgentResult(content=answer, error=None)
+                elif summary:
+                    # Fallback: generate simple response from summary
+                    focus_score = summary.get("focus_score", 0)
+                    work_time = summary.get("work_time", 0) / 3600
+                    research_time = summary.get("research_time", 0) / 3600
+                    insights = summary.get("insights", "Activity tracking is collecting data.")
+                    
+                    answer = f"Your focus score today is {focus_score}%. "
+                    if work_time > 0:
+                        answer += f"You spent {work_time:.1f} hours on work. "
+                    if research_time > 0:
+                        answer += f"You spent {research_time:.1f} hours on research. "
+                    answer += insights
+                    
+                    return AgentResult(content=answer, error=None)
+                else:
+                    return AgentResult(
+                        content="Activity tracking is enabled and collecting data. Please check back later for insights.",
+                        error=None
+                    )
+            except Exception as e:
+                logger.error(f"Error handling activity query: {e}")
+                # Fall through to normal agent processing
+        
         # Show initial status
         self.show_status("Starting", "Task Analysis", f"Processing: '{query[:50]}{'...' if len(query) > 50 else ''}'")
         
@@ -927,7 +975,101 @@ Convert the raw answer above into a natural, conversational response:"""
         response=self.invoke(query)
         self.console.print(Markdown(response.content or response.error))
     
+    def _initialize_tracking(self):
+        """Initialize activity tracking system."""
+        try:
+            from windows_use.tracking.config import initialize_tracking
+            import os
+            
+            # Get Google API key for analyzer - try multiple sources
+            google_api_key = None
+            
+            # Try to get from LLM instance if it's ChatGoogleGenerativeAI
+            try:
+                if isinstance(self.llm, ChatGoogleGenerativeAI):
+                    # Check if API key is stored in the model
+                    if hasattr(self.llm, 'google_api_key'):
+                        google_api_key = self.llm.google_api_key
+                    elif hasattr(self.llm, 'client') and hasattr(self.llm.client, '_client'):
+                        # Try to extract from client
+                        pass
+            except Exception:
+                pass
+            
+            # Fallback to environment variable
+            if not google_api_key:
+                google_api_key = os.getenv('GOOGLE_API_KEY')
+            
+            # Fallback: try to use the same LLM instance if available
+            if not google_api_key and self.llm:
+                # Pass the LLM instance directly to analyzer
+                pass
+            
+            # Get storage path from environment
+            # Use WINDOWS_USE_DATA_PATH (set by Electron) or fallback to YUKI_DATA_PATH or default
+            storage_path = os.getenv('WINDOWS_USE_DATA_PATH') or os.getenv('YUKI_DATA_PATH') or os.path.join(os.getcwd(), 'data')
+            
+            # Initialize tracking (screenshots enabled by default, 5 minute interval)
+            # Pass LLM instance for AI-based productivity classification
+            if google_api_key:
+                self.activity_tracker, self.screenshot_service, self.activity_analyzer = initialize_tracking(
+                    desktop=self.desktop,
+                    storage_path=storage_path,
+                    google_api_key=google_api_key,
+                    enable_screenshots=True,
+                    screenshot_interval=300.0,  # 5 minutes
+                    poll_interval=2.0,
+                    notification_callback=self.notification_callback,
+                    llm=self.llm  # Pass LLM for AI classification
+                )
+            else:
+                # Initialize without API key - analyzer will try to use LLM instance
+                self.activity_tracker, self.screenshot_service, self.activity_analyzer = initialize_tracking(
+                    desktop=self.desktop,
+                    storage_path=storage_path,
+                    google_api_key=None,
+                    enable_screenshots=True,
+                    screenshot_interval=300.0,
+                    poll_interval=2.0,
+                    notification_callback=self.notification_callback,
+                    llm=self.llm  # Pass LLM for AI classification
+                )
+                # Try to set LLM on analyzer if available
+                if self.activity_analyzer and self.llm:
+                    try:
+                        self.activity_analyzer.llm = self.llm
+                    except Exception:
+                        pass
+            
+            # Start tracking
+            self.activity_tracker.start_tracking()
+            if self.screenshot_service:
+                self.screenshot_service.start_capturing()
+            
+            logger.info("Activity tracking initialized and started")
+        
+        except Exception as e:
+            logger.warning(f"Failed to initialize activity tracking: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            self.activity_tracker = None
+            self.screenshot_service = None
+            self.activity_analyzer = None
+    
     def cleanup(self):
-        """Clean up agent resources including TTS service"""
+        """Clean up agent resources including TTS service and activity tracking"""
         if self.tts_service:
-            self.tts_service.cleanup()   
+            self.tts_service.cleanup()
+        
+        # Stop activity tracking
+        if self.activity_tracker:
+            try:
+                self.activity_tracker.stop_tracking()
+            except Exception as e:
+                logger.error(f"Error stopping activity tracker: {e}")
+        
+        if self.screenshot_service:
+            try:
+                self.screenshot_service.stop_capturing()
+            except Exception as e:
+                logger.error(f"Error stopping screenshot service: {e}")   

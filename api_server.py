@@ -165,6 +165,23 @@ agent: Optional[Agent] = None
 streaming_wrapper: Optional[StreamingAgentWrapper] = None
 agent_initialized = False
 
+# Notification queue for activity tracking notifications
+_notification_queue: List[Dict[str, str]] = []
+_notification_lock = threading.Lock()
+
+def handle_notification(title: str, message: str):
+    """Handle notification from activity tracker."""
+    with _notification_lock:
+        _notification_queue.append({
+            "title": title,
+            "message": message,
+            "timestamp": datetime.now().isoformat()
+        })
+        # Keep only last 100 notifications
+        if len(_notification_queue) > 100:
+            _notification_queue.pop(0)
+    logger.info(f"Notification queued: {title} - {message}")
+
 # Function to initialize the agent (can be called multiple times)
 async def initialize_agent():
     """Initialize or re-initialize the agent with current API keys"""
@@ -227,9 +244,12 @@ async def initialize_agent():
             except Exception as e:
                 logger.error(f"Error reading ElevenLabs API key: {e}")
         
-        # Initialize agent
+        # Set notification callback before initializing agent (so it's available during tracking init)
+        # Create agent with notification callback
         logger.info("Initializing Agent with parameters...")
-        agent = Agent(
+        
+        # Create agent instance
+        agent_instance = Agent(
             llm=llm,
             browser='chrome',
             use_vision=False,
@@ -239,6 +259,25 @@ async def initialize_agent():
             enable_tts=enable_tts,
             tts_voice_id=tts_voice_id
         )
+        
+        # Set notification callback (tracking is initialized in __init__, so we need to set it after)
+        agent_instance.notification_callback = handle_notification
+        
+        # Update notification service with callback and LLM if tracking is already initialized
+        if agent_instance.activity_tracker and hasattr(agent_instance.activity_tracker, 'notification_service'):
+            agent_instance.activity_tracker.notification_service.set_notification_callback(handle_notification)
+            # Ensure LLM is available for AI classification
+            if llm and hasattr(agent_instance.activity_tracker.notification_service, 'set_llm'):
+                agent_instance.activity_tracker.notification_service.set_llm(llm)
+            # Also set activity analyzer if available
+            if agent_instance.activity_analyzer and hasattr(agent_instance.activity_tracker.notification_service, 'set_activity_analyzer'):
+                agent_instance.activity_tracker.notification_service.set_activity_analyzer(agent_instance.activity_analyzer)
+            logger.info("Notification callback and AI support set on activity tracker")
+        else:
+            # If tracking hasn't been initialized yet, the callback will be used when it is
+            logger.info("Notification callback stored for when tracking initializes")
+        
+        agent = agent_instance
         logger.info("Agent initialized successfully")
         
         # Get running programs
@@ -273,6 +312,19 @@ async def initialize_agent():
         logger.info("Creating streaming wrapper...")
         streaming_wrapper = StreamingAgentWrapper(agent)
         logger.info("Streaming wrapper created")
+        
+        # Ensure notification callback and AI are set (in case tracking was initialized)
+        if hasattr(agent, 'activity_tracker') and agent.activity_tracker:
+            if hasattr(agent.activity_tracker, 'notification_service'):
+                agent.activity_tracker.notification_service.set_notification_callback(handle_notification)
+                # Ensure LLM is available for AI classification
+                if llm and hasattr(agent.activity_tracker.notification_service, 'set_llm'):
+                    agent.activity_tracker.notification_service.set_llm(llm)
+                # Also set activity analyzer if available
+                if hasattr(agent, 'activity_analyzer') and agent.activity_analyzer:
+                    if hasattr(agent.activity_tracker.notification_service, 'set_activity_analyzer'):
+                        agent.activity_tracker.notification_service.set_activity_analyzer(agent.activity_analyzer)
+                logger.info("Notification callback and AI support registered for activity tracker")
         
         agent_initialized = True
         logger.info("Agent initialization completed successfully")
@@ -2111,6 +2163,409 @@ async def repeat_scheduled_task(task_id: str):
     _schedule_timer_for_task(new_task)
     with _scheduled_lock:
         return _scheduled_tasks[new_task.id]
+
+# Activity Tracking API Endpoints
+class ActivityQueryRequest(BaseModel):
+    query: str
+    date: Optional[str] = None  # YYYY-MM-DD format
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+
+@app.get("/api/tracking/activity")
+async def get_activity(date: Optional[str] = None):
+    """Get activity data for a specific date (default: today)."""
+    if not agent_initialized or not agent:
+        raise HTTPException(status_code=503, detail="Agent not initialized")
+    
+    try:
+        if not hasattr(agent, 'activity_tracker') or not agent.activity_tracker:
+            raise HTTPException(status_code=503, detail="Activity tracking not available")
+        
+        storage = agent.activity_tracker.storage
+        activities = storage.get_activities(date)
+        return activities
+    except Exception as e:
+        logger.error(f"Error getting activity data: {e}")
+        raise HTTPException(status_code=500, detail=f"Error getting activity data: {str(e)}")
+
+@app.get("/api/tracking/activity/range")
+async def get_activity_range(start_date: str, end_date: str):
+    """Get activities for a date range."""
+    if not agent_initialized or not agent:
+        raise HTTPException(status_code=503, detail="Agent not initialized")
+    
+    try:
+        if not hasattr(agent, 'activity_tracker') or not agent.activity_tracker:
+            raise HTTPException(status_code=503, detail="Activity tracking not available")
+        
+        storage = agent.activity_tracker.storage
+        activities = storage.get_activities_range(start_date, end_date)
+        return activities
+    except Exception as e:
+        logger.error(f"Error getting activity range: {e}")
+        raise HTTPException(status_code=500, detail=f"Error getting activity range: {str(e)}")
+
+@app.get("/api/tracking/summary")
+async def get_summary(date: Optional[str] = None):
+    """Get daily summary for a specific date (default: today)."""
+    if not agent_initialized or not agent:
+        raise HTTPException(status_code=503, detail="Agent not initialized")
+    
+    try:
+        if not hasattr(agent, 'activity_tracker') or not agent.activity_tracker:
+            raise HTTPException(status_code=503, detail="Activity tracking not available")
+        
+        storage = agent.activity_tracker.storage
+        
+        # Get summary if exists
+        summary = storage.get_daily_summary(date)
+        if summary:
+            return summary
+        
+        # Generate summary if doesn't exist
+        if not hasattr(agent, 'activity_analyzer') or not agent.activity_analyzer:
+            return {"error": "Activity analyzer not available"}
+        
+        # Get activities for the date
+        activities = storage.get_activities(date)
+        screenshots = storage.get_screenshot_metadata(date)
+        
+        # Calculate summary
+        summary = agent.activity_analyzer.calculate_daily_summary(activities, screenshots)
+        storage.save_daily_summary(summary)
+        
+        return summary
+    except Exception as e:
+        logger.error(f"Error getting summary: {e}")
+        raise HTTPException(status_code=500, detail=f"Error getting summary: {str(e)}")
+
+@app.get("/api/tracking/summary/range")
+async def get_summary_range(start_date: str, end_date: str):
+    """Get summaries for a date range."""
+    if not agent_initialized or not agent:
+        raise HTTPException(status_code=503, detail="Agent not initialized")
+    
+    try:
+        if not hasattr(agent, 'activity_tracker') or not agent.activity_tracker:
+            raise HTTPException(status_code=503, detail="Activity tracking not available")
+        
+        storage = agent.activity_tracker.storage
+        summaries = storage.get_summaries_range(start_date, end_date)
+        return summaries
+    except Exception as e:
+        logger.error(f"Error getting summary range: {e}")
+        raise HTTPException(status_code=500, detail=f"Error getting summary range: {str(e)}")
+
+@app.get("/api/tracking/current")
+async def get_current_activity():
+    """Get current activity information."""
+    if not agent_initialized or not agent:
+        raise HTTPException(status_code=503, detail="Agent not initialized")
+    
+    try:
+        if not hasattr(agent, 'activity_tracker') or not agent.activity_tracker:
+            raise HTTPException(status_code=503, detail="Activity tracking not available")
+        
+        current = agent.activity_tracker.get_current_activity()
+        return current or {"message": "No current activity"}
+    except Exception as e:
+        logger.error(f"Error getting current activity: {e}")
+        raise HTTPException(status_code=500, detail=f"Error getting current activity: {str(e)}")
+
+@app.post("/api/tracking/query")
+async def query_activity(request: ActivityQueryRequest):
+    """Query activity data using natural language."""
+    if not agent_initialized or not agent:
+        raise HTTPException(status_code=503, detail="Agent not initialized")
+    
+    try:
+        if not hasattr(agent, 'activity_tracker') or not agent.activity_tracker:
+            raise HTTPException(status_code=503, detail="Activity tracking not available")
+        
+        storage = agent.activity_tracker.storage
+        
+        # Parse query to determine what data to fetch
+        query_lower = request.query.lower()
+        
+        # Determine date range
+        if request.date:
+            date = request.date
+            start_date = date
+            end_date = date
+        elif request.start_date and request.end_date:
+            start_date = request.start_date
+            end_date = request.end_date
+        elif "today" in query_lower:
+            today = datetime.now().strftime("%Y-%m-%d")
+            start_date = today
+            end_date = today
+        elif "yesterday" in query_lower:
+            yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+            start_date = yesterday
+            end_date = yesterday
+        elif "week" in query_lower:
+            end_date = datetime.now().strftime("%Y-%m-%d")
+            start_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+        else:
+            # Default to today
+            today = datetime.now().strftime("%Y-%m-%d")
+            start_date = today
+            end_date = today
+        
+        # Get data
+        if start_date == end_date:
+            activities = storage.get_activities(start_date)
+            summary = storage.get_daily_summary(start_date)
+            
+            # Generate summary if doesn't exist
+            if not summary and hasattr(agent, 'activity_analyzer') and agent.activity_analyzer:
+                screenshots = storage.get_screenshot_metadata(start_date)
+                summary = agent.activity_analyzer.calculate_daily_summary(activities, screenshots)
+                storage.save_daily_summary(summary)
+        else:
+            activities_list = storage.get_activities_range(start_date, end_date)
+            summaries = storage.get_summaries_range(start_date, end_date)
+            
+            # Aggregate data
+            activities = {
+                "date_range": f"{start_date} to {end_date}",
+                "activities": activities_list,
+                "summaries": summaries
+            }
+            summary = None
+        
+        # Use LLM to generate response
+        if hasattr(agent, 'llm') and agent.llm:
+            prompt = f"""The user asked: "{request.query}"
+
+Activity data for {start_date}:
+{json.dumps(activities, indent=2) if isinstance(activities, dict) else 'Activities retrieved'}
+
+Summary data:
+{json.dumps(summary, indent=2) if summary else 'No summary available'}
+
+Provide a natural, conversational response answering the user's question about their activity and productivity. 
+Be specific with numbers and insights. If the user asks about focus or productivity, calculate and explain the metrics clearly."""
+            
+            try:
+                from langchain_core.messages import HumanMessage
+                response = agent.llm.invoke([HumanMessage(content=prompt)])
+                answer = response.content if hasattr(response, 'content') else str(response)
+                return {
+                    "query": request.query,
+                    "response": answer,
+                    "data": {
+                        "activities": activities,
+                        "summary": summary
+                    }
+                }
+            except Exception as e:
+                logger.error(f"Error generating LLM response: {e}")
+                return {
+                    "query": request.query,
+                    "response": "I have your activity data, but couldn't generate a response. Here's the raw data.",
+                    "data": {
+                        "activities": activities,
+                        "summary": summary
+                    }
+                }
+        else:
+            return {
+                "query": request.query,
+                "response": "Activity tracking data retrieved. LLM not available for natural language response.",
+                "data": {
+                    "activities": activities,
+                    "summary": summary
+                }
+            }
+    
+    except Exception as e:
+        logger.error(f"Error querying activity: {e}")
+        raise HTTPException(status_code=500, detail=f"Error querying activity: {str(e)}")
+
+@app.get("/api/tracking/timeline")
+async def get_timeline(date: Optional[str] = None, start_time: Optional[str] = None, end_time: Optional[str] = None):
+    """
+    Get activity timeline with screenshot analysis for a specific date and optional time range.
+    
+    Args:
+        date: Date in YYYY-MM-DD format (default: today)
+        start_time: Start time in HH:MM format (e.g., "16:00" for 4pm)
+        end_time: End time in HH:MM format (e.g., "18:00" for 6pm)
+    
+    Returns:
+        Combined timeline of activities and screenshot analyses for the specified time period
+    """
+    if not agent_initialized or not agent:
+        raise HTTPException(status_code=503, detail="Agent not initialized")
+    
+    try:
+        if not hasattr(agent, 'activity_tracker') or not agent.activity_tracker:
+            raise HTTPException(status_code=503, detail="Activity tracking not available")
+        
+        storage = agent.activity_tracker.storage
+        
+        # Default to today if no date provided
+        if not date:
+            date = datetime.now().strftime("%Y-%m-%d")
+        
+        # Get activities for the date
+        activities_data = storage.get_activities(date)
+        app_activities = activities_data.get("app_activities", [])
+        
+        # Get screenshot metadata for the date
+        screenshots = storage.get_screenshot_metadata(date)
+        
+        # Parse time range if provided
+        start_datetime = None
+        end_datetime = None
+        if start_time:
+            try:
+                start_datetime = datetime.strptime(f"{date} {start_time}", "%Y-%m-%d %H:%M")
+            except ValueError:
+                raise HTTPException(status_code=400, detail=f"Invalid start_time format. Use HH:MM (e.g., '16:00')")
+        
+        if end_time:
+            try:
+                end_datetime = datetime.strptime(f"{date} {end_time}", "%Y-%m-%d %H:%M")
+            except ValueError:
+                raise HTTPException(status_code=400, detail=f"Invalid end_time format. Use HH:MM (e.g., '18:00')")
+        
+        # Filter activities by time range
+        filtered_activities = []
+        for activity in app_activities:
+            activity_start = datetime.fromisoformat(activity.get("start_time", ""))
+            
+            # Check if activity falls within time range
+            if start_datetime and activity_start < start_datetime:
+                continue
+            if end_datetime and activity_start > end_datetime:
+                continue
+            
+            filtered_activities.append(activity)
+        
+        # Filter screenshots by time range
+        filtered_screenshots = []
+        for screenshot in screenshots:
+            screenshot_time = datetime.fromisoformat(screenshot.get("timestamp", ""))
+            
+            # Check if screenshot falls within time range
+            if start_datetime and screenshot_time < start_datetime:
+                continue
+            if end_datetime and screenshot_time > end_datetime:
+                continue
+            
+            filtered_screenshots.append(screenshot)
+        
+        # Combine and sort by timestamp
+        timeline = []
+        
+        # Add activities
+        for activity in filtered_activities:
+            timeline.append({
+                "type": "activity",
+                "timestamp": activity.get("start_time"),
+                "app_name": activity.get("app_name"),
+                "window_title": activity.get("window_title"),
+                "duration_seconds": activity.get("duration_seconds", 0),
+                "data": activity
+            })
+        
+        # Add screenshots with analysis
+        for screenshot in filtered_screenshots:
+            timeline.append({
+                "type": "screenshot",
+                "timestamp": screenshot.get("timestamp"),
+                "app_name": screenshot.get("app_name"),
+                "window_title": screenshot.get("window_title"),
+                "ai_analysis": screenshot.get("ai_analysis", ""),
+                "activity_category": screenshot.get("activity_category", "unknown"),
+                "focus_score": screenshot.get("focus_score", 50),
+                "description": screenshot.get("description", ""),
+                "filename": screenshot.get("filename"),
+                "data": screenshot
+            })
+        
+        # Sort by timestamp
+        timeline.sort(key=lambda x: x.get("timestamp", ""))
+        
+        return {
+            "date": date,
+            "start_time": start_time,
+            "end_time": end_time,
+            "activities": filtered_activities,
+            "screenshots": filtered_screenshots,
+            "timeline": timeline,
+            "count": {
+                "activities": len(filtered_activities),
+                "screenshots": len(filtered_screenshots),
+                "total": len(timeline)
+            }
+        }
+    
+    except Exception as e:
+        logger.error(f"Error getting timeline: {e}")
+        raise HTTPException(status_code=500, detail=f"Error getting timeline: {str(e)}")
+
+@app.get("/api/tracking/stats")
+async def get_stats(days: int = 7):
+    """Get statistics for the last N days."""
+    if not agent_initialized or not agent:
+        raise HTTPException(status_code=503, detail="Agent not initialized")
+    
+    try:
+        if not hasattr(agent, 'activity_tracker') or not agent.activity_tracker:
+            raise HTTPException(status_code=503, detail="Activity tracking not available")
+        
+        storage = agent.activity_tracker.storage
+        
+        # Calculate date range
+        end_date = datetime.now().strftime("%Y-%m-%d")
+        start_date = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
+        
+        # Get summaries
+        summaries = storage.get_summaries_range(start_date, end_date)
+        
+        # Aggregate statistics
+        total_focus_time = sum(s.get("total_focus_time", 0) for s in summaries)
+        total_work_time = sum(s.get("work_time", 0) for s in summaries)
+        total_research_time = sum(s.get("research_time", 0) for s in summaries)
+        total_entertainment_time = sum(s.get("entertainment_time", 0) for s in summaries)
+        
+        avg_focus_score = 0
+        if summaries:
+            focus_scores = [s.get("focus_score", 0) for s in summaries if s.get("focus_score")]
+            if focus_scores:
+                avg_focus_score = sum(focus_scores) / len(focus_scores)
+        
+        return {
+            "period": f"{start_date} to {end_date}",
+            "days": len(summaries),
+            "total_focus_time": total_focus_time,
+            "total_work_time": total_work_time,
+            "total_research_time": total_research_time,
+            "total_entertainment_time": total_entertainment_time,
+            "average_focus_score": round(avg_focus_score, 2),
+            "summaries": summaries
+        }
+    except Exception as e:
+        logger.error(f"Error getting stats: {e}")
+        raise HTTPException(status_code=500, detail=f"Error getting stats: {str(e)}")
+
+@app.get("/api/notifications")
+async def get_notifications(clear: bool = False):
+    """Get pending notifications from activity tracking."""
+    global _notification_queue
+    
+    with _notification_lock:
+        notifications = list(_notification_queue)
+        if clear:
+            _notification_queue.clear()
+    
+    return {
+        "notifications": notifications,
+        "count": len(notifications)
+    }
 
 if __name__ == "__main__":
     import uvicorn

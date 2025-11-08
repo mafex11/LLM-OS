@@ -1,9 +1,12 @@
-from windows_use.agent.tools.views import Click, Type, Launch, Scroll, Drag, Move, Shortcut, Key, Wait, Scrape,Done, Clipboard, Shell, Switch, Resize, Human, System, Schedule
+from windows_use.agent.tools.views import Click, Type, Launch, Scroll, Drag, Move, Shortcut, Key, Wait, Scrape,Done, Clipboard, Shell, Switch, Resize, Human, System, Schedule, Activity, Timeline
 from windows_use.desktop.service import Desktop
 from humancursor import SystemCursor
 from markdownify import markdownify
 from langchain.tools import tool
 from typing import Literal
+import logging
+
+logger = logging.getLogger(__name__)
 import threading
 from datetime import datetime, timedelta
 import uiautomation as uia
@@ -527,6 +530,226 @@ def system_tool(info_type:Literal['all','cpu','memory','disk','processes','summa
         
     except Exception as e:
         return f"Error retrieving system information: {e}"
+
+@tool('Activity Tool', args_schema=Activity)
+def activity_tool(query: str, date: str | None = None, desktop: Desktop = None) -> str:
+    '''Query activity tracking data to answer questions about productivity, focus, app usage, and time spent on different activities.
+    Use this when users ask about their activity, productivity, focus, or time spent on work/entertainment/research.
+    Examples: "How focused was I today?", "Did I do well?", "What apps did I use most?", "How much time did I spend on work?"'''
+    try:
+        # Query activity data via API endpoint
+        import requests
+        import json
+        from datetime import datetime
+        
+        # Determine date
+        if not date:
+            date = datetime.now().strftime("%Y-%m-%d")
+        
+        # Query the API endpoint
+        payload = {
+            "query": query,
+            "date": date
+        }
+        
+        try:
+            response = requests.post(
+                "http://127.0.0.1:8000/api/tracking/query",
+                json=payload,
+                timeout=10
+            )
+            
+            if response.ok:
+                data = response.json()
+                return data.get("response", "Activity data retrieved but no response generated.")
+            else:
+                # Fallback: try to get summary directly
+                try:
+                    summary_response = requests.get(
+                        f"http://127.0.0.1:8000/api/tracking/summary?date={date}",
+                        timeout=5
+                    )
+                    if summary_response.ok:
+                        summary = summary_response.json()
+                        # Generate a simple response from summary
+                        focus_score = summary.get("focus_score", 0)
+                        work_time = summary.get("work_time", 0) / 3600  # Convert to hours
+                        research_time = summary.get("research_time", 0) / 3600
+                        entertainment_time = summary.get("entertainment_time", 0) / 3600
+                        insights = summary.get("insights", "")
+                        
+                        response_text = f"Your focus score for {date} is {focus_score}%. "
+                        if work_time > 0:
+                            response_text += f"You spent {work_time:.1f} hours on work. "
+                        if research_time > 0:
+                            response_text += f"You spent {research_time:.1f} hours on research. "
+                        if entertainment_time > 0:
+                            response_text += f"You spent {entertainment_time:.1f} hours on entertainment. "
+                        if insights:
+                            response_text += insights
+                        
+                        return response_text
+                    else:
+                        return f"Activity tracking data is being collected. Please check back later or use the API endpoint directly."
+                except Exception:
+                    return f"Activity tracking is enabled and collecting data. Please check back later for insights."
+        
+        except requests.exceptions.ConnectionError:
+            return "Activity tracking API is not available. The tracking service may still be initializing."
+        except Exception as e:
+            return f"Error querying activity data: {str(e)}"
+    
+    except Exception as e:
+        return f"Error querying activity: {str(e)}"
+
+@tool('Timeline Tool', args_schema=Timeline)
+def timeline_tool(query: str, date: str | None = None, start_time: str | None = None, end_time: str | None = None, desktop: Desktop = None) -> str:
+    '''Query activity timeline with screenshot analysis to answer questions about what the user was doing at specific times.
+    Use this when users ask about what they were doing at a specific time, time range, or want detailed analysis of their activities.
+    Examples: "What was I doing at 4pm?", "What did I do between 2pm and 5pm?", "How did I do today?", "What was I working on this afternoon?"
+    This tool combines program activity data with AI-analyzed screenshots to provide detailed insights.'''
+    try:
+        import requests
+        import json
+        from datetime import datetime
+        
+        # Determine date
+        if not date:
+            date = datetime.now().strftime("%Y-%m-%d")
+        
+        # Build query parameters
+        params = {"date": date}
+        if start_time:
+            params["start_time"] = start_time
+        if end_time:
+            params["end_time"] = end_time
+        
+        try:
+            # Query the timeline endpoint
+            response = requests.get(
+                "http://127.0.0.1:8000/api/tracking/timeline",
+                params=params,
+                timeout=10
+            )
+            
+            if response.ok:
+                data = response.json()
+                timeline = data.get("timeline", [])
+                activities = data.get("activities", [])
+                screenshots = data.get("screenshots", [])
+                
+                # Build a detailed response from timeline data
+                if not timeline:
+                    time_range = f" from {start_time} to {end_time}" if start_time and end_time else f" at {start_time}" if start_time else " today"
+                    return f"No activity or screenshot data found{time_range} on {date}."
+                
+                # Use LLM to generate a natural language response from the timeline data
+                try:
+                    # Prepare context for LLM
+                    timeline_summary = []
+                    for item in timeline[:20]:  # Limit to first 20 items
+                        if item.get("type") == "screenshot":
+                            timeline_summary.append({
+                                "time": item.get("timestamp", "")[:16],  # Just date and time
+                                "type": "screenshot",
+                                "app": item.get("app_name", "Unknown"),
+                                "description": item.get("description", ""),
+                                "category": item.get("activity_category", "unknown"),
+                                "focus_score": item.get("focus_score", 50),
+                                "ai_analysis": item.get("ai_analysis", "")[:500]  # Limit length
+                            })
+                        else:
+                            timeline_summary.append({
+                                "time": item.get("timestamp", "")[:16],
+                                "type": "activity",
+                                "app": item.get("app_name", "Unknown"),
+                                "window": item.get("window_title", ""),
+                                "duration": item.get("duration_seconds", 0)
+                            })
+                    
+                    # Use the query endpoint which has LLM access for better responses
+                    try:
+                        query_payload = {
+                            "query": query,
+                            "date": date
+                        }
+                        
+                        # Add timeline context to the query
+                        timeline_context = f"\n\nTimeline data for {date}"
+                        if start_time and end_time:
+                            timeline_context += f" from {start_time} to {end_time}"
+                        elif start_time:
+                            timeline_context += f" at {start_time}"
+                        timeline_context += f":\n{json.dumps(timeline_summary[:15], indent=2)}"
+                        
+                        # Enhance query with timeline context
+                        enhanced_query = f"{query}{timeline_context}"
+                        query_payload["query"] = enhanced_query
+                        
+                        query_response = requests.post(
+                            "http://127.0.0.1:8000/api/tracking/query",
+                            json=query_payload,
+                            timeout=15
+                        )
+                        
+                        if query_response.ok:
+                            query_data = query_response.json()
+                            llm_response = query_data.get("response", "")
+                            if llm_response:
+                                return llm_response
+                    except Exception as e:
+                        logger.debug(f"Could not use query endpoint for LLM response: {e}")
+                    
+                    # Fallback: Build a detailed response from timeline data
+                    response_text = f"Based on your activity timeline for {date}"
+                    if start_time and end_time:
+                        response_text += f" from {start_time} to {end_time}"
+                    elif start_time:
+                        response_text += f" at {start_time}"
+                    response_text += ":\n\n"
+                    
+                    # Group by time periods
+                    screenshot_items = [item for item in timeline if item.get("type") == "screenshot"]
+                    activity_items = [item for item in timeline if item.get("type") == "activity"]
+                    
+                    if screenshot_items:
+                        response_text += "AI Analysis from Screenshots:\n"
+                        for item in screenshot_items[:8]:  # First 8 screenshots
+                            timestamp = item.get("timestamp", "")[11:16]  # Just time
+                            desc = item.get("description", "")
+                            category = item.get("activity_category", "unknown")
+                            focus = item.get("focus_score", 50)
+                            app = item.get("app_name", "Unknown")
+                            response_text += f"  • {timestamp}: {desc} (using {app}, {category}, focus: {focus}%)\n"
+                        response_text += "\n"
+                    
+                    if activity_items:
+                        response_text += "Program Activity:\n"
+                        for item in activity_items[:8]:  # First 8 activities
+                            timestamp = item.get("timestamp", "")[11:16]  # Just time
+                            app = item.get("app_name", "Unknown app")
+                            window = item.get("window_title", "")
+                            duration = item.get("duration_seconds", 0)
+                            response_text += f"  • {timestamp}: {app}"
+                            if window and window != app:
+                                response_text += f" - {window}"
+                            if duration > 0:
+                                response_text += f" ({duration//60}m)"
+                            response_text += "\n"
+                    
+                    return response_text
+                except Exception as e:
+                    return f"Retrieved timeline data but couldn't format response: {str(e)}"
+            else:
+                return f"Failed to retrieve timeline data (HTTP {response.status_code})"
+        
+        except requests.exceptions.ConnectionError:
+            return "Timeline API is not available. The tracking service may still be initializing."
+        except Exception as e:
+            return f"Error querying timeline data: {str(e)}"
+    
+    except Exception as e:
+        return f"Error querying timeline: {str(e)}"
 
 @tool('Schedule Tool', args_schema=Schedule)
 def schedule_tool(name: str, delay_seconds: int | None = None, run_at: str | None = None, desktop: Desktop = None) -> str:
