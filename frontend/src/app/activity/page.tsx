@@ -307,11 +307,8 @@ export default function ActivityPage() {
         animate={{ paddingLeft: showSidebar ? '16rem' : '4rem' }}
         transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
       >
-        <motion.div 
+        <div 
           className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-10"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
         >
           <div className="flex items-center gap-3">
             <div className="cursor-pointer p-2 hover:bg-black/20 rounded-lg transition-colors" onClick={() => setShowSidebar(!showSidebar)}>
@@ -338,7 +335,7 @@ export default function ActivityPage() {
               <Loading01Icon size={16} className={loading ? "animate-spin" : ""} />
             </Button>
           </div>
-        </motion.div>
+        </div>
 
         <div className="flex-1 px-2 sm:px-4 overflow-auto">
           <div className="max-w-4xl mx-auto py-4 sm:py-8">

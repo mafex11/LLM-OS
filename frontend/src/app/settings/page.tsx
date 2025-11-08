@@ -394,11 +394,8 @@ export default function SettingsPage() {
           animate={{ paddingLeft: showSidebar ? '16rem' : '4rem' }}
           transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
         >
-        <motion.div 
+        <div 
           className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-10"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
         >
           <div className="flex items-center gap-3">
             <div
@@ -412,7 +409,7 @@ export default function SettingsPage() {
               <h1 className="text-lg font-normal hidden sm:block">Settings</h1>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         <ScrollArea className="flex-1 px-2 sm:px-4">
           <div className="max-w-4xl mx-auto py-4 sm:py-8">
