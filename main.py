@@ -111,34 +111,51 @@ def show_ready_indicator():
 def get_running_programs():
     """Get list of currently running programs using PowerShell"""
     try:
-        # PowerShell command to get running processes
-        cmd = [
-            "powershell", "-Command",
-            "Get-Process | Where-Object {$_.MainWindowTitle -ne ''} | Select-Object ProcessName, MainWindowTitle, Id | ConvertTo-Json"
-        ]
-        
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-        
-        if result.returncode == 0:
-            processes = json.loads(result.stdout)
-            if isinstance(processes, dict):
-                processes = [processes]  # Convert single object to list
-            
-            # Filter and format the processes
-            running_programs = []
-            for proc in processes:
-                if proc.get('MainWindowTitle'):
-                    running_programs.append({
-                        'name': proc.get('ProcessName', ''),
-                        'title': proc.get('MainWindowTitle', ''),
-                        'id': proc.get('Id', '')
-                    })
-            
-            return running_programs
-        else:
+        command = (
+            "$OutputEncoding = [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; "
+            "Get-Process | Where-Object { $_.MainWindowTitle -ne '' } | "
+            "Select-Object ProcessName, MainWindowTitle, Id | ConvertTo-Json -Compress"
+        )
+        cmd = ["powershell", "-NoProfile", "-Command", command]
+
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=10,
+        )
+
+        if result.returncode != 0:
             print(f"Warning: Could not get running programs: {result.stderr}")
             return []
-            
+
+        output = result.stdout.strip()
+        if not output:
+            return []
+
+        try:
+            processes = json.loads(output)
+        except json.JSONDecodeError as decode_error:
+            print(f"Warning: Failed to parse running programs JSON: {decode_error}")
+            return []
+
+        if isinstance(processes, dict):
+            processes = [processes]
+
+        running_programs = []
+        for proc in processes:
+            if proc.get("MainWindowTitle"):
+                running_programs.append(
+                    {
+                        "name": proc.get("ProcessName", ""),
+                        "title": proc.get("MainWindowTitle", ""),
+                        "id": proc.get("Id", ""),
+                    }
+                )
+
+        return running_programs
+
     except Exception as e:
         print(f"Warning: Error getting running programs: {e}")
         return []
