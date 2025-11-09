@@ -71,8 +71,10 @@ class System(SharedBaseModel):
 
 class Schedule(SharedBaseModel):
     name:str=Field(...,description="The application name to launch from Start menu (e.g., 'calculator', 'chrome').",examples=["calculator","chrome"]) 
-    delay_seconds:int|None=Field(default=None,description="How many seconds from now to run. Use this for phrases like 'in 10 seconds'.")
-    run_at:str|None=Field(default=None,description="Absolute local time to run, accepts HH:MM (24h) or ISO-8601 like '2025-11-03T10:00:00'. For phrases like 'at 10 am'.")
+    delay_seconds:int|None=Field(default=None,description="How many seconds from now to run. Use this for phrases like 'in 10 seconds'. For repeating tasks, this is the initial delay before first run.")
+    run_at:str|None=Field(default=None,description="Absolute local time to run, accepts HH:MM (24h) or ISO-8601 like '2025-11-03T10:00:00'. For phrases like 'at 10 am'. For repeating tasks, this is the start time each day.")
+    repeat_interval_seconds:int|None=Field(default=None,description="Interval in seconds for repeating tasks within a day. Examples: 600 for every 10 minutes, 7200 for every 2 hours. Use this for phrases like 'every 10 minutes' or 'every 2 hours'.",examples=[600,7200,3600])
+    repeat_end_time:str|None=Field(default=None,description="End time in HH:MM format (24-hour) to stop repeating. For example, '18:30' means stop repeating after 6:30 PM. If not provided, tasks repeat until midnight.",examples=["18:30","22:00"])
 
 class Activity(SharedBaseModel):
     query:str=Field(...,description="The user's question about their activity, productivity, or focus. Examples: 'How focused was I today?', 'Did I do well?', 'What apps did I use most?', 'How much time did I spend on work?'",examples=["How focused was I today?","Did I do well?","What apps did I use the most today?"])

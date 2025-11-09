@@ -61,7 +61,7 @@ class Agent:
     Returns:
         Agent
     '''
-    def __init__(self,instructions:list[str]=[],additional_tools:list[BaseTool]=[],browser:Literal['edge','chrome','firefox']='edge', llm: BaseChatModel=None,consecutive_failures:int=3,max_steps:int=20,use_vision:bool=False,enable_conversation:bool=True,literal_mode:bool=True,enable_tts:bool=False,tts_voice_id:str="21m00Tcm4TlvDq8ikWAM"):
+    def __init__(self,instructions:list[str]=[],additional_tools:list[BaseTool]=[],browser:Literal['edge','chrome','firefox']='edge', llm: BaseChatModel=None,consecutive_failures:int=3,max_steps:int=20,use_vision:bool=False,enable_conversation:bool=True,literal_mode:bool=True,enable_tts:bool=False,tts_voice_id:str="21m00Tcm4TlvDq8ikWAM",enable_screenshot_analysis:bool=True,enable_activity_tracking:bool=True):
         self.name='Yuki AI'
         self.description='An agent that can interact with GUI elements on Windows' 
         from windows_use.agent.tools.service import activity_tool, timeline_tool
@@ -79,7 +79,10 @@ class Agent:
         self.literal_mode=literal_mode
         self.enable_tts=enable_tts
         self.tts_voice_id=tts_voice_id
+        self.enable_screenshot_analysis=enable_screenshot_analysis
+        self.enable_activity_tracking=enable_activity_tracking
         self.llm = llm or ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.7)
+        self.model_id = getattr(self.llm, "model", "gemini-2.0-flash")
         self.watch_cursor = WatchCursor()
         self.desktop = Desktop()
         self.console=Console(file=sys.stderr)  # Use stderr to avoid interfering with stdin
@@ -106,6 +109,8 @@ class Agent:
         self.screenshot_service = None
         self.activity_analyzer = None
         self.notification_callback = None  # Notification callback for activity tracking
+        # Track the target app for precise detection (e.g., Calculator after switching to it)
+        self._target_app_for_precise_detection = None
         self._initialize_tracking()
 
     def pause(self):
@@ -359,14 +364,66 @@ class Agent:
         
         
         # Only refresh desktop state before coordinate-based actions if it's stale
+        # CRITICAL: Use precise detection if we have a target app (e.g., Calculator)
+        # IMPORTANT: If we just switched/launched an app, the state should already be fresh
+        # Only refresh if state is truly stale (> 1.5s old) to avoid capturing wrong window
+        # CRITICAL: Ensure target app is in foreground before refreshing to get correct coordinates
         if name in ['Click Tool', 'Type Tool', 'Scroll Tool', 'Drag Tool', 'Move Tool']:
-            # Only refresh if we don't have recent desktop state
             current_time = time.time()
-            if (not hasattr(self.desktop, '_last_state_time') or 
-                current_time - getattr(self.desktop, '_last_state_time', 0) > 1.5):
-                self.desktop.get_state(use_vision=self.use_vision)
+            state_age = current_time - getattr(self.desktop, '_last_state_time', 0) if hasattr(self.desktop, '_last_state_time') else float('inf')
+            
+            # Only refresh if state is stale (older than 1.5s)
+            # This prevents refreshing right after switching, which could capture wrong window
+            if state_age > 1.5:
+                # Use precise detection if we have a target app
+                target_app = self._target_app_for_precise_detection
+                if target_app:
+                    # CRITICAL: Verify target app is actually in foreground before getting elements
+                    # If not, try to switch to it first
+                    if self.desktop.desktop_state and self.desktop.desktop_state.active_app:
+                        active_app_name = self.desktop.desktop_state.active_app.name.lower()
+                        target_app_lower = target_app.lower()
+                        if not (target_app_lower in active_app_name or active_app_name in target_app_lower):
+                            # Target app is not in foreground - try to switch to it
+                            self.show_status("Warning", "Focus", f"Target app {target_app} not in foreground, switching to it")
+                            try:
+                                switch_result, switch_status = self.desktop.switch_app(target_app)
+                                if switch_status == 0:
+                                    time.sleep(0.3)  # Wait for switch to complete
+                                else:
+                                    self.show_status("Warning", "Focus", f"Failed to switch to {target_app}: {switch_result}")
+                            except Exception as e:
+                                self.show_status("Warning", "Focus", f"Error switching to {target_app}: {e}")
+                    
+                    # Now get state with precise detection
+                    self.desktop.get_state(use_vision=self.use_vision, target_app=target_app)
+                    self.show_status("Refreshing", "Desktop State", f"Getting precise coordinates for {target_app}")
+                else:
+                    self.desktop.get_state(use_vision=self.use_vision)
+                    self.show_status("Refreshing", "Desktop State", "Getting updated coordinates")
                 self.desktop._last_state_time = current_time
-                self.show_status("Refreshing", "Desktop State", "Getting updated coordinates")
+            else:
+                # State is fresh - verify target app is still active
+                if self._target_app_for_precise_detection and self.desktop.desktop_state and self.desktop.desktop_state.active_app:
+                    active_app_name = self.desktop.desktop_state.active_app.name.lower()
+                    target_app_lower = self._target_app_for_precise_detection.lower()
+                    if not (target_app_lower in active_app_name or active_app_name in target_app_lower):
+                        # Target app lost focus - try to switch back and refresh with precise detection
+                        self.show_status("Warning", "Focus", f"Target app lost focus, switching back to {self._target_app_for_precise_detection}")
+                        try:
+                            switch_result, switch_status = self.desktop.switch_app(self._target_app_for_precise_detection)
+                            if switch_status == 0:
+                                time.sleep(0.3)  # Wait for switch to complete
+                                self.desktop.get_state(use_vision=self.use_vision, target_app=self._target_app_for_precise_detection)
+                                self.show_status("Refreshing", "Desktop State", f"Target app lost focus, refreshed precise coordinates")
+                            else:
+                                self.show_status("Warning", "Focus", f"Failed to switch: {switch_result}")
+                                # Still refresh to get current state
+                                self.desktop.get_state(use_vision=self.use_vision, target_app=self._target_app_for_precise_detection)
+                        except Exception as e:
+                            self.show_status("Warning", "Focus", f"Error switching: {e}")
+                            self.desktop.get_state(use_vision=self.use_vision, target_app=self._target_app_for_precise_detection)
+                        self.desktop._last_state_time = current_time
         
         # OPTIMIZATION: For Click Tool and Type Tool, find control_type from desktop state
         if name in ['Click Tool', 'Type Tool'] and 'loc' in params:
@@ -411,9 +468,49 @@ class Agent:
             self.show_status("Failed", name, f"{observation[:50]}...")
         
         # Force desktop state refresh after Launch Tool to get updated coordinates
+        # Launch Tool may switch to existing app or launch new one - handle both cases
         if tool_result.is_success and name == 'Launch Tool':
-            self.show_status("Refreshing", "Desktop State", "Getting fresh coordinates after launch")
-            self.desktop.get_state(use_vision=self.use_vision)
+            # Extract app name from launch params
+            launched_app = params.get('name', '').strip() if 'name' in params else None
+            
+            # Check if Launch Tool switched to existing app (response contains "already running" or "switched")
+            was_switch = 'already running' in observation.lower() or 'switched' in observation.lower()
+            
+            if launched_app:
+                # Check if this app supports precise detection (Calculator, browsers, etc.)
+                apps_with_precise_detection = [
+                    'calculator',
+                    'calc',
+                    'chrome',
+                    'google chrome',
+                    'edge',
+                    'microsoft edge',
+                    'firefox',
+                    'mozilla firefox'
+                ]
+                if any(app in launched_app.lower() for app in apps_with_precise_detection):
+                    self._target_app_for_precise_detection = launched_app
+                    if was_switch:
+                        # App was already running and we switched to it - wait a bit then use precise detection
+                        time.sleep(0.3)  # Wait for switch to complete
+                        self.show_status("Refreshing", "Desktop State", f"Getting precise coordinates for {launched_app} after switch")
+                        self.desktop.get_state(use_vision=self.use_vision, target_app=launched_app)
+                    else:
+                        # New app was launched - wait for it to load then use precise detection
+                        time.sleep(0.2)  # Wait for app to stabilize
+                        self.show_status("Refreshing", "Desktop State", f"Getting precise coordinates for {launched_app} after launch")
+                        self.desktop.get_state(use_vision=self.use_vision, target_app=launched_app)
+                else:
+                    # App doesn't support precise detection - use regular detection
+                    if was_switch:
+                        time.sleep(0.3)  # Wait for switch to complete
+                    else:
+                        time.sleep(0.2)  # Wait for app to load
+                    self.desktop.get_state(use_vision=self.use_vision)
+                    self.show_status("Refreshing", "Desktop State", "Getting fresh coordinates after launch")
+            else:
+                self.desktop.get_state(use_vision=self.use_vision)
+                self.show_status("Refreshing", "Desktop State", "Getting fresh coordinates after launch")
             self.desktop._last_state_time = time.time()
         
         # Cooperative pause checkpoint after action side-effects settle
@@ -425,14 +522,99 @@ class Agent:
         # Show observation (skip for Human Tool as it's a question)
         if name != 'Human Tool':
             logger.info(colored(f"{shorten(observation,500,placeholder='...')}",color='green'))
-        # Only get fresh desktop state if we don't have recent state
-        current_time = time.time()
-        if (not hasattr(self.desktop, '_last_state_time') or 
-            current_time - getattr(self.desktop, '_last_state_time', 0) > 1.0):
-            desktop_state = self.desktop.get_state(use_vision=self.use_vision)
-            self.desktop._last_state_time = current_time
+        
+        # Smart desktop state refresh: Only refresh when needed
+        # Actions that don't need immediate state refresh (they don't change UI coordinates):
+        # - Key Tool: Just presses keys, UI doesn't change structure - reuse state to avoid focus shifts
+        # - Done Tool: Task complete, no next action needed
+        # - Wait Tool: Just waits, no UI change
+        # - Human Tool: Asking user, no UI change
+        
+        # Special handling for Switch Tool: After switching, wait for switch to complete,
+        # then refresh state to get accurate foreground app info using PRECISE DETECTION
+        if name == 'Switch Tool' and tool_result.is_success:
+            # Wait longer for the window switch to fully complete and stabilize
+            # The switch_app method keeps the window topmost for ~150ms after confirmation,
+            # so we wait a bit more to ensure it's ready for detection
+            time.sleep(0.3)  # 300ms to ensure switch is fully complete
+            
+            # Extract app name from switch params and use precise detection
+            switched_app = params.get('name', '').strip() if 'name' in params else None
+            if switched_app:
+                # Check if this app supports precise detection (Calculator, browsers, etc.)
+                apps_with_precise_detection = [
+                    'calculator',
+                    'calc',
+                    'chrome',
+                    'google chrome',
+                    'edge',
+                    'microsoft edge',
+                    'firefox',
+                    'mozilla firefox'
+                ]
+                if any(app in switched_app.lower() for app in apps_with_precise_detection):
+                    self._target_app_for_precise_detection = switched_app
+                    self.show_status("Refreshing", "Desktop State", f"Getting precise coordinates for {switched_app}")
+                    desktop_state = self.desktop.get_state(use_vision=self.use_vision, target_app=switched_app)
+                else:
+                    # For other apps, use regular detection but track the app name
+                    self._target_app_for_precise_detection = None
+                    desktop_state = self.desktop.get_state(use_vision=self.use_vision)
+                    self.show_status("Refreshing", "Desktop State", "Getting updated coordinates after switch")
+            else:
+                desktop_state = self.desktop.get_state(use_vision=self.use_vision)
+                self.show_status("Refreshing", "Desktop State", "Getting updated coordinates after switch")
+            self.desktop._last_state_time = time.time()
+        elif name in ['Key Tool', 'Done Tool', 'Wait Tool', 'Human Tool'] and tool_result.is_success:
+            # For these actions, reuse existing desktop state without refreshing
+            # This prevents focus shifts that cause unnecessary window switching
+            # Key Tool especially: after pressing space to pause, we don't want to refresh
+            # state immediately as it might cause focus to shift and make agent think it needs to switch again
+            desktop_state = self.desktop.desktop_state
+            if desktop_state is None:
+                # Fallback: if no state exists, get it (shouldn't happen normally)
+                desktop_state = self.desktop.get_state(use_vision=self.use_vision)
+                self.desktop._last_state_time = time.time()
         else:
-            desktop_state = self.desktop.desktop_state or self.desktop.get_state(use_vision=self.use_vision)
+            # For other actions (Click, Type, Scroll, etc.), refresh if stale
+            # Use precise detection if we have a target app
+            current_time = time.time()
+            if (not hasattr(self.desktop, '_last_state_time') or 
+                current_time - getattr(self.desktop, '_last_state_time', 0) > 1.0):
+                # Add small delay after actions to let UI settle before refreshing
+                # This prevents focus shifts from state refresh interfering with the action
+                if name not in ['Launch Tool']:  # Launch Tool already refreshed above
+                    time.sleep(0.1)  # 100ms delay to let UI settle
+                
+                # Use precise detection if we have a target app and it's still active
+                target_app = self._target_app_for_precise_detection
+                if target_app and self.desktop.desktop_state and self.desktop.desktop_state.active_app:
+                    active_app_name = self.desktop.desktop_state.active_app.name.lower()
+                    if target_app.lower() in active_app_name or active_app_name in target_app.lower():
+                        desktop_state = self.desktop.get_state(use_vision=self.use_vision, target_app=target_app)
+                    else:
+                        # Target app is no longer active, clear it
+                        self._target_app_for_precise_detection = None
+                        desktop_state = self.desktop.get_state(use_vision=self.use_vision)
+                elif target_app:
+                    # Use precise detection even if we don't have current state
+                    desktop_state = self.desktop.get_state(use_vision=self.use_vision, target_app=target_app)
+                else:
+                    desktop_state = self.desktop.get_state(use_vision=self.use_vision)
+                self.desktop._last_state_time = current_time
+            else:
+                desktop_state = self.desktop.desktop_state or self.desktop.get_state(use_vision=self.use_vision)
+            
+            # After clicking, check if we clicked outside the target app window
+            # If so, clear the target app to avoid using stale coordinates
+            if name == 'Click Tool' and tool_result.is_success:
+                if self._target_app_for_precise_detection and desktop_state and desktop_state.active_app:
+                    active_app_name = desktop_state.active_app.name.lower()
+                    target_app_lower = self._target_app_for_precise_detection.lower()
+                    if not (target_app_lower in active_app_name or active_app_name in target_app_lower):
+                        # We clicked outside the target app, clear it
+                        self._target_app_for_precise_detection = None
+                        self.show_status("Warning", "Click", "Clicked outside target app, clearing precise detection")
         prompt=Prompt.observation_prompt(query=state.get('input'),steps=steps,max_steps=max_steps, tool_result=tool_result, desktop_state=desktop_state)
         human_message=image_message(prompt=prompt,image=desktop_state.screenshot) if self.use_vision and desktop_state.screenshot else HumanMessage(content=prompt)
         return {**state,'agent_data':None,'messages':[ai_message, human_message],'previous_observation':observation}
@@ -815,7 +997,6 @@ Activity summary for {today}:
 Provide a natural, conversational response answering the user's question about their activity and productivity.
 Be specific with numbers and insights. Be encouraging and helpful."""
                     
-                    from langchain_core.messages import HumanMessage
                     response = self.llm.invoke([HumanMessage(content=prompt)])
                     answer = response.content if hasattr(response, 'content') else str(response)
                     
@@ -977,6 +1158,14 @@ Be specific with numbers and insights. Be encouraging and helpful."""
     
     def _initialize_tracking(self):
         """Initialize activity tracking system."""
+        # Check if activity tracking is disabled
+        if not self.enable_activity_tracking:
+            logger.info("Activity tracking is disabled in settings")
+            self.activity_tracker = None
+            self.screenshot_service = None
+            self.activity_analyzer = None
+            return
+        
         try:
             from windows_use.tracking.config import initialize_tracking
             import os
@@ -1009,18 +1198,21 @@ Be specific with numbers and insights. Be encouraging and helpful."""
             # Use WINDOWS_USE_DATA_PATH (set by Electron) or fallback to YUKI_DATA_PATH or default
             storage_path = os.getenv('WINDOWS_USE_DATA_PATH') or os.getenv('YUKI_DATA_PATH') or os.path.join(os.getcwd(), 'data')
             
-            # Initialize tracking (screenshots enabled by default, 5 minute interval)
+            # Use enable_screenshot_analysis setting to control screenshot capture and analysis
+            enable_screenshots = self.enable_screenshot_analysis
+            
+            # Initialize tracking with screenshot analysis setting
             # Pass LLM instance for AI-based productivity classification
             if google_api_key:
                 self.activity_tracker, self.screenshot_service, self.activity_analyzer = initialize_tracking(
                     desktop=self.desktop,
                     storage_path=storage_path,
                     google_api_key=google_api_key,
-                    enable_screenshots=True,
+                    enable_screenshots=enable_screenshots,
                     screenshot_interval=300.0,  # 5 minutes
                     poll_interval=2.0,
                     notification_callback=self.notification_callback,
-                    llm=self.llm  # Pass LLM for AI classification
+                    llm=self.llm if enable_screenshots else None  # Only pass LLM if screenshot analysis is enabled
                 )
             else:
                 # Initialize without API key - analyzer will try to use LLM instance
@@ -1028,25 +1220,26 @@ Be specific with numbers and insights. Be encouraging and helpful."""
                     desktop=self.desktop,
                     storage_path=storage_path,
                     google_api_key=None,
-                    enable_screenshots=True,
+                    enable_screenshots=enable_screenshots,
                     screenshot_interval=300.0,
                     poll_interval=2.0,
                     notification_callback=self.notification_callback,
-                    llm=self.llm  # Pass LLM for AI classification
+                    llm=self.llm if enable_screenshots else None  # Only pass LLM if screenshot analysis is enabled
                 )
-                # Try to set LLM on analyzer if available
-                if self.activity_analyzer and self.llm:
+                # Try to set LLM on analyzer if available and screenshot analysis is enabled
+                if self.activity_analyzer and self.llm and enable_screenshots:
                     try:
                         self.activity_analyzer.llm = self.llm
                     except Exception:
                         pass
             
             # Start tracking
-            self.activity_tracker.start_tracking()
-            if self.screenshot_service:
+            if self.activity_tracker:
+                self.activity_tracker.start_tracking()
+            if self.screenshot_service and enable_screenshots:
                 self.screenshot_service.start_capturing()
             
-            logger.info("Activity tracking initialized and started")
+            logger.info(f"Activity tracking initialized and started (screenshot analysis: {enable_screenshots})")
         
         except Exception as e:
             logger.warning(f"Failed to initialize activity tracking: {e}")

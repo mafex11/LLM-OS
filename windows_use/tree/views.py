@@ -1,4 +1,5 @@
 from dataclasses import dataclass,field
+from typing import Optional
 
 @dataclass
 class TreeState:
@@ -58,6 +59,9 @@ class TreeElementNode:
 class TextElementNode:
     name:str
     app_name:str
+    control_type:Optional[str]=None
+    bounding_box:Optional['BoundingBox']=None
+    center:Optional['Center']=None
 
 @dataclass
 class ScrollElementNode:

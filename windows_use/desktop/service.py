@@ -29,17 +29,34 @@ class Desktop:
         self._last_switch_handle = None
         
     def get_state(self,use_vision:bool=False, target_app:str=None)->DesktopState:
-        tree=Tree(self)
-        apps=self.get_apps()
-        
-        # Use precise detection if target_app is specified
-        if target_app:
-            tree_state=tree.get_precise_state(target_app)
-        else:
-            tree_state=tree.get_state()
-            
-        # Find the actual foreground app instead of assuming the first one
+        tree = Tree(self)
+        apps = self.get_apps()
+
+        # Track the foreground app so we can gather precise UI metadata
         active_app = self._get_foreground_app(apps)
+
+        target_window = None
+        target_app_obj = None
+
+        if target_app:
+            app_name_map = {app.name: app for app in apps if app.name}
+            match = process.extractOne(target_app, list(app_name_map.keys()), score_cutoff=60)
+            if match:
+                target_app_obj = app_name_map.get(match[0])
+        if target_app_obj is None:
+            target_app_obj = active_app
+
+        if target_app_obj:
+            try:
+                target_window = ControlFromHandle(target_app_obj.handle)
+            except Exception:
+                target_window = None
+
+        if target_window:
+            tree_state = tree.get_precise_state(target_window)
+        else:
+            tree_state = tree.get_state()
+        
         apps = [app for app in apps if app != active_app]
         if use_vision:
             # Capture full-screen screenshot for accurate coordinate mapping
@@ -149,7 +166,14 @@ class Desktop:
     
     def switch_app(self,name:str):
         import time
-        apps={app.name:app for app in self.desktop_state.apps}
+        # Always work with a fresh list of apps to avoid stale handles or missing entries
+        current_apps = self.get_apps()
+        apps = {app.name: app for app in current_apps if app.name}
+        if self.desktop_state and self.desktop_state.active_app:
+            active = self.desktop_state.active_app
+            apps.setdefault(active.name, active)
+        if not apps:
+            return (f'Application {name.title()} not found.',1)
         matched_app:tuple[str,float]=process.extractOne(name,list(apps.keys()))
         if matched_app is None:
             return (f'Application {name.title()} not found.',1)

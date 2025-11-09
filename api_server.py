@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Literal, Optional
 from contextlib import asynccontextmanager
 import asyncio
 import json
@@ -69,6 +69,15 @@ import threading
 import uuid
 import re
 
+VALID_GEMINI_MODELS: List[str] = [
+    "gemini-2.5-pro",
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
+]
+DEFAULT_GEMINI_MODEL: str = "gemini-2.0-flash"
+
 # Lifespan context manager for startup/shutdown
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -89,7 +98,8 @@ async def lifespan(app: FastAPI):
                 "elevenlabs_api_key": "",
                 "deepgram_api_key": "",
                 "last_updated": datetime.now().isoformat(),
-                "version": "1.0"
+                "version": "1.0",
+                "model": DEFAULT_GEMINI_MODEL
             }
             
             # Ensure config directory exists
@@ -193,6 +203,7 @@ async def initialize_agent():
         
         # Get Google API key from config file
         config_file = os.path.join(CONFIG_PATH, "api_keys.json")
+        config_data: Dict[str, Any] = {}
         google_api_key = ""
         
         logger.info(f"Looking for API keys in config file: {config_file}")
@@ -201,12 +212,13 @@ async def initialize_agent():
             try:
                 with open(config_file, "r", encoding="utf-8") as f:
                     config_data = json.load(f)
-                    google_api_key = config_data.get("google_api_key", "")
-                    logger.info(f"Found Google API key: {'Yes' if google_api_key else 'No'}")
-                    print(f"✅ Config file found - Google API key: {'Yes' if google_api_key else 'No'}")
+                google_api_key = config_data.get("google_api_key", "")
+                logger.info(f"Found Google API key: {'Yes' if google_api_key else 'No'}")
+                print(f"✅ Config file found - Google API key: {'Yes' if google_api_key else 'No'}")
             except Exception as e:
                 logger.error(f"Error reading config file: {e}")
                 print(f"❌ Error reading config file: {e}")
+                config_data = {}
         else:
             logger.warning(f"Config file not found: {config_file}")
             print(f"⚠️  Config file not found: {config_file}")
@@ -218,9 +230,16 @@ async def initialize_agent():
             agent_initialized = False
             return False
         
-        logger.info("Initializing ChatGoogleGenerativeAI...")
+        model_setting = DEFAULT_GEMINI_MODEL
+        if config_data:
+            model_setting = config_data.get("model", DEFAULT_GEMINI_MODEL)
+        if model_setting not in VALID_GEMINI_MODELS:
+            logger.warning(f"Requested model '{model_setting}' is not supported. Falling back to default.")
+            model_setting = DEFAULT_GEMINI_MODEL
+
+        logger.info(f"Initializing ChatGoogleGenerativeAI with model: {model_setting}")
         llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash", 
+            model=model_setting,
             temperature=0.3,
             google_api_key=google_api_key
         )
@@ -228,37 +247,58 @@ async def initialize_agent():
         
         # TTS configuration - check if ElevenLabs API key is available
         enable_tts = False
-        tts_voice_id = "21m00Tcm4TlvDq8ikWAM"
+        tts_voice_id = config_data.get("tts_voice_id", "21m00Tcm4TlvDq8ikWAM")
         
         logger.info("Checking TTS configuration...")
-        if os.path.exists(config_file):
-            try:
-                with open(config_file, "r", encoding="utf-8") as f:
-                    config_data = json.load(f)
-                    elevenlabs_key = config_data.get("elevenlabs_api_key", "")
-                    if elevenlabs_key and elevenlabs_key.strip():
-                        enable_tts = True
-                        logger.info("ElevenLabs API key found, TTS enabled")
-                    else:
-                        logger.info("No ElevenLabs API key found, TTS disabled")
-            except Exception as e:
-                logger.error(f"Error reading ElevenLabs API key: {e}")
+        elevenlabs_key = config_data.get("elevenlabs_api_key", "")
+        enable_tts_setting = bool(config_data.get("enable_tts", False))
+        if enable_tts_setting and elevenlabs_key and elevenlabs_key.strip():
+            enable_tts = True
+            logger.info("ElevenLabs API key found, TTS enabled")
+        elif enable_tts_setting:
+            enable_tts = False
+            logger.info("TTS enabled in settings but ElevenLabs API key missing. TTS will remain disabled.")
+        else:
+            logger.info("TTS disabled in settings")
         
         # Set notification callback before initializing agent (so it's available during tracking init)
         # Create agent with notification callback
         logger.info("Initializing Agent with parameters...")
         
+        # Load agent settings from config file if available
+        enable_screenshot_analysis = config_data.get("enable_screenshot_analysis", True)
+        enable_activity_tracking = config_data.get("enable_activity_tracking", True)
+        enable_vision = config_data.get("enable_vision", False)
+        enable_conversation = config_data.get("enable_conversation", True)
+        max_steps_setting = int(config_data.get("max_steps", 100) or 100)
+        literal_mode_setting = bool(config_data.get("literal_mode", True))
+        browser_setting = config_data.get("browser", "chrome")
+        consecutive_failures_setting = int(config_data.get("consecutive_failures", 3) or 3)
+        cache_timeout_setting = float(config_data.get("cache_timeout", 2.0) or 2.0)
+        
+        # Sanitize configurable values
+        if browser_setting not in ("edge", "chrome", "firefox"):
+            browser_setting = "chrome"
+        max_steps_setting = max(1, min(200, max_steps_setting))
+        consecutive_failures_setting = max(1, min(10, consecutive_failures_setting))
+        cache_timeout_setting = max(0.1, min(10.0, cache_timeout_setting))
+        
         # Create agent instance
         agent_instance = Agent(
             llm=llm,
-            browser='chrome',
-            use_vision=False,
-            enable_conversation=True,
-            literal_mode=True,
-            max_steps=100,
+            browser=browser_setting,
+            use_vision=enable_vision,
+            enable_conversation=enable_conversation,
+            literal_mode=literal_mode_setting,
+            max_steps=max_steps_setting,
+            consecutive_failures=consecutive_failures_setting,
             enable_tts=enable_tts,
-            tts_voice_id=tts_voice_id
+            tts_voice_id=tts_voice_id,
+            enable_screenshot_analysis=enable_screenshot_analysis,
+            enable_activity_tracking=enable_activity_tracking
         )
+        agent_instance.model_id = model_setting
+        agent_instance.desktop.cache_timeout = cache_timeout_setting
         
         # Set notification callback (tracking is initialized in __init__, so we need to set it after)
         agent_instance.notification_callback = handle_notification
@@ -375,6 +415,20 @@ class SettingsRequest(BaseModel):
     tts_voice_id: str = "21m00Tcm4TlvDq8ikWAM"
     cache_timeout: float = 2.0
     max_steps: int = 50
+    consecutive_failures: int = 3
+    browser: Literal["edge", "chrome", "firefox"] = "chrome"
+    literal_mode: bool = True
+    model: Literal[
+        "gemini-2.5-pro",
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-lite",
+        "gemini-2.0-flash",
+        "gemini-2.0-flash-lite",
+    ] = DEFAULT_GEMINI_MODEL
+    enable_screenshot_analysis: bool = True
+    enable_activity_tracking: bool = True
+    enable_vision: bool = False
+    enable_conversation: bool = True
 
 class ApiKeysRequest(BaseModel):
     google_api_key: str
@@ -397,10 +451,12 @@ class ScheduledTask(BaseModel):
     created_at: str
     scheduled_for: Optional[str] = None
     last_error: Optional[str] = None
-    repeat: Optional[str] = None  # none, daily, weekly
+    repeat: Optional[str] = None  # none, daily, weekly, interval
     days_of_week: Optional[List[int]] = None  # 0=Monday ... 6=Sunday
     last_run_at: Optional[str] = None
     last_run_status: Optional[str] = None
+    repeat_interval_seconds: Optional[int] = None  # Interval in seconds (e.g., 600 for 10 minutes, 7200 for 2 hours)
+    repeat_end_time: Optional[str] = None  # HH:MM format - stop repeating after this time in the day
 
 # In-memory registry and persistence for scheduled tasks
 _scheduled_tasks: Dict[str, ScheduledTask] = {}
@@ -484,6 +540,10 @@ def _resolve_run_datetime(run_at: Optional[str], base: datetime, allow_rollover:
 
 def _should_repeat(task: ScheduledTask) -> bool:
     repeat = (task.repeat or "").strip().lower()
+    # Check for interval-based repeats
+    if task.repeat_interval_seconds and task.repeat_interval_seconds > 0:
+        return True
+    # Check for daily/weekly repeats
     return bool(repeat in {"daily", "weekly"} or (task.days_of_week and len(task.days_of_week) > 0))
 
 
@@ -515,6 +575,136 @@ def _compute_next_run_datetime(task: ScheduledTask, reference: Optional[datetime
                 continue
             return candidate
         return None
+    # Handle interval-based repeats (e.g., every 10 minutes, every 2 hours)
+    if task.repeat_interval_seconds and task.repeat_interval_seconds > 0:
+        # Determine base time for calculating next run
+        base_time = None
+        
+        # If this is a repeat run, use last_run_at
+        if task.last_run_at:
+            base_time = _normalize_iso_datetime(task.last_run_at)
+        
+        # If no last_run_at, this is the first run - determine start time
+        if not base_time:
+            if task.run_at:
+                # Use run_at as start time
+                start_components = _parse_time_of_day_components(task.run_at)
+                if start_components:
+                    today = ref.date()
+                    base_time = datetime.combine(today, datetime.min.time()).replace(
+                        hour=start_components[0],
+                        minute=start_components[1],
+                        second=start_components[2],
+                        microsecond=0,
+                    )
+                    # If start time is in the past today, use it for today anyway (will be adjusted below)
+                    if base_time < ref:
+                        # Start immediately or use current time
+                        base_time = ref
+            elif task.delay_seconds is not None:
+                # Use delay_seconds from creation time
+                created = _normalize_iso_datetime(task.created_at) or ref
+                base_time = created + timedelta(seconds=task.delay_seconds)
+            else:
+                # Start immediately
+                base_time = ref
+        
+        # Calculate next run time
+        next_run = base_time + timedelta(seconds=task.repeat_interval_seconds)
+        
+        # Parse end time if set (HH:MM format)
+        end_time_components = None
+        if task.repeat_end_time:
+            end_time_components = _parse_time_of_day_components(task.repeat_end_time)
+        
+        # Check constraints: end time and day boundaries
+        next_run_date = next_run.date()
+        base_date = base_time.date()
+        
+        # Check if we've crossed to a new day
+        if next_run_date > base_date:
+            # Crossed to next day - check if we should continue
+            if task.run_at:
+                # Restart at run_at time on next day
+                start_components = _parse_time_of_day_components(task.run_at)
+                if start_components:
+                    next_run = datetime.combine(next_run_date, datetime.min.time()).replace(
+                        hour=start_components[0],
+                        minute=start_components[1],
+                        second=start_components[2],
+                        microsecond=0,
+                    )
+                else:
+                    # Invalid start time - stop
+                    return None
+            elif end_time_components:
+                # Check if next run time on next day is past end time
+                end_time_next_day = datetime.combine(next_run_date, datetime.min.time()).replace(
+                    hour=end_time_components[0],
+                    minute=end_time_components[1],
+                    second=end_time_components[2],
+                    microsecond=0,
+                )
+                if next_run > end_time_next_day:
+                    # Past end time on next day - stop (no start time to restart)
+                    return None
+            # If no end time and no start time, continue with calculated time
+        
+        # Check end time constraint on same day
+        if end_time_components and next_run_date == base_date:
+            end_time_today = datetime.combine(base_date, datetime.min.time()).replace(
+                hour=end_time_components[0],
+                minute=end_time_components[1],
+                second=end_time_components[2],
+                microsecond=0,
+            )
+            if next_run > end_time_today:
+                # Past end time - schedule for next day at start time (if available)
+                if task.run_at:
+                    start_components = _parse_time_of_day_components(task.run_at)
+                    if start_components:
+                        next_day = base_date + timedelta(days=1)
+                        next_run = datetime.combine(next_day, datetime.min.time()).replace(
+                            hour=start_components[0],
+                            minute=start_components[1],
+                            second=start_components[2],
+                            microsecond=0,
+                        )
+                    else:
+                        return None
+                else:
+                    # No start time - stop repeating
+                    return None
+        
+        # Ensure next run is in the future (at least ref time)
+        if next_run < ref:
+            # Calculate from ref instead
+            next_run = ref + timedelta(seconds=task.repeat_interval_seconds)
+            # Re-check constraints
+            if end_time_components and next_run.date() == ref.date():
+                end_time_today = datetime.combine(ref.date(), datetime.min.time()).replace(
+                    hour=end_time_components[0],
+                    minute=end_time_components[1],
+                    second=end_time_components[2],
+                    microsecond=0,
+                )
+                if next_run > end_time_today:
+                    if task.run_at:
+                        start_components = _parse_time_of_day_components(task.run_at)
+                        if start_components:
+                            next_day = ref.date() + timedelta(days=1)
+                            next_run = datetime.combine(next_day, datetime.min.time()).replace(
+                                hour=start_components[0],
+                                minute=start_components[1],
+                                second=start_components[2],
+                                microsecond=0,
+                            )
+                        else:
+                            return None
+                    else:
+                        return None
+        
+        return next_run
     if task.delay_seconds is not None:
         created = _normalize_iso_datetime(task.created_at) or ref
         target = created + timedelta(seconds=int(task.delay_seconds))
@@ -861,8 +1051,11 @@ async def process_query_stream(request: QueryRequest):
                 return
             
             # Create new agent instance with API key
+            current_model = getattr(agent, 'model_id', DEFAULT_GEMINI_MODEL)
+            if current_model not in VALID_GEMINI_MODELS:
+                current_model = DEFAULT_GEMINI_MODEL
             llm = ChatGoogleGenerativeAI(
-                model="gemini-2.0-flash", 
+                model=current_model, 
                 temperature=0.3,
                 google_api_key=google_api_key
             )
@@ -870,14 +1063,20 @@ async def process_query_stream(request: QueryRequest):
             # Create a new agent instance with the frontend API key
             frontend_agent = Agent(
                 llm=llm,
-                browser='chrome',
-                use_vision=False,
-                enable_conversation=True,
-                literal_mode=True,
-                max_steps=50,
+                browser=getattr(agent, 'browser', 'chrome'),
+                use_vision=request.use_vision and getattr(agent, 'use_vision', False),
+                enable_conversation=getattr(agent, 'enable_conversation', True),
+                literal_mode=getattr(agent, 'literal_mode', True),
+                max_steps=getattr(agent, 'max_steps', 50),
+                consecutive_failures=getattr(agent, 'consecutive_failures', 3),
+                enable_screenshot_analysis=getattr(agent, 'enable_screenshot_analysis', True),
+                enable_activity_tracking=getattr(agent, 'enable_activity_tracking', True),
                 enable_tts=False,  # We'll handle TTS separately
-                tts_voice_id="21m00Tcm4TlvDq8ikWAM"
+                tts_voice_id=getattr(agent, 'tts_voice_id', "21m00Tcm4TlvDq8ikWAM")
             )
+            frontend_agent.model_id = current_model
+            if hasattr(frontend_agent, 'desktop'):
+                frontend_agent.desktop.cache_timeout = getattr(agent.desktop, 'cache_timeout', 2.0) if hasattr(agent, 'desktop') else 2.0
             
             # Copy running programs from the original agent
             frontend_agent.running_programs = agent.running_programs
@@ -1186,6 +1385,32 @@ async def clear_memories():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error clearing memories: {str(e)}")
 
+# Get current settings
+@app.get("/api/settings")
+async def get_settings():
+    """Get current agent settings"""
+    if not agent_initialized or not agent:
+        raise HTTPException(status_code=503, detail="Agent not initialized")
+    
+    try:
+        settings = {
+            "enable_tts": getattr(agent, 'enable_tts', False),
+            "tts_voice_id": getattr(agent, 'tts_voice_id', "21m00Tcm4TlvDq8ikWAM"),
+            "cache_timeout": getattr(agent.desktop, 'cache_timeout', 2.0) if hasattr(agent, 'desktop') else 2.0,
+            "max_steps": getattr(agent, 'max_steps', 50),
+            "consecutive_failures": getattr(agent, 'consecutive_failures', 3),
+            "browser": getattr(agent, 'browser', "chrome"),
+            "literal_mode": getattr(agent, 'literal_mode', True),
+            "model": getattr(agent, 'model_id', getattr(getattr(agent, 'llm', None), 'model', DEFAULT_GEMINI_MODEL)),
+            "enable_screenshot_analysis": getattr(agent, 'enable_screenshot_analysis', True),
+            "enable_activity_tracking": getattr(agent, 'enable_activity_tracking', True),
+            "enable_vision": getattr(agent, 'use_vision', False),
+            "enable_conversation": getattr(agent, 'enable_conversation', True)
+        }
+        return settings
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting settings: {str(e)}")
+
 # Update settings
 @app.post("/api/settings")
 async def update_settings(request: SettingsRequest):
@@ -1194,17 +1419,151 @@ async def update_settings(request: SettingsRequest):
         raise HTTPException(status_code=503, detail="Agent not initialized")
     
     try:
+        bounded_max_steps = max(1, min(200, request.max_steps))
+        bounded_cache_timeout = max(0.1, min(10.0, request.cache_timeout))
+        bounded_consecutive_failures = max(1, min(10, request.consecutive_failures))
+        if request.model not in VALID_GEMINI_MODELS:
+            raise HTTPException(status_code=400, detail=f"Unsupported model: {request.model}")
+
+        config_file = os.path.join(CONFIG_PATH, "api_keys.json")
+        config_data: Dict[str, Any] = {}
+        if os.path.exists(config_file):
+            try:
+                with open(config_file, "r", encoding="utf-8") as f:
+                    config_data = json.load(f)
+            except Exception as read_error:
+                logger.warning(f"Failed to read config file before updating settings: {read_error}")
+                config_data = {}
+
+        previous_browser = getattr(agent, 'browser', request.browser)
+        previous_literal_mode = getattr(agent, 'literal_mode', request.literal_mode)
+        previous_max_steps = getattr(agent, 'max_steps', bounded_max_steps)
+        previous_model = getattr(agent, 'model_id', DEFAULT_GEMINI_MODEL)
+        model_changed = previous_model != request.model
+        should_reset_prompt = (
+            previous_browser != request.browser
+            or previous_literal_mode != request.literal_mode
+            or previous_max_steps != bounded_max_steps
+            or model_changed
+        )
+
         # Update TTS settings
-        if hasattr(agent, 'tts_service') and agent.tts_service:
-            agent.tts_service.enabled = request.enable_tts
-            agent.tts_service.voice_id = request.tts_voice_id
+        tts_service = getattr(agent, 'tts_service', None)
+        if request.enable_tts:
+            if tts_service:
+                tts_service.enabled = True
+                tts_service.voice_id = request.tts_voice_id
+            else:
+                try:
+                    from windows_use.agent.tts_service import TTSService
+                    agent.tts_service = TTSService(voice_id=request.tts_voice_id, enable_tts=True)
+                except Exception as tts_error:
+                    logger.warning(f"Failed to initialize TTS service: {tts_error}")
+        else:
+            if tts_service:
+                tts_service.enabled = False
+                try:
+                    tts_service.stop_current_speech()
+                except Exception:
+                    pass
+        
+        # Update agent TTS flags
+        agent.enable_tts = request.enable_tts
+        agent.tts_voice_id = request.tts_voice_id
+        
+        # Update browser and literal mode
+        agent.browser = request.browser
+        agent.literal_mode = request.literal_mode
+        agent.model_id = request.model
         
         # Update cache timeout
         if hasattr(agent, 'desktop'):
-            agent.desktop.cache_timeout = request.cache_timeout
+            agent.desktop.cache_timeout = bounded_cache_timeout
         
         # Update max steps
-        agent.max_steps = request.max_steps
+        agent.max_steps = bounded_max_steps
+        
+        # Update consecutive failure limit
+        agent.consecutive_failures = bounded_consecutive_failures
+        
+        # Update vision mode
+        agent.use_vision = request.enable_vision
+        
+        # Update conversation mode
+        agent.enable_conversation = request.enable_conversation
+        if not request.enable_conversation and hasattr(agent, 'conversation_history'):
+            try:
+                agent.conversation_history.clear()
+            except Exception:
+                agent.conversation_history = []
+        
+        # Update screenshot analysis and activity tracking
+        screenshot_analysis_changed = getattr(agent, 'enable_screenshot_analysis', True) != request.enable_screenshot_analysis
+        activity_tracking_changed = getattr(agent, 'enable_activity_tracking', True) != request.enable_activity_tracking
+        
+        agent.enable_screenshot_analysis = request.enable_screenshot_analysis
+        agent.enable_activity_tracking = request.enable_activity_tracking
+        
+        # If screenshot analysis or activity tracking changed, reinitialize tracking
+        if screenshot_analysis_changed or activity_tracking_changed:
+            # Stop existing tracking if running
+            if hasattr(agent, 'activity_tracker') and agent.activity_tracker:
+                try:
+                    agent.activity_tracker.stop_tracking()
+                except Exception as e:
+                    logger.warning(f"Error stopping activity tracker: {e}")
+            
+            if hasattr(agent, 'screenshot_service') and agent.screenshot_service:
+                try:
+                    agent.screenshot_service.stop_capturing()
+                except Exception as e:
+                    logger.warning(f"Error stopping screenshot service: {e}")
+            
+            # Reinitialize tracking with new settings
+            agent._initialize_tracking()
+            logger.info(f"Activity tracking reinitialized (screenshot analysis: {request.enable_screenshot_analysis}, activity tracking: {request.enable_activity_tracking})")
+        
+        # Reset system prompt when core planning parameters change
+        if should_reset_prompt and hasattr(agent, 'system_message'):
+            agent.system_message = None
+        
+        # Reinitialize LLM if model changed and API key available
+        try:
+            google_api_key = config_data.get("google_api_key", "")
+            if model_changed and google_api_key:
+                temperature = getattr(agent.llm, "temperature", 0.3) if hasattr(agent, "llm") else 0.3
+                agent.llm = ChatGoogleGenerativeAI(
+                    model=request.model,
+                    temperature=temperature,
+                    google_api_key=google_api_key,
+                )
+                logger.info(f"Agent language model updated to {request.model}")
+            elif model_changed and not google_api_key:
+                logger.warning("Cannot update language model because Google API key is missing.")
+        except Exception as llm_error:
+            logger.warning(f"Failed to update language model: {llm_error}")
+        
+        # Save settings to config file for persistence
+        try:
+            # Update agent settings in config
+            config_data["enable_screenshot_analysis"] = request.enable_screenshot_analysis
+            config_data["enable_activity_tracking"] = request.enable_activity_tracking
+            config_data["enable_vision"] = request.enable_vision
+            config_data["enable_conversation"] = request.enable_conversation
+            config_data["max_steps"] = bounded_max_steps
+            config_data["cache_timeout"] = bounded_cache_timeout
+            config_data["enable_tts"] = request.enable_tts
+            config_data["tts_voice_id"] = request.tts_voice_id
+            config_data["consecutive_failures"] = bounded_consecutive_failures
+            config_data["browser"] = request.browser
+            config_data["literal_mode"] = request.literal_mode
+            config_data["model"] = request.model
+            
+            with open(config_file, "w", encoding="utf-8") as f:
+                json.dump(config_data, f, indent=2, ensure_ascii=False)
+            logger.info("Agent settings saved to config file")
+        except Exception as e:
+            logger.warning(f"Failed to save settings to config file: {e}")
         
         return {"success": True, "message": "Settings updated"}
     except Exception as e:
@@ -1275,6 +1634,15 @@ voice_last_command_ts: float = 0.0
 session_conversations: Dict[str, List[Dict[str, Any]]] = {}
 # Default session id for single-chat UI
 DEFAULT_SESSION_ID = "default"
+
+VALID_GEMINI_MODELS: List[str] = [
+    "gemini-2.5-pro",
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
+]
+DEFAULT_GEMINI_MODEL: str = "gemini-2.0-flash"
 
 # Global flags to prevent duplicate voice processing/starts
 _voice_processing_lock = False
@@ -1425,9 +1793,14 @@ async def start_voice_mode(request: VoiceModeRequest):
             
             _voice_processing_lock = True
             
+            # Check conversation mode status
+            in_conversation_mode = voice_stt_service.is_in_conversation_mode() if hasattr(voice_stt_service, 'is_in_conversation_mode') else False
+            
             # Check if we're waiting for a command after trigger word detection
             if voice_stt_service.is_waiting_for_command():
                 print(f"Voice command received: {transcript}")
+            elif in_conversation_mode:
+                print(f"Query received in conversation mode: {transcript}")
             else:
                 print(f"Trigger word detected, voice command received: {transcript}")
             
@@ -1903,14 +2276,23 @@ async def save_api_keys(keys: ApiKeysRequest):
         # Create config directory if it doesn't exist
         os.makedirs(CONFIG_PATH, exist_ok=True)
         
-        # Prepare config data
-        config_data = {
-            "google_api_key": keys.google_api_key.strip() if keys.google_api_key else "",
-            "elevenlabs_api_key": keys.elevenlabs_api_key.strip() if keys.elevenlabs_api_key else "",
-            "deepgram_api_key": keys.deepgram_api_key.strip() if keys.deepgram_api_key else "",
-            "last_updated": datetime.now().isoformat(),
-            "version": "1.0"
-        }
+        # Read existing config to preserve agent settings
+        config_data = {}
+        if os.path.exists(config_file):
+            try:
+                with open(config_file, "r", encoding="utf-8") as f:
+                    config_data = json.load(f)
+            except Exception as e:
+                logger.warning(f"Error reading existing config file: {e}")
+                config_data = {}
+        
+        # Update only API keys, preserve all other settings
+        config_data["google_api_key"] = keys.google_api_key.strip() if keys.google_api_key else ""
+        config_data["elevenlabs_api_key"] = keys.elevenlabs_api_key.strip() if keys.elevenlabs_api_key else ""
+        config_data["deepgram_api_key"] = keys.deepgram_api_key.strip() if keys.deepgram_api_key else ""
+        config_data["last_updated"] = datetime.now().isoformat()
+        if "version" not in config_data:
+            config_data["version"] = "1.0"
         
         # Save to config file
         with open(config_file, "w", encoding="utf-8") as f:
@@ -1943,6 +2325,8 @@ class CreateTaskRequest(BaseModel):
     run_at: Optional[str] = None
     repeat: Optional[str] = None
     days_of_week: Optional[List[int]] = None
+    repeat_interval_seconds: Optional[int] = None  # Interval in seconds for interval-based repeats
+    repeat_end_time: Optional[str] = None  # HH:MM format - stop repeating after this time
 
 class UpdateTaskRequest(BaseModel):
     name: Optional[str] = None
@@ -1952,6 +2336,8 @@ class UpdateTaskRequest(BaseModel):
     status: Optional[str] = None  # allow cancel
     repeat: Optional[str] = None
     days_of_week: Optional[List[int]] = None
+    repeat_interval_seconds: Optional[int] = None  # Interval in seconds for interval-based repeats
+    repeat_end_time: Optional[str] = None  # HH:MM format - stop repeating after this time
 
 @app.get("/api/scheduled-tasks", response_model=List[ScheduledTask])
 async def list_scheduled_tasks():
@@ -1965,9 +2351,29 @@ async def create_scheduled_task(req: CreateTaskRequest):
     delay_seconds = req.delay_seconds
     run_at = (req.run_at or '').strip() if req.run_at else None
     repeat_value = (req.repeat or '').strip().lower() if req.repeat else None
-    if repeat_value and repeat_value not in {"daily", "weekly"}:
-        raise HTTPException(status_code=400, detail="Repeat must be 'daily' or 'weekly'")
-    if repeat_value and delay_seconds is not None:
+    
+    # Handle interval-based repeats
+    repeat_interval_seconds = req.repeat_interval_seconds
+    repeat_end_time = (req.repeat_end_time or '').strip() if req.repeat_end_time else None
+    
+    # Validate interval-based repeat fields
+    if repeat_interval_seconds is not None:
+        if repeat_interval_seconds <= 0:
+            raise HTTPException(status_code=400, detail="repeat_interval_seconds must be positive")
+        # Set repeat to "interval" if interval is provided
+        if not repeat_value:
+            repeat_value = "interval"
+        elif repeat_value not in {"interval", "daily", "weekly"}:
+            raise HTTPException(status_code=400, detail="Cannot combine interval-based repeat with daily/weekly repeat")
+    
+    # Validate end time format if provided
+    if repeat_end_time:
+        if not _parse_time_of_day_components(repeat_end_time):
+            raise HTTPException(status_code=400, detail="repeat_end_time must be in HH:MM format")
+    
+    if repeat_value and repeat_value not in {"daily", "weekly", "interval"}:
+        raise HTTPException(status_code=400, detail="Repeat must be 'daily', 'weekly', or 'interval'")
+    if repeat_value and repeat_value != "interval" and delay_seconds is not None:
         raise HTTPException(status_code=400, detail="Repeat schedules use run_at, not delay_seconds")
     days_normalized: Optional[List[int]] = None
     if req.days_of_week is not None:
@@ -1978,13 +2384,13 @@ async def create_scheduled_task(req: CreateTaskRequest):
         if any(d < 0 or d > 6 for d in cleaned):
             raise HTTPException(status_code=400, detail="days_of_week entries must be between 0 (Monday) and 6 (Sunday)")
         days_normalized = cleaned or None
-    if repeat_value:
+    if repeat_value and repeat_value != "interval":
         if not run_at:
             raise HTTPException(status_code=400, detail="Repeat schedules require run_at")
         if repeat_value == "weekly" and not days_normalized:
             raise HTTPException(status_code=400, detail="Weekly repeat requires days_of_week")
-    # If no explicit scheduling provided, try to parse from query
-    if (delay_seconds is None) and (not run_at or not run_at.strip()):
+    # If no explicit scheduling provided and not interval-based, try to parse from query
+    if repeat_value != "interval" and (delay_seconds is None) and (not run_at or not run_at.strip()):
         if req.query and req.query.strip():
             parsed_delay, parsed_run_at = _extract_time_from_text(req.query)
             delay_seconds = parsed_delay
@@ -1995,8 +2401,9 @@ async def create_scheduled_task(req: CreateTaskRequest):
         raise HTTPException(status_code=400, detail="Provide a name or a query for the task")
     created_dt = datetime.now().replace(microsecond=0)
     created = created_dt.isoformat()
-    if repeat_value:
+    if repeat_value and repeat_value != "interval":
         delay_seconds = None
+    # For interval-based repeats, delay_seconds can be used for initial delay
     task_id = str(uuid.uuid4())
     task = ScheduledTask(
         id=task_id,
@@ -2010,7 +2417,9 @@ async def create_scheduled_task(req: CreateTaskRequest):
         repeat=repeat_value,
         days_of_week=days_normalized,
         last_run_at=None,
-        last_run_status=None
+        last_run_status=None,
+        repeat_interval_seconds=repeat_interval_seconds,
+        repeat_end_time=repeat_end_time
     )
     next_run = _compute_next_run_datetime(task)
     if not next_run:
@@ -2042,15 +2451,45 @@ async def update_scheduled_task(task_id: str, req: UpdateTaskRequest):
     if req.query is not None:
         task.query = req.query.strip() if req.query else None
 
+    # Handle interval-based repeat fields
+    if req.repeat_interval_seconds is not None:
+        if req.repeat_interval_seconds < 0:
+            raise HTTPException(status_code=400, detail="repeat_interval_seconds must be non-negative")
+        if req.repeat_interval_seconds == 0:
+            # Setting to 0 means disable interval-based repeat
+            task.repeat_interval_seconds = None
+            if task.repeat == "interval":
+                task.repeat = None
+        else:
+            task.repeat_interval_seconds = req.repeat_interval_seconds
+            # Set repeat to "interval" if interval is provided
+            if not task.repeat or task.repeat not in {"interval", "daily", "weekly"}:
+                task.repeat = "interval"
+        reschedule_needed = True
+    
+    if req.repeat_end_time is not None:
+        repeat_end_time = (req.repeat_end_time or '').strip() if req.repeat_end_time else None
+        if repeat_end_time:
+            if not _parse_time_of_day_components(repeat_end_time):
+                raise HTTPException(status_code=400, detail="repeat_end_time must be in HH:MM format")
+            task.repeat_end_time = repeat_end_time
+        else:
+            task.repeat_end_time = None
+        reschedule_needed = True
+
     if req.repeat is not None:
         repeat_value = (req.repeat or '').strip().lower()
-        if repeat_value and repeat_value not in {"daily", "weekly"}:
-            raise HTTPException(status_code=400, detail="Repeat must be 'daily' or 'weekly'")
+        if repeat_value and repeat_value not in {"daily", "weekly", "interval"}:
+            raise HTTPException(status_code=400, detail="Repeat must be 'daily', 'weekly', or 'interval'")
         task.repeat = repeat_value or None
-        if task.repeat:
+        if task.repeat and task.repeat != "interval":
             task.delay_seconds = None
-        else:
+            task.repeat_interval_seconds = None
+            task.repeat_end_time = None
+        elif not task.repeat:
             task.days_of_week = None
+            task.repeat_interval_seconds = None
+            task.repeat_end_time = None
         reschedule_needed = True
 
     if req.days_of_week is not None:
@@ -2067,8 +2506,8 @@ async def update_scheduled_task(task_id: str, req: UpdateTaskRequest):
         reschedule_needed = True
 
     if req.delay_seconds is not None or (req.run_at is not None):
-        if task.repeat and req.delay_seconds is not None:
-            raise HTTPException(status_code=400, detail="Repeat schedules cannot use delay_seconds")
+        if task.repeat and task.repeat != "interval" and req.delay_seconds is not None:
+            raise HTTPException(status_code=400, detail="Repeat schedules cannot use delay_seconds (except interval-based)")
         if req.delay_seconds is not None:
             task.delay_seconds = req.delay_seconds
         if req.run_at is not None:
@@ -2084,8 +2523,10 @@ async def update_scheduled_task(task_id: str, req: UpdateTaskRequest):
 
     if task.repeat == "weekly" and (not task.days_of_week or len(task.days_of_week) == 0):
         raise HTTPException(status_code=400, detail="Weekly repeat requires days_of_week")
-    if task.repeat and not (task.run_at and task.run_at.strip()):
-        raise HTTPException(status_code=400, detail="Repeat schedules require run_at")
+    if task.repeat and task.repeat != "interval" and not (task.run_at and task.run_at.strip()):
+        raise HTTPException(status_code=400, detail="Repeat schedules require run_at (except interval-based)")
+    if task.repeat == "interval" and not task.repeat_interval_seconds:
+        raise HTTPException(status_code=400, detail="Interval-based repeats require repeat_interval_seconds")
 
     if not cancel_task and reschedule_needed:
         next_run = _compute_next_run_datetime(task)

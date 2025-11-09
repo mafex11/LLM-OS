@@ -57,6 +57,12 @@ class STTService:
         self.trigger_word = trigger_word.lower()
         self.trigger_word_detected = False
         self.waiting_for_command = False
+        # Conversation mode: after yuki trigger, accept queries without yuki for 2 minutes
+        self.conversation_mode = False
+        self.conversation_mode_timeout = 120.0  # 2 minutes in seconds
+        self.last_query_time = None
+        self.conversation_mode_lock = threading.Lock()
+        self.conversation_timeout_thread = None
         
         # Configure latency settings based on mode
         if self.latency_mode == "ultra":
@@ -132,6 +138,13 @@ class STTService:
             # Reset stop event and transcript tracking
             self.stop_event.clear()
             self._last_transcript = None  # Reset transcript tracking
+            # Reset conversation mode state
+            with self.conversation_mode_lock:
+                self.conversation_mode = False
+                self.last_query_time = None
+            
+            # Start conversation timeout monitoring thread
+            self._start_conversation_timeout_monitor()
             
             # Start listening thread
             self.listening_thread = threading.Thread(
@@ -310,6 +323,9 @@ class STTService:
         except Exception as e:
             logger.error(f"Error in listening loop: {e}")
             self.is_listening = False
+        finally:
+            # Stop conversation timeout monitor
+            self._stop_conversation_timeout_monitor()
     
     def _check_and_finalize_transcript(self):
         """Check if enough silence has passed to finalize the transcript"""
@@ -330,6 +346,73 @@ class STTService:
             # Check for trigger word detection
             transcript_lower = transcript.lower()
             
+            # Check if we're in conversation mode
+            with self.conversation_mode_lock:
+                in_conversation_mode = self.conversation_mode
+            
+            # Check if trigger word is present (even in conversation mode, to reset timeout)
+            has_trigger_word = self.trigger_word in transcript_lower
+            
+            # If we're in conversation mode
+            if in_conversation_mode:
+                # If trigger word is present, extract command after it (if any)
+                if has_trigger_word:
+                    words = transcript_lower.split()
+                    trigger_index = -1
+                    
+                    for i, word in enumerate(words):
+                        if self.trigger_word in word:
+                            trigger_index = i
+                            break
+                    
+                    if trigger_index >= 0:
+                        # Extract command after trigger word
+                        if trigger_index + 1 < len(words):
+                            # Command follows trigger word
+                            command_words = words[trigger_index + 1:]
+                            query = " ".join(command_words) if command_words else transcript
+                        else:
+                            # Only trigger word - use the full transcript (might be just "yuki")
+                            # In conversation mode, if user says just "yuki", we can ignore it or reset timeout
+                            # For now, we'll reset timeout but not process it as a query
+                            if transcript_lower.strip() == self.trigger_word or transcript_lower.strip().startswith(self.trigger_word):
+                                # Just "yuki" - reset timeout but don't process
+                                with self.conversation_mode_lock:
+                                    self.last_query_time = time.time()
+                                    logger.debug("Trigger word detected in conversation mode - timeout reset")
+                                self.current_transcript = ""
+                                return
+                            query = transcript
+                    else:
+                        query = transcript
+                else:
+                    # No trigger word - any transcript is a query
+                    query = transcript
+                
+                # Reset the timeout - update last query time
+                with self.conversation_mode_lock:
+                    self.last_query_time = time.time()
+                
+                # Only process if query is not empty or just the trigger word
+                if query.strip() and query.strip().lower() != self.trigger_word:
+                    logger.debug(f"Query detected in conversation mode: {query}")
+                    
+                    # Put query in queue
+                    self.transcription_queue.put(query)
+                    
+                    # Call callback if provided
+                    if self.on_transcription:
+                        try:
+                            self.on_transcription(query)
+                        except Exception as e:
+                            logger.error(f"Error in transcription callback: {e}")
+                else:
+                    logger.debug(f"Empty query or just trigger word in conversation mode - timeout reset only")
+                
+                # Reset for next utterance
+                self.current_transcript = ""
+                return
+            
             # If we're waiting for a command after trigger word was detected
             if self.waiting_for_command:
                 # Any speech after trigger word is considered a command
@@ -339,6 +422,12 @@ class STTService:
                 # Reset trigger word state
                 self.waiting_for_command = False
                 self.trigger_word_detected = False
+                
+                # Enter conversation mode and reset timeout
+                with self.conversation_mode_lock:
+                    self.conversation_mode = True
+                    self.last_query_time = time.time()
+                    logger.debug("Entered conversation mode - will accept queries without trigger word for 2 minutes")
                 
                 # Put command in queue
                 self.transcription_queue.put(command)
@@ -350,8 +439,8 @@ class STTService:
                     except Exception as e:
                         logger.error(f"Error in transcription callback: {e}")
             
-            # Check if trigger word is present in the transcript
-            elif self.trigger_word in transcript_lower:
+            # Check if trigger word is present in the transcript (not in conversation mode)
+            elif has_trigger_word:
                 # Check if trigger word is at the beginning or followed by a command
                 words = transcript_lower.split()
                 trigger_index = -1
@@ -370,6 +459,12 @@ class STTService:
                         
                         if command.strip():
                             logger.debug(f"Trigger word '{self.trigger_word}' detected with command: {command}")
+                            
+                            # Enter conversation mode and reset timeout
+                            with self.conversation_mode_lock:
+                                self.conversation_mode = True
+                                self.last_query_time = time.time()
+                                logger.debug("Entered conversation mode - will accept queries without trigger word for 2 minutes")
                             
                             # Put command in queue
                             self.transcription_queue.put(command)
@@ -391,7 +486,7 @@ class STTService:
                         self.trigger_word_detected = True
                         self.waiting_for_command = True
             else:
-                # No trigger word detected - ignore the transcript
+                # No trigger word detected and not in conversation mode - ignore the transcript
                 logger.debug(f"No trigger word detected, ignoring: {transcript}")
         
         # Reset for next utterance
@@ -438,6 +533,49 @@ class STTService:
         """Reset trigger word detection state"""
         self.trigger_word_detected = False
         self.waiting_for_command = False
+    
+    def _start_conversation_timeout_monitor(self):
+        """Start the conversation timeout monitoring thread"""
+        if self.conversation_timeout_thread and self.conversation_timeout_thread.is_alive():
+            return
+        
+        def monitor_timeout():
+            """Monitor conversation mode timeout"""
+            while self.is_listening and not self.stop_event.is_set():
+                try:
+                    with self.conversation_mode_lock:
+                        if self.conversation_mode and self.last_query_time is not None:
+                            elapsed = time.time() - self.last_query_time
+                            if elapsed >= self.conversation_mode_timeout:
+                                # Timeout reached - exit conversation mode
+                                logger.debug(f"Conversation mode timeout ({self.conversation_mode_timeout}s) reached, exiting conversation mode")
+                                self.conversation_mode = False
+                                self.last_query_time = None
+                    time.sleep(1.0)  # Check every second
+                except Exception as e:
+                    logger.error(f"Error in conversation timeout monitor: {e}")
+                    time.sleep(1.0)
+        
+        self.conversation_timeout_thread = threading.Thread(target=monitor_timeout, daemon=True)
+        self.conversation_timeout_thread.start()
+    
+    def _stop_conversation_timeout_monitor(self):
+        """Stop the conversation timeout monitoring thread"""
+        # The thread will exit when is_listening becomes False or stop_event is set
+        # No need to explicitly stop it, but we can wait for it if needed
+        pass
+    
+    def reset_conversation_timeout(self):
+        """Reset the conversation mode timeout (called after each query)"""
+        with self.conversation_mode_lock:
+            if self.conversation_mode:
+                self.last_query_time = time.time()
+                logger.debug("Conversation mode timeout reset")
+    
+    def is_in_conversation_mode(self) -> bool:
+        """Check if service is in conversation mode"""
+        with self.conversation_mode_lock:
+            return self.conversation_mode
     
     def cleanup(self):
         """Clean up all resources"""

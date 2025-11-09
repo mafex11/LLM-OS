@@ -25,37 +25,49 @@ class Tree:
         interactive_nodes,informative_nodes,scrollable_nodes=self.get_appwise_nodes(node=root)
         return TreeState(interactive_nodes=interactive_nodes,informative_nodes=informative_nodes,scrollable_nodes=scrollable_nodes)
     
-    def get_precise_state(self, app_name: str = None) -> TreeState:
+    def get_precise_state(self, window: Control | None = None) -> TreeState:
         """
-        Get precise element detection for a specific application.
-        If app_name is None, falls back to regular detection.
+        Get element detection focused on a specific window. Falls back to regular
+        detection when a window isn't provided.
         """
         sleep(0.2)  # Reduced from 0.5 to 0.2 seconds
-        
-        if app_name and app_name.lower() in ['calculator', 'calc']:
-            # Use precise detection for calculator
-            interactive_nodes, informative_nodes, scrollable_nodes = self.precise_detector.get_calculator_elements()
-        elif app_name:
-            # Use precise detection for other specific apps
-            interactive_nodes, informative_nodes, scrollable_nodes = self.precise_detector.get_elements_from_app(app_name)
-        else:
-            # Fall back to regular detection
+        if window is None:
             root = GetRootControl()
             interactive_nodes, informative_nodes, scrollable_nodes = self.get_appwise_nodes(node=root)
-        
-        return TreeState(interactive_nodes=interactive_nodes, informative_nodes=informative_nodes, scrollable_nodes=scrollable_nodes)
+            return TreeState(
+                interactive_nodes=interactive_nodes,
+                informative_nodes=informative_nodes,
+                scrollable_nodes=scrollable_nodes,
+            )
+
+        window_name = window.Name.strip() or window.ClassName or "Window"
+        interactive_nodes, informative_nodes, scrollable_nodes = self.precise_detector.get_elements_for_window(
+            window, window_name
+        )
+
+        # Some applications expose controls lazily; fall back to the generic traversal
+        # when precise detection yields no metadata.
+        if not interactive_nodes and not informative_nodes and not scrollable_nodes:
+            interactive_nodes, informative_nodes, scrollable_nodes = self.get_nodes(
+                window, self.desktop.is_app_browser(window)
+            )
+
+        return TreeState(
+            interactive_nodes=interactive_nodes,
+            informative_nodes=informative_nodes,
+            scrollable_nodes=scrollable_nodes,
+        )
     
     def get_appwise_nodes(self,node:Control) -> tuple[list[TreeElementNode],list[TextElementNode]]:
         apps:list[Control]=[]
-        found_foreground_app=False
 
         for app in node.GetChildren():
             if app.ClassName in EXCLUDED_APPS:
+                continue
+            if app.ClassName in AVOIDED_APPS:
+                continue
+            if self.desktop.is_app_visible(app):
                 apps.append(app)
-            elif app.ClassName not in AVOIDED_APPS and self.desktop.is_app_visible(app):
-                if not found_foreground_app:
-                    apps.append(app)
-                    found_foreground_app=True
 
         interactive_nodes,informative_nodes,scrollable_nodes=[],[],[]
         # Parallel traversal (using ThreadPoolExecutor) to get nodes from each app

@@ -60,6 +60,36 @@ interface ApiKeys {
   deepgram_api_key: string
 }
 
+type BrowserOption = "edge" | "chrome" | "firefox"
+type ModelOption =
+  | "gemini-2.5-pro"
+  | "gemini-2.5-flash"
+  | "gemini-2.5-flash-lite"
+  | "gemini-2.0-flash"
+  | "gemini-2.0-flash-lite"
+
+const MODEL_OPTIONS: ModelOption[] = [
+  "gemini-2.5-pro",
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
+  "gemini-2.0-flash",
+  "gemini-2.0-flash-lite"
+]
+
+type AgentSettingsState = {
+  enable_screenshot_analysis: boolean
+  enable_activity_tracking: boolean
+  enable_vision: boolean
+  enable_conversation: boolean
+  enable_tts: boolean
+  cache_timeout: number
+  tts_voice_id: string
+  browser: BrowserOption
+  literal_mode: boolean
+  consecutive_failures: number
+  model: ModelOption
+}
+
 export default function SettingsPage() {
   const router = useRouter()
   const { toast } = useToast()
@@ -84,6 +114,23 @@ export default function SettingsPage() {
     elevenlabs_api_key: "",
     deepgram_api_key: ""
   })
+  const [agentSettings, setAgentSettings] = useState<AgentSettingsState>({
+    enable_screenshot_analysis: true,
+    enable_activity_tracking: true,
+    enable_vision: false,
+    enable_conversation: true,
+    enable_tts: false,
+    cache_timeout: 2.0,
+    tts_voice_id: "21m00Tcm4TlvDq8ikWAM",
+    browser: "chrome",
+    literal_mode: true,
+    consecutive_failures: 3,
+    model: "gemini-2.0-flash"
+  })
+  const [cacheTimeoutInput, setCacheTimeoutInput] = useState<string>("2.0")
+  const [cacheTimeoutInvalid, setCacheTimeoutInvalid] = useState<boolean>(false)
+  const [consecutiveFailuresInput, setConsecutiveFailuresInput] = useState<string>("3")
+  const [consecutiveFailuresInvalid, setConsecutiveFailuresInvalid] = useState<boolean>(false)
 
   const fetchSystemStatus = async () => {
     try {
@@ -122,16 +169,70 @@ export default function SettingsPage() {
     }
   }, [])
 
+  const loadAgentSettings = useCallback(async () => {
+    try {
+      const response = await fetch("http://localhost:8000/api/settings")
+      if (response.ok) {
+        const data = await response.json()
+        const parsedMaxSteps = Number(data.max_steps)
+        const boundedMaxSteps = Math.max(1, Math.min(200, Number.isFinite(parsedMaxSteps) ? Math.floor(parsedMaxSteps) : 50))
+        const parsedCacheTimeout = Number(data.cache_timeout)
+        const boundedCacheTimeout = Math.max(0.1, Math.min(10, Number.isFinite(parsedCacheTimeout) ? parsedCacheTimeout : 2.0))
+        const parsedFailures = Number(data.consecutive_failures)
+        const boundedFailures = Math.max(1, Math.min(10, Number.isFinite(parsedFailures) ? Math.floor(parsedFailures) : 3))
+        const browser: BrowserOption =
+          typeof data.browser === "string" && ["edge", "chrome", "firefox"].includes(data.browser)
+            ? (data.browser as BrowserOption)
+            : "chrome"
+        const rawModel = typeof data.model === "string" ? data.model : ""
+        const model = (MODEL_OPTIONS.find(option => option === rawModel) ?? "gemini-2.0-flash") as ModelOption
+        const ttsVoice = typeof data.tts_voice_id === "string" && data.tts_voice_id.trim().length > 0
+          ? data.tts_voice_id.trim()
+          : "21m00Tcm4TlvDq8ikWAM"
+        setAgentSettings({
+          enable_screenshot_analysis: data.enable_screenshot_analysis ?? true,
+          enable_activity_tracking: data.enable_activity_tracking ?? true,
+          enable_vision: data.enable_vision ?? false,
+          enable_conversation: data.enable_conversation ?? true,
+          enable_tts: data.enable_tts ?? false,
+          cache_timeout: Number(boundedCacheTimeout.toFixed(2)),
+          tts_voice_id: ttsVoice,
+          browser,
+          literal_mode: data.literal_mode ?? true,
+          consecutive_failures: boundedFailures,
+          model
+        })
+        setMaxSteps(boundedMaxSteps)
+        setMaxStepsInput(String(boundedMaxSteps))
+        setCacheTimeoutInvalid(false)
+        setConsecutiveFailuresInvalid(false)
+        setMaxStepsInvalid(false)
+      }
+    } catch (error) {
+      console.error("Failed to fetch agent settings:", error)
+      // Keep existing values when backend is not available
+    }
+  }, [])
+
   useEffect(() => {
     fetchSystemStatus()
     loadApiKeys()
+    loadAgentSettings()
     const interval = setInterval(fetchSystemStatus, 5000)
     return () => clearInterval(interval)
-  }, [loadApiKeys])
+  }, [loadApiKeys, loadAgentSettings])
 
   useEffect(() => {
     setMaxStepsInput(String(maxSteps))
   }, [maxSteps])
+
+  useEffect(() => {
+    setCacheTimeoutInput(String(agentSettings.cache_timeout))
+  }, [agentSettings.cache_timeout])
+
+  useEffect(() => {
+    setConsecutiveFailuresInput(String(agentSettings.consecutive_failures))
+  }, [agentSettings.consecutive_failures])
 
   const handleApiKeyChange = (keyType: keyof ApiKeys, value: string) => {
     // Update input field state
@@ -203,22 +304,81 @@ export default function SettingsPage() {
   }
 
   const saveAgentSettings = async () => {
+    if (maxStepsInvalid || cacheTimeoutInvalid || consecutiveFailuresInvalid) {
+      toast({
+        title: "Fix validation errors",
+        description: "Resolve highlighted fields before saving.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    const trimmedMaxSteps = maxStepsInput.trim()
+    const trimmedFailures = consecutiveFailuresInput.trim()
+    const trimmedCacheTimeout = cacheTimeoutInput.trim()
+
+    if (!trimmedMaxSteps || !trimmedFailures || !trimmedCacheTimeout) {
+      if (!trimmedMaxSteps) setMaxStepsInvalid(true)
+      if (!trimmedFailures) setConsecutiveFailuresInvalid(true)
+      if (!trimmedCacheTimeout) setCacheTimeoutInvalid(true)
+      toast({
+        title: "Missing values",
+        description: "Provide values for steps, failure limit, and cache timeout.",
+        variant: "destructive"
+      })
+      return
+    }
+
     setSavingAgentSettings(true)
     try {
-      const value = Number(maxSteps)
-      const bounded = isNaN(value) ? 50 : Math.max(1, Math.min(200, Math.floor(value)))
+      const fallbackMaxSteps = maxSteps > 0 ? maxSteps : 50
+      const parsedMaxSteps = Number(trimmedMaxSteps)
+      const boundedMaxSteps = Math.max(1, Math.min(200, Number.isFinite(parsedMaxSteps) ? Math.floor(parsedMaxSteps) : fallbackMaxSteps))
+      const fallbackFailures = agentSettings.consecutive_failures > 0 ? agentSettings.consecutive_failures : 3
+      const parsedFailures = Number(trimmedFailures)
+      const boundedFailures = Math.max(1, Math.min(10, Number.isFinite(parsedFailures) ? Math.floor(parsedFailures) : fallbackFailures))
+      const parsedCacheTimeout = Number(trimmedCacheTimeout)
+      const boundedCacheTimeout = Math.max(0.1, Math.min(10, Number.isFinite(parsedCacheTimeout) ? parsedCacheTimeout : agentSettings.cache_timeout))
+      const formattedCacheTimeout = Number(boundedCacheTimeout.toFixed(2))
+      const trimmedVoice = agentSettings.tts_voice_id.trim() || "21m00Tcm4TlvDq8ikWAM"
+
       const response = await fetch("http://localhost:8000/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ max_steps: bounded })
+        body: JSON.stringify({
+          max_steps: boundedMaxSteps,
+          consecutive_failures: boundedFailures,
+          browser: agentSettings.browser,
+          literal_mode: agentSettings.literal_mode,
+          enable_screenshot_analysis: agentSettings.enable_screenshot_analysis,
+          enable_activity_tracking: agentSettings.enable_activity_tracking,
+          enable_vision: agentSettings.enable_vision,
+          enable_conversation: agentSettings.enable_conversation,
+          enable_tts: agentSettings.enable_tts,
+          cache_timeout: formattedCacheTimeout,
+          tts_voice_id: trimmedVoice,
+          model: agentSettings.model
+        })
       })
 
       if (response.ok) {
         toast({
           title: "Agent settings saved",
-          description: `Max tool calls set to ${bounded}.`
+          description: "Agent settings have been updated successfully."
         })
-        setMaxSteps(bounded)
+        setAgentSettings(prev => ({
+          ...prev,
+          cache_timeout: formattedCacheTimeout,
+          consecutive_failures: boundedFailures,
+          tts_voice_id: trimmedVoice
+        }))
+        setMaxSteps(boundedMaxSteps)
+        setMaxStepsInput(String(boundedMaxSteps))
+        setCacheTimeoutInput(formattedCacheTimeout.toString())
+        setConsecutiveFailuresInput(String(boundedFailures))
+        setCacheTimeoutInvalid(false)
+        setConsecutiveFailuresInvalid(false)
+        setMaxStepsInvalid(false)
       } else {
         toast({
           title: "Error",
@@ -668,7 +828,7 @@ export default function SettingsPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       <div className="space-y-2 max-w-full">
                         <Label htmlFor="max-steps" className="text-sm font-normal">Max tool calls per run</Label>
                         <Input
@@ -682,12 +842,20 @@ export default function SettingsPage() {
                             const isDigitsOnly = /^\d*$/.test(raw)
                             setMaxStepsInput(raw)
                             if (!isDigitsOnly) { setMaxStepsInvalid(true); return }
+                            if (raw === "") { setMaxStepsInvalid(true); setMaxSteps(0); return }
                             setMaxStepsInvalid(false)
-                            const num = raw === "" ? 0 : Number(raw)
-                            setMaxSteps(num)
+                            setMaxSteps(Number(raw))
                           }}
                           onBlur={() => {
-                            const num = Number(maxStepsInput.replace(/[^\d]/g, ""))
+                            const raw = maxStepsInput.trim()
+                            if (raw === "") {
+                              const fallback = maxSteps > 0 ? maxSteps : 50
+                              setMaxSteps(fallback)
+                              setMaxStepsInput(String(fallback))
+                              setMaxStepsInvalid(false)
+                              return
+                            }
+                            const num = Number(raw.replace(/[^\d]/g, ""))
                             const bounded = isNaN(num) ? 1 : Math.max(1, Math.min(200, Math.floor(num)))
                             setMaxSteps(bounded)
                             setMaxStepsInput(String(bounded))
@@ -699,9 +867,325 @@ export default function SettingsPage() {
                         <p className="text-xs text-muted-foreground w-full">Control how many tool calls the agent can make per run.</p>
                       </div>
 
-                      <div className="flex items-center justify-end">
-                        <Button onClick={saveAgentSettings} disabled={savingAgentSettings} size="sm" className="text-xs rounded-full bg-white text-black hover:bg_white/90 shadow-[0_0_14px_rgba(255,255,255,0.45)] hover:shadow-[0_0_24px_rgba(255,255,255,0.65)] ring-1 ring-white/60 hover:ring-white/80 transition-all">
-                          {savingAgentSettings ? (<>Saving...</>) : (<>Save Agent Settings</>)}
+                      <div className="space-y-2 max-w-full">
+                        <Label htmlFor="max-failures" className="text-sm font-normal">Max consecutive failures</Label>
+                        <Input
+                          id="max-failures"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          value={consecutiveFailuresInput}
+                          onChange={(e) => {
+                            const raw = e.target.value
+                            const isDigitsOnly = /^\d*$/.test(raw)
+                            setConsecutiveFailuresInput(raw)
+                            if (!isDigitsOnly) { setConsecutiveFailuresInvalid(true); return }
+                            if (raw === "") { setConsecutiveFailuresInvalid(true); return }
+                            setConsecutiveFailuresInvalid(false)
+                          }}
+                          onBlur={() => {
+                            const raw = consecutiveFailuresInput.trim()
+                            if (raw === "") {
+                              const fallback = agentSettings.consecutive_failures > 0 ? agentSettings.consecutive_failures : 3
+                              setConsecutiveFailuresInput(String(fallback))
+                              setConsecutiveFailuresInvalid(false)
+                              return
+                            }
+                            const num = Number(raw)
+                            const bounded = Math.max(1, Math.min(10, Number.isFinite(num) ? Math.floor(num) : agentSettings.consecutive_failures))
+                            setAgentSettings(prev => ({ ...prev, consecutive_failures: bounded }))
+                            setConsecutiveFailuresInput(String(bounded))
+                            setConsecutiveFailuresInvalid(false)
+                          }}
+                          className={`rounded-full bg-transparent border ${consecutiveFailuresInvalid ? 'border-red-500/60 shadow-[0_0_12px_rgba(239,68,68,0.45)]' : 'border-white/20'} hover:border-white/30 focus:border-white/40 text-white focus:outline-none focus:ring-0 focus-visible:ring-0`}
+                        />
+                        {consecutiveFailuresInvalid && (<p className="text-xs text-red-400">Numbers only. Range 1–10.</p>)}
+                        <p className="text-xs text-muted-foreground w-full">Stop a run after repeated errors to avoid loops.</p>
+                      </div>
+
+                      <div className="space-y-2 max-w-full">
+                        <Label htmlFor="cache-timeout" className="text-sm font-normal">Desktop cache timeout (s)</Label>
+                        <Input
+                          id="cache-timeout"
+                          type="text"
+                          inputMode="decimal"
+                          value={cacheTimeoutInput}
+                          onChange={(e) => {
+                            const raw = e.target.value
+                            setCacheTimeoutInput(raw)
+                            if (raw === "") { setCacheTimeoutInvalid(true); return }
+                            const isDecimal = /^\d*\.?\d*$/.test(raw)
+                            setCacheTimeoutInvalid(!isDecimal)
+                          }}
+                          onBlur={() => {
+                            const raw = cacheTimeoutInput.trim()
+                            if (raw === "") {
+                              const fallback = agentSettings.cache_timeout
+                              setCacheTimeoutInput(fallback.toString())
+                              setCacheTimeoutInvalid(false)
+                              return
+                            }
+                            const num = Number(raw)
+                            if (!Number.isFinite(num)) {
+                              setCacheTimeoutInput(agentSettings.cache_timeout.toString())
+                              setCacheTimeoutInvalid(false)
+                              return
+                            }
+                            const bounded = Math.max(0.1, Math.min(10, num))
+                            const formatted = Number(bounded.toFixed(2))
+                            setAgentSettings(prev => ({ ...prev, cache_timeout: formatted }))
+                            setCacheTimeoutInput(formatted.toString())
+                            setCacheTimeoutInvalid(false)
+                          }}
+                          className={`rounded-full bg-transparent border ${cacheTimeoutInvalid ? 'border-red-500/60 shadow-[0_0_12px_rgba(239,68,68,0.45)]' : 'border-white/20'} hover:border-white/30 focus:border-white/40 text-white focus:outline-none focus:ring-0 focus-visible:ring-0`}
+                        />
+                        {cacheTimeoutInvalid && (<p className="text-xs text-red-400">Use numbers only. Range 0.1–10.</p>)}
+                        <p className="text-xs text-muted-foreground w-full">Set how long desktop and app snapshots stay cached.</p>
+                      </div>
+
+                      <Separator />
+
+                      <div className="space-y-4">
+                        <Label className="text-sm font-normal">Execution preferences</Label>
+                        <div className="space-y-3">
+                          <div className="space-y-2">
+                            <Label htmlFor="default-browser" className="text-sm font-normal">
+                              Default browser
+                            </Label>
+                            <Select
+                              value={agentSettings.browser}
+                              onValueChange={(value) => setAgentSettings(prev => ({ ...prev, browser: value as BrowserOption }))}
+                            >
+                              <SelectTrigger
+                                id="default-browser"
+                                className="rounded-full bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white focus:outline-none focus:ring-0 focus-visible:ring-0"
+                              >
+                                <SelectValue placeholder="Select browser" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-zinc-950 border border-white/20 rounded-2xl">
+                                <SelectItem value="chrome" className="text-white hover:bg-white/10 rounded-3xl pb-2">
+                                  Google Chrome
+                                </SelectItem>
+                                <SelectItem value="edge" className="text-white hover:bg-white/10 rounded-3xl pb-2">
+                                  Microsoft Edge
+                                </SelectItem>
+                                <SelectItem value="firefox" className="text-white hover:bg-white/10 rounded-3xl pb-2">
+                                  Mozilla Firefox
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">Choose which browser the agent launches for web tasks.</p>
+                          </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="model-select" className="text-sm font-normal">
+                          Language model
+                        </Label>
+                        <Select
+                          value={agentSettings.model}
+                          onValueChange={(value) => setAgentSettings(prev => ({ ...prev, model: value as ModelOption }))}
+                        >
+                          <SelectTrigger
+                            id="model-select"
+                            className="rounded-full bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white focus:outline-none focus:ring-0 focus-visible:ring-0"
+                          >
+                            <SelectValue placeholder="Select Gemini model" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-zinc-950 border border-white/20 rounded-2xl">
+                            {MODEL_OPTIONS.map(option => (
+                              <SelectItem key={option} value={option} className="text-white hover:bg-white/10 rounded-3xl pb-2">
+                                {option}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">Toggle between Gemini 2.5 and 2.0 variants to balance quality and speed.</p>
+                      </div>
+
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                              <Label htmlFor="literal-mode-toggle" className="text-sm font-normal cursor-pointer">
+                                Literal mode
+                              </Label>
+                              <p className="text-xs text-muted-foreground">
+                                Keep plans concise and action-focused when enabled.
+                              </p>
+                            </div>
+                            <button
+                              id="literal-mode-toggle"
+                              type="button"
+                              onClick={() => setAgentSettings(prev => ({ ...prev, literal_mode: !prev.literal_mode }))}
+                              aria-pressed={agentSettings.literal_mode}
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-black ${
+                                agentSettings.literal_mode ? 'bg-white' : 'bg-gray-600'
+                              }`}
+                            >
+                              <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-black transition-transform ${
+                                  agentSettings.literal_mode ? 'translate-x-6' : 'translate-x-1'
+                                }`}
+                              />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="space-y-4">
+                        <Label className="text-sm font-normal">AI Features</Label>
+                        
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                              <Label htmlFor="enable-screenshot-analysis" className="text-sm font-normal cursor-pointer">
+                                Screenshot Analysis
+                              </Label>
+                              <p className="text-xs text-muted-foreground">
+                                Enable AI analysis of screenshots for activity tracking
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setAgentSettings(prev => ({ ...prev, enable_screenshot_analysis: !prev.enable_screenshot_analysis }))}
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-black ${
+                                agentSettings.enable_screenshot_analysis ? 'bg-white' : 'bg-gray-600'
+                              }`}
+                            >
+                              <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-black transition-transform ${
+                                  agentSettings.enable_screenshot_analysis ? 'translate-x-6' : 'translate-x-1'
+                                }`}
+                              />
+                            </button>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                              <Label htmlFor="enable-activity-tracking" className="text-sm font-normal cursor-pointer">
+                                Activity Tracking
+                              </Label>
+                              <p className="text-xs text-muted-foreground">
+                                Track app usage and productivity metrics
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setAgentSettings(prev => ({ ...prev, enable_activity_tracking: !prev.enable_activity_tracking }))}
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-black ${
+                                agentSettings.enable_activity_tracking ? 'bg-white' : 'bg-gray-600'
+                              }`}
+                            >
+                              <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-black transition-transform ${
+                                  agentSettings.enable_activity_tracking ? 'translate-x-6' : 'translate-x-1'
+                                }`}
+                              />
+                            </button>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                              <Label htmlFor="enable-vision" className="text-sm font-normal cursor-pointer">
+                                Vision Mode
+                              </Label>
+                              <p className="text-xs text-muted-foreground">
+                                Use AI vision to analyze screenshots during tasks
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setAgentSettings(prev => ({ ...prev, enable_vision: !prev.enable_vision }))}
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-black ${
+                                agentSettings.enable_vision ? 'bg-white' : 'bg-gray-600'
+                              }`}
+                            >
+                              <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-black transition-transform ${
+                                  agentSettings.enable_vision ? 'translate-x-6' : 'translate-x-1'
+                                }`}
+                              />
+                            </button>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                              <Label htmlFor="enable-conversation" className="text-sm font-normal cursor-pointer">
+                                Conversation Mode
+                              </Label>
+                              <p className="text-xs text-muted-foreground">
+                                Maintain conversation context across queries
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setAgentSettings(prev => ({ ...prev, enable_conversation: !prev.enable_conversation }))}
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-black ${
+                                agentSettings.enable_conversation ? 'bg-white' : 'bg-gray-600'
+                              }`}
+                            >
+                              <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-black transition-transform ${
+                                  agentSettings.enable_conversation ? 'translate-x-6' : 'translate-x-1'
+                                }`}
+                              />
+                            </button>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                              <Label htmlFor="enable-tts" className="text-sm font-normal cursor-pointer">
+                                Text-to-Speech
+                              </Label>
+                              <p className="text-xs text-muted-foreground">
+                                Speak agent responses aloud
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setAgentSettings(prev => ({ ...prev, enable_tts: !prev.enable_tts }))}
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-black ${
+                                agentSettings.enable_tts ? 'bg-white' : 'bg-gray-600'
+                              }`}
+                            >
+                              <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-black transition-transform ${
+                                  agentSettings.enable_tts ? 'translate-x-6' : 'translate-x-1'
+                                }`}
+                              />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2 pt-2">
+                          <Label htmlFor="tts-voice-id" className="text-sm font-normal">
+                            TTS voice ID
+                          </Label>
+                          <Input
+                            id="tts-voice-id"
+                            type="text"
+                            value={agentSettings.tts_voice_id}
+                            onChange={(e) => setAgentSettings(prev => ({ ...prev, tts_voice_id: e.target.value }))}
+                            disabled={!agentSettings.enable_tts}
+                            placeholder="21m00Tcm4TlvDq8ikWAM"
+                            className="rounded-full bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white focus:outline-none focus:ring-0 focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Use a voice ID from ElevenLabs. Leave the default if unsure.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-end pt-2">
+                        <Button onClick={saveAgentSettings} disabled={savingAgentSettings} size="sm" className="text-xs rounded-full bg-white text-black hover:bg-white/90 shadow-[0_0_14px_rgba(255,255,255,0.45)] hover:shadow-[0_0_24px_rgba(255,255,255,0.65)] ring-1 ring-white/60 hover:ring-white/80 transition-all">
+                          {savingAgentSettings ? (
+                            <>
+                              <Loading03Icon size={14} className="mr-1 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            <>Save Agent Settings</>
+                          )}
                         </Button>
                       </div>
                     </div>

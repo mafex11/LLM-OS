@@ -196,11 +196,11 @@ def clipboard_tool(mode: Literal['copy', 'paste'], text: str = None,desktop:Desk
 @tool('Switch Tool',args_schema=Switch)
 def switch_tool(name: str,desktop:Desktop=None) -> str:
     'Switch to a specific application window (e.g., "notepad", "calculator", "chrome", etc.) and bring to foreground.'
-    _,status=desktop.switch_app(name)
+    result_message,status=desktop.switch_app(name)
     if status!=0:
-        return f'Failed to switch to {name.title()}.'
-    else:
-        return f'Switched to {name.title()}.'
+        # Raise exception so registry treats this as failure
+        raise RuntimeError(result_message)
+    return result_message
     
 @tool("Resize Tool",args_schema=Resize)
 def resize_tool(name: str,loc:tuple[int,int]=None,size:tuple[int,int]=None,desktop:Desktop=None) -> str:
@@ -217,6 +217,32 @@ def click_tool(loc:tuple[int,int],button:Literal['left','right','middle']='left'
     screen_width, screen_height = pg.size()
     if x < 0 or x >= screen_width or y < 0 or y >= screen_height:
         return f'Error: Coordinates ({x},{y}) are outside screen bounds ({screen_width}x{screen_height})'
+    
+    # CRITICAL: If we have desktop state with active app, validate coordinates are within that app's window
+    # This prevents clicking outside the target app (e.g., Calculator)
+    if desktop and desktop.desktop_state and desktop.desktop_state.active_app:
+        try:
+            from uiautomation import ControlFromHandle
+            
+            active_app = desktop.desktop_state.active_app
+            app_control = ControlFromHandle(active_app.handle)
+            app_box = app_control.BoundingRectangle
+            
+            if not app_box.isempty():
+                # Check if coordinates are within the active app's window bounds
+                # Allow 5px margin for elements that might be on window edges
+                margin = 5
+                if (x < app_box.left - margin or x > app_box.right + margin or
+                    y < app_box.top - margin or y > app_box.bottom + margin):
+                    # Coordinates are outside the active app window
+                    # This is likely a mistake - raise error to prevent wrong clicks
+                    raise ValueError(f'Coordinates ({x},{y}) are outside active app "{active_app.name}" window bounds ({app_box.left},{app_box.top},{app_box.right},{app_box.bottom})')
+        except ValueError:
+            # Re-raise ValueError (coordinate validation failure)
+            raise
+        except Exception as e:
+            # If validation fails for other reasons, log but continue (better to try than fail completely)
+            print(f"Warning: Could not validate coordinates against active app: {e}")
     
     # OPTIMIZATION: Direct click without cursor pre-positioning or redundant element detection
     # Trust the coordinates from desktop.get_state() - they're already precise
@@ -752,10 +778,11 @@ def timeline_tool(query: str, date: str | None = None, start_time: str | None = 
         return f"Error querying timeline: {str(e)}"
 
 @tool('Schedule Tool', args_schema=Schedule)
-def schedule_tool(name: str, delay_seconds: int | None = None, run_at: str | None = None, desktop: Desktop = None) -> str:
-    'Schedule launching an application at a specific time or after a delay. This registers the task with the API server so it appears on the Scheduled Tasks page.'
-    if delay_seconds is None and (run_at is None or run_at.strip() == ''):
-        return 'Please provide either delay_seconds or run_at.'
+def schedule_tool(name: str, delay_seconds: int | None = None, run_at: str | None = None, repeat_interval_seconds: int | None = None, repeat_end_time: str | None = None, desktop: Desktop = None) -> str:
+    'Schedule launching an application at a specific time or after a delay. For repeating tasks, use repeat_interval_seconds (e.g., 600 for every 10 minutes, 7200 for every 2 hours) and optionally repeat_end_time (HH:MM format) to stop repeating after a certain time. This registers the task with the API server so it appears on the Scheduled Tasks page.'
+    # For interval-based repeats, delay_seconds or run_at are optional (can start immediately)
+    if repeat_interval_seconds is None and delay_seconds is None and (run_at is None or run_at.strip() == ''):
+        return 'Please provide either delay_seconds, run_at, or repeat_interval_seconds for repeating tasks.'
 
     # Normalize HH:MM to future by moving to next day if needed; API server also handles this
     normalized_run_at = None
@@ -764,7 +791,7 @@ def schedule_tool(name: str, delay_seconds: int | None = None, run_at: str | Non
             delay_seconds = max(0, int(delay_seconds))
         except Exception:
             return 'Invalid delay_seconds; provide an integer number of seconds.'
-    else:
+    elif run_at is not None and run_at.strip():
         text = run_at.strip()
         try:
             if len(text) in (4,5) and ":" in text:
@@ -775,6 +802,31 @@ def schedule_tool(name: str, delay_seconds: int | None = None, run_at: str | Non
                 normalized_run_at = text
         except Exception:
             return 'Invalid run_at; use HH:MM (24h) or ISO-8601 like 2025-11-03T10:00:00.'
+    
+    # Validate interval parameters
+    normalized_repeat_interval_seconds = None
+    if repeat_interval_seconds is not None:
+        try:
+            normalized_repeat_interval_seconds = max(1, int(repeat_interval_seconds))
+        except Exception:
+            return 'Invalid repeat_interval_seconds; provide an integer number of seconds (e.g., 600 for 10 minutes, 7200 for 2 hours).'
+    
+    normalized_repeat_end_time = None
+    if repeat_end_time is not None and repeat_end_time.strip():
+        text = repeat_end_time.strip()
+        # Validate HH:MM format
+        if len(text) in (4, 5) and ":" in text:
+            parts = text.split(":")
+            try:
+                hour = int(parts[0])
+                minute = int(parts[1])
+                if hour < 0 or hour > 23 or minute < 0 or minute > 59:
+                    return 'Invalid repeat_end_time; use HH:MM format (24-hour, e.g., "18:30").'
+                normalized_repeat_end_time = text
+            except Exception:
+                return 'Invalid repeat_end_time; use HH:MM format (24-hour, e.g., "18:30").'
+        else:
+            return 'Invalid repeat_end_time; use HH:MM format (24-hour, e.g., "18:30").'
 
     try:
         body = {"name": name}
@@ -782,12 +834,34 @@ def schedule_tool(name: str, delay_seconds: int | None = None, run_at: str | Non
             body["delay_seconds"] = delay_seconds
         if normalized_run_at is not None:
             body["run_at"] = normalized_run_at
+        if normalized_repeat_interval_seconds is not None:
+            body["repeat_interval_seconds"] = normalized_repeat_interval_seconds
+        if normalized_repeat_end_time is not None:
+            body["repeat_end_time"] = normalized_repeat_end_time
         r = requests.post("http://127.0.0.1:8000/api/scheduled-tasks", json=body, timeout=5)
         if r.ok:
             data = r.json()
-            when = data.get("run_at") or f"in {delay_seconds}s"
-            return f'Scheduled {name} ({when}).'
+            when = data.get("run_at") or (f"in {delay_seconds}s" if delay_seconds else "immediately")
+            interval_info = ""
+            if normalized_repeat_interval_seconds:
+                minutes = normalized_repeat_interval_seconds // 60
+                hours = minutes // 60
+                if hours > 0:
+                    interval_info = f", repeating every {hours} hour{'s' if hours > 1 else ''}"
+                elif minutes > 0:
+                    interval_info = f", repeating every {minutes} minute{'s' if minutes > 1 else ''}"
+                else:
+                    interval_info = f", repeating every {normalized_repeat_interval_seconds} second{'s' if normalized_repeat_interval_seconds > 1 else ''}"
+                if normalized_repeat_end_time:
+                    interval_info += f" until {normalized_repeat_end_time}"
+            return f'Scheduled {name} ({when}{interval_info}).'
         else:
-            return f'Failed to register scheduled task (HTTP {r.status_code}).'
+            error_detail = r.text
+            try:
+                error_data = r.json()
+                error_detail = error_data.get("detail", error_detail)
+            except Exception:
+                pass
+            return f'Failed to register scheduled task (HTTP {r.status_code}): {error_detail}'
     except Exception as e:
         return f'Failed to register scheduled task: {e}'
