@@ -77,12 +77,12 @@ function WorkflowSteps({ workflowSteps }: { workflowSteps: WorkflowStep[] }) {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <div>
-      <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
+      <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-2 text-xs text-white hover:text-white transition-colors">
         <motion.div animate={{ rotate: isOpen ? 90 : 0 }} transition={{ duration: 0.2 }}>
           <ArrowRight01Icon size={12} className="text-white" />
         </motion.div>
         <CpuIcon size={12} className="text-white" />
-        <span>View {workflowSteps.length} workflow steps</span>
+        <span className="text-white">View {workflowSteps.length} workflow steps</span>
       </button>
       <AnimatePresence mode="wait">
         {isOpen && (
@@ -100,7 +100,7 @@ function WorkflowSteps({ workflowSteps }: { workflowSteps: WorkflowStep[] }) {
                       {step.type === "status" && <Loading02Icon size={12} className="text-white" />}
                     </div>
                     <div className="flex-1">
-                      <p className="text-muted-foreground">{step.message}</p>
+                      <p className="text-white">{step.message}</p>
                       {step.actionName && (<Badge variant="outline" className="mt-1 text-xs">{step.actionName}</Badge>)}
                     </div>
                   </motion.div>
