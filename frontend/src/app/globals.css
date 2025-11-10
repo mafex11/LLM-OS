@@ -77,9 +77,9 @@
     @apply bg-background text-foreground;
   }
   
-  /* Force scrollbar to always be visible to prevent layout shift */
-  html {
-    overflow-y: scroll;
+  /* Prevent default scrollbar on html/body since we use controlled ScrollArea components */
+  html, body {
+    overflow: hidden;
   }
   
   /* For webkit browsers (Chrome, Safari, Edge) */
