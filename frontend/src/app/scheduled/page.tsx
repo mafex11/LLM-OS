@@ -51,7 +51,20 @@ export default function ScheduledTasksPage() {
   const router = useRouter()
   const [tasks, setTasks] = useState<ScheduledTask[]>([])
   const [loading, setLoading] = useState(false)
-  const [showSidebar, setShowSidebar] = useState(false)
+  const [showSidebar, setShowSidebar] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("sidebarOpen")
+      return saved === "true"
+    }
+    return false
+  })
+  
+  // Save sidebar state to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("sidebarOpen", String(showSidebar))
+    }
+  }, [showSidebar])
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<ScheduledTask | null>(null)
@@ -306,8 +319,8 @@ export default function ScheduledTasksPage() {
           collapsedContent={(
             <>
               <div className="flex items-center justify-center mt-0">
-                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-zinc-950" onClick={() => router.push('/chat')} title="Chat">
-                  <img src="/logo.svg" alt="Logo" width={24} height={24} className="rounded-full" />
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-transparent" onClick={() => router.push('/chat')} title="Chat">
+                  <img src="/logo.svg" alt="Logo" width={36} height={36} className="rounded-full" />
                 </Button>
               </div>
               <div className="flex-1" />
@@ -332,7 +345,7 @@ export default function ScheduledTasksPage() {
           )}
         >
             <div className="p-4 border-b border-white/10 mx-2 space-y-4">
-              <div className="flex items-center gap-3 px-2 cursor-pointer hover:bg-zinc-950 rounded-lg transition-colors" onClick={() => router.push('/chat')}>
+              <div className="flex items-center gap-3 px-2 cursor-pointer rounded-lg transition-colors" onClick={() => router.push('/chat')}>
                 <img src="/logo.svg" alt="Logo" width={44} height={44} className="flex-shrink-0 rounded-full" />
                 <span className="text-lg font-semibold">Yuki AI</span>
               </div>
@@ -407,10 +420,10 @@ export default function ScheduledTasksPage() {
         <motion.div 
           className="flex-1 flex flex-col"
           animate={{ paddingLeft: showSidebar ? '16rem' : '4rem' }}
-          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
         >
           <div 
-            className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-10"
+            className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-50 flex-shrink-0"
           >
             <div className="flex items-center gap-3">
               <div className="cursor-pointer p-2 hover:bg-black/20 rounded-lg transition-colors" onClick={() => { setShowSidebar(!showSidebar) }}>

@@ -127,8 +127,21 @@ function ChatContent() {
   const [stopRequested, setStopRequested] = useState(false)
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null)
   const [currentWorkflow, setCurrentWorkflow] = useState<WorkflowStep[]>([])
-  const [showSidebar, setShowSidebar] = useState(false)
+  const [showSidebar, setShowSidebar] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("sidebarOpen")
+      return saved === "true"
+    }
+    return false
+  })
   const [renameDialogOpen, setRenameDialogOpen] = useState(false)
+  
+  // Save sidebar state to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("sidebarOpen", String(showSidebar))
+    }
+  }, [showSidebar])
   const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null)
   const [newChatTitle, setNewChatTitle] = useState("")
   const [taskExecuted, setTaskExecuted] = useState(false)
@@ -174,15 +187,20 @@ function ChatContent() {
 
   useEffect(() => {
     const wasLoading = previousIsLoadingRef.current
+    // Check if notification sounds are enabled
+    const soundsEnabled = typeof window !== "undefined" 
+      ? localStorage.getItem("notificationSoundsEnabled") !== "false"
+      : true
+    
     if (isLoading && !wasLoading) {
       const sound = queryStartSoundRef.current
-      if (sound) {
+      if (sound && soundsEnabled) {
         sound.currentTime = 0
         sound.play().catch(() => {})
       }
     } else if (!isLoading && wasLoading) {
       const sound = taskCompleteSoundRef.current
-      if (sound) {
+      if (sound && soundsEnabled) {
         sound.currentTime = 0
         sound.play().catch(() => {})
       }
@@ -653,6 +671,14 @@ function ChatContent() {
       <div className="flex h-screen w-full bg-black"></div>
     ) : (
     <div className="flex h-screen relative">
+      {/* <div
+        className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full blur-3xl opacity-80"
+        style={{
+          width: "100rem",
+          height: "100rem",
+          background: "radial-gradient(circle, rgba(250,50,50,0.5) 0%, rgba(250,50,50,0.15) 45%, rgba(0,0,0,0) 75%)",
+        }}
+      /> */}
       {/* <div className="absolute inset-0 z-0" style={{ background: "radial-gradient(125% 25% at 60% 100%, #000000 60%, #2b0707 200%)" }} /> */}
       <div className="relative z-10 w-full h-full">
         <AppSidebar
@@ -660,12 +686,12 @@ function ChatContent() {
           collapsedContent={(
             <>
               <div className="flex items-center justify-center mt-0">
-                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-zinc-950" onClick={() => router.push('/chat')} title="Chat">
-                  <img src="/logo.svg" alt="Logo" width={24} height={24} className="rounded-full" />
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-transparent" onClick={() => router.push('/chat')} title="Chat">
+                  <img src="/logo.svg" alt="Logo" width={36} height={36} className="rounded-full" />
                 </Button>
               </div>
-              <Button onClick={createNewChat} variant="ghost" size="icon" className="h-10 w-10 mx-auto mt-4 hover:bg-black/20 border border-white/20 hover:border-white/30">
-                <PlusSignIcon size={16} />
+              <Button onClick={createNewChat} variant="ghost" size="icon" className="group h-12 w-12 mx-auto mt-4 hover:bg-black/20 border border-white/20 hover:border-white/30 rounded-full">
+                <PlusSignIcon size={20} className="group-hover:animate-[spin_3s_linear_infinite]" />
               </Button>
               <div className="flex-1" />
               <div className="mt-auto flex flex-col items-center gap-1 w-full">
@@ -688,25 +714,25 @@ function ChatContent() {
             </>
           )}
         >
-          <div className="p-4 border-b border-white/10 mx-2 space-y-4">
-            <div className="flex items-center gap-3 px-2 cursor-pointer hover:bg-zinc-950 rounded-lg transition-colors" onClick={() => router.push('/chat')}>
+          <div className="p-2 py-4 border-b border-white/10 mx-2 space-y-4">
+            <div className="flex items-center gap-3 px-2  cursor-pointer transition-colors" onClick={() => router.push('/chat')}>
               <img src="/logo.svg" alt="Logo" width={44} height={44} className="flex-shrink-0 rounded-full" />
               <span className="text-lg font-semibold">Yuki AI</span>
             </div>
-            <Button onClick={createNewChat} className="w-full justify-start gap-2 hover:bg-black/20 backdrop-blur-sm border border-white/20 hover:border-white/30" variant="ghost">
-              <PlusSignIcon size={16} />
+            <Button onClick={createNewChat} className="group w-full justify-start gap-2 hover:bg-black/20 backdrop-blur-sm border border-white/20 hover:border-white/30 rounded-full py-6" variant="ghost">
+              <PlusSignIcon size={20} className="group-hover:animate-[spin_3s_linear_infinite]" />
               New Chat
             </Button>
           </div>
-          <div className="flex-1 px-2 py-2 overflow-auto">
+          <div className="flex-1 px-4 py-2 overflow-auto">
             <div className="space-y-1">
               {chatSessions.map((session, index) => (
-                <motion.div key={session.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2, delay: index * 0.05 }} className={`group relative overflow-hidden flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors w-full ${currentSessionId === session.id ? "bg-black/60" : "hover:bg-black/30"}`}>
+                <motion.div key={session.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2, delay: index * 0.05 }} className={`group relative overflow-hidden flex items-center gap-2 rounded-full   px-3 py-3 text-md transition-colors w-full  ${currentSessionId === session.id ? "bg-black/60" : "hover:bg-zinc-950/50 hover:shadow-xl hover:shadow-white/20 hover:border-white/30 hover:border"}`}>
                   {currentSessionId === session.id && (
                     <div className="pointer-events-none absolute inset-0 border-1 border-black/20">
-                      <motion.div className="absolute inset-y-0 left-0 w-2 bg-white/60 rounded-r-full blur-2xl" initial={{ opacity: 0.8 }} animate={{ opacity: [0.7, 1, 0.7] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }} />
-                      <motion.div className="absolute inset-y-0 left-0 w-2/3 bg-gradient-to-r from-white/60 to-transparent" initial={{ opacity: 0.35 }} animate={{ opacity: [0.25, 0.5, 0.25] }} transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }} />
-                      <motion.div className="absolute top-0 bottom-0 -left-16 w-40 bg-gradient-to-r from-white/60 to-transparent blur-2xl" animate={{ x: [0, 56, 0], opacity: [0.6, 1, 0.6] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} />
+                      <motion.div className="absolute inset-y-0 left-0 w-2 rounded-r-full blur-2xl" style={{ backgroundColor: 'rgba(250,50,50,0.5)' }} initial={{ opacity: 0.8 }} animate={{ opacity: [0.7, 1, 0.7] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }} />
+                      <motion.div className="absolute inset-y-0 left-0 w-2/3 bg-gradient-to-r to-transparent" style={{ backgroundImage: 'linear-gradient(to right, rgba(250,50,50,0.5), transparent)' }} initial={{ opacity: 0.35 }} animate={{ opacity: [0.25, 0.5, 0.25] }} transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }} />
+                      <motion.div className="absolute top-0 bottom-0 -left-16 w-40 bg-gradient-to-r to-transparent blur-2xl" style={{ backgroundImage: 'linear-gradient(to right, rgba(250,50,50,0.5), transparent)' }} animate={{ x: [0, 56, 0], opacity: [0.6, 1, 0.6] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} />
                     </div>
                   )}
                   <div className="flex-1 truncate cursor-pointer" onClick={async () => { 
@@ -746,7 +772,7 @@ function ChatContent() {
         <motion.div 
           className="flex-1 flex flex-col"
           animate={{ paddingLeft: showSidebar ? '16rem' : '4rem' }}
-          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
         >
           {showVoiceInstructions && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.3 }} className="bg-blue-500/10 border-b border-blue-500/20 px-4 py-3 backdrop-blur-sm">
@@ -769,7 +795,7 @@ function ChatContent() {
               </div>
             </motion.div>
           )}
-        <div className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-10">
+        <div className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-50 flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="cursor-pointer p-2 hover:bg-black/20 rounded-lg transition-colors" onClick={() => setShowSidebar(!showSidebar)}>
                 {showSidebar ? <SidebarLeft01Icon size={24} /> : <SidebarRight01Icon size={24} />}

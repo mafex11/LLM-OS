@@ -96,8 +96,35 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
   const audioDevices = useAudioDevices()
   // Removed context dependency - using config file only
-  const [showSidebar, setShowSidebar] = useState(false)
+  const [showSidebar, setShowSidebar] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("sidebarOpen")
+      return saved === "true"
+    }
+    return false
+  })
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null)
+  const [notificationSoundsEnabled, setNotificationSoundsEnabled] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("notificationSoundsEnabled")
+      return saved !== "false" // Default to true if not set
+    }
+    return true
+  })
+  
+  // Save sidebar state to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("sidebarOpen", String(showSidebar))
+    }
+  }, [showSidebar])
+
+  // Save notification sounds setting to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("notificationSoundsEnabled", String(notificationSoundsEnabled))
+    }
+  }, [notificationSoundsEnabled])
   const [showApiKeys, setShowApiKeys] = useState({
     google_api_key: false,
     elevenlabs_api_key: false,
@@ -417,8 +444,8 @@ export default function SettingsPage() {
           collapsedContent={(
             <>
               <div className="flex items-center justify-center mt-0">
-                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-zinc-950" onClick={() => router.push('/chat')} title="Chat">
-                  <img src="/logo.svg" alt="Logo" width={24} height={24} className="rounded-full" />
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-transparent" onClick={() => router.push('/chat')} title="Chat">
+                  <img src="/logo.svg" alt="Logo" width={36} height={36} className="rounded-full" />
                 </Button>
               </div>
               <div className="flex-1" />
@@ -444,7 +471,7 @@ export default function SettingsPage() {
         >
             {/* Sidebar Header */}
             <div className="p-4 border-b border-white/10 mx-2 space-y-4">
-              <div className="flex items-center gap-3 px-2 cursor-pointer hover:bg-zinc-950 rounded-lg transition-colors" onClick={() => router.push('/chat')}>
+              <div className="flex items-center gap-3 px-2 cursor-pointer rounded-lg transition-colors" onClick={() => router.push('/chat')}>
                 <img src="/logo.svg" alt="Logo" width={44} height={44} className="flex-shrink-0 rounded-full" />
                 <span className="text-lg font-semibold">Yuki AI</span>
               </div>
@@ -552,7 +579,7 @@ export default function SettingsPage() {
         <motion.div 
           className="flex-1 flex flex-col overflow-hidden"
           animate={{ paddingLeft: showSidebar ? '16rem' : '4rem' }}
-          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
         >
         <div 
           className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-50 flex-shrink-0"
@@ -1358,6 +1385,35 @@ export default function SettingsPage() {
                         <p className="text-xs text-gray-500">
                           {audioDevices.outputDevices.length} speaker(s) detected
                         </p>
+                      </div>
+
+                      <Separator />
+
+                      {/* Notification Sounds Toggle */}
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="notification-sounds-toggle" className="text-sm font-normal cursor-pointer">
+                            Notification Sounds
+                          </Label>
+                          <p className="text-xs text-muted-foreground">
+                            Play sounds when tasks start and complete
+                          </p>
+                        </div>
+                        <button
+                          id="notification-sounds-toggle"
+                          type="button"
+                          onClick={() => setNotificationSoundsEnabled(prev => !prev)}
+                          aria-pressed={notificationSoundsEnabled}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-black ${
+                            notificationSoundsEnabled ? 'bg-white' : 'bg-gray-600'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-black transition-transform ${
+                              notificationSoundsEnabled ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
                       </div>
 
                       <div className="flex items-center justify-between pt-4">
