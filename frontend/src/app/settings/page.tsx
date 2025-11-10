@@ -410,14 +410,14 @@ export default function SettingsPage() {
 
 
   return (
-    <div className="flex min-h-screen w-full ">
-      <div className="relative z-10 w-full">
+    <div className="flex h-screen w-full overflow-hidden">
+      <div className="relative z-10 w-full flex flex-col">
         <AppSidebar
           isOpen={showSidebar}
           collapsedContent={(
             <>
               <div className="flex items-center justify-center mt-0">
-                <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => router.push('/chat')} title="Chat">
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-zinc-950" onClick={() => router.push('/chat')} title="Chat">
                   <img src="/logo.svg" alt="Logo" width={24} height={24} className="rounded-full" />
                 </Button>
               </div>
@@ -444,7 +444,7 @@ export default function SettingsPage() {
         >
             {/* Sidebar Header */}
             <div className="p-4 border-b border-white/10 mx-2 space-y-4">
-              <div className="flex items-center gap-3 px-2 cursor-pointer" onClick={() => router.push('/chat')}>
+              <div className="flex items-center gap-3 px-2 cursor-pointer hover:bg-zinc-950 rounded-lg transition-colors" onClick={() => router.push('/chat')}>
                 <img src="/logo.svg" alt="Logo" width={44} height={44} className="flex-shrink-0 rounded-full" />
                 <span className="text-lg font-semibold">Yuki AI</span>
               </div>
@@ -550,12 +550,12 @@ export default function SettingsPage() {
         </AppSidebar>
 
         <motion.div 
-          className="flex-1 flex flex-col"
+          className="flex-1 flex flex-col overflow-hidden"
           animate={{ paddingLeft: showSidebar ? '16rem' : '4rem' }}
           transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
         >
         <div 
-          className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-10"
+          className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-50 flex-shrink-0"
         >
           <div className="flex items-center gap-3">
             <div

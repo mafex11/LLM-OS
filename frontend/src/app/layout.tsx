@@ -3,7 +3,8 @@ import { Montserrat } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { ApiKeyProvider } from "@/contexts/ApiKeyContext"
-import { GridBackground } from "@/components/ui/grid-background"
+import { StaticGridBackground } from "@/components/ui/static-grid-background"
+import DarkVeilBackground from "@/components/DarkVeilBackground"
 
 const montserrat = Montserrat({ 
   subsets: ["latin"],
@@ -25,13 +26,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${montserrat.className} min-h-screen w-full relative overflow-hidden bg-black`}>
         <div className="fixed inset-0">
-          <div 
-            className="absolute inset-0 z-0"
-            style={{
-              background: "radial-gradient(125% 125% at 50% 100%, #000000 30%, #1a0b0b 70%, #2b0707 100%)",
-            }}
-          />
-          {/* <GridBackground /> */}
+          <DarkVeilBackground />
+          <StaticGridBackground />
         </div>
         <ThemeProvider
           attribute="class"

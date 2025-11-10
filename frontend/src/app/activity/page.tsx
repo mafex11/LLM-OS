@@ -245,7 +245,7 @@ export default function ActivityPage() {
         collapsedContent={(
           <>
             <div className="flex items-center justify-center mt-0">
-              <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => router.push('/chat')} title="Chat">
+              <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-zinc-950" onClick={() => router.push('/chat')} title="Chat">
                 <img src="/logo.svg" alt="Logo" width={24} height={24} className="rounded-full" />
               </Button>
             </div>
@@ -271,7 +271,7 @@ export default function ActivityPage() {
         )}
       >
         <div className="p-4 border-b border-white/10 mx-2 space-y-4">
-          <div className="flex items-center gap-3 px-2 cursor-pointer" onClick={() => router.push('/chat')}>
+          <div className="flex items-center gap-3 px-2 cursor-pointer hover:bg-zinc-950 rounded-lg transition-colors" onClick={() => router.push('/chat')}>
             <img src="/logo.svg" alt="Logo" width={44} height={44} className="flex-shrink-0 rounded-full" />
             <span className="text-lg font-semibold">Yuki AI</span>
           </div>

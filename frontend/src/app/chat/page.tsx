@@ -145,6 +145,9 @@ function ChatContent() {
   const workflowRef = useRef<WorkflowStep[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const queryStartSoundRef = useRef<HTMLAudioElement | null>(null)
+  const taskCompleteSoundRef = useRef<HTMLAudioElement | null>(null)
+  const previousIsLoadingRef = useRef(false)
 
   const generateUniqueSessionId = () => {
     return `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${performance.now()}`
@@ -156,6 +159,36 @@ function ChatContent() {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    queryStartSoundRef.current = new Audio("/noti1.mp3")
+    queryStartSoundRef.current.preload = "auto"
+    taskCompleteSoundRef.current = new Audio("/noti2.mp3")
+    taskCompleteSoundRef.current.preload = "auto"
+    return () => {
+      queryStartSoundRef.current = null
+      taskCompleteSoundRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    const wasLoading = previousIsLoadingRef.current
+    if (isLoading && !wasLoading) {
+      const sound = queryStartSoundRef.current
+      if (sound) {
+        sound.currentTime = 0
+        sound.play().catch(() => {})
+      }
+    } else if (!isLoading && wasLoading) {
+      const sound = taskCompleteSoundRef.current
+      if (sound) {
+        sound.currentTime = 0
+        sound.play().catch(() => {})
+      }
+    }
+    previousIsLoadingRef.current = isLoading
+  }, [isLoading])
 
   useEffect(() => {
     const initializeChat = async () => {
@@ -404,7 +437,17 @@ function ChatContent() {
     try {
       const conversationHistory = messages.map(msg => ({ role: msg.role, content: msg.content, timestamp: msg.timestamp.toISOString() }))
       const response = await fetch("http://127.0.0.1:8000/api/query/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query: userMessage.content, use_vision: false, conversation_history: conversationHistory, api_key: getApiKey('google_api_key') }) })
-      if (!response.ok) throw new Error("Failed to send query")
+      if (!response.ok) {
+        let errorText = ""
+        try {
+          errorText = await response.text()
+        } catch {}
+        const normalized = errorText.toLowerCase()
+        if (response.status === 429 || normalized.includes("quota") || normalized.includes("rate limit")) {
+          throw new Error("QUOTA_EXCEEDED")
+        }
+        throw new Error(errorText || "Failed to send query")
+      }
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
       if (!reader) throw new Error("No reader available")
@@ -434,7 +477,14 @@ function ChatContent() {
                 const messageId = `${Date.now()}-error-${Math.random().toString(36).substr(2, 9)}`
                 const rawMessage: string = data?.data?.message || ""
                 const isUserStop = (rawMessage || "").toLowerCase() === "execution stopped by user"
-                const errorMessage: Message = { id: messageId, role: "assistant", content: isUserStop ? "Execution stopped by user" : `Error: ${rawMessage}`, timestamp: new Date(data.timestamp), workflowSteps: [...workflowRef.current] }
+                const normalized = rawMessage.toLowerCase()
+                const isQuotaError = normalized.includes("quota") || normalized.includes("rate limit") || normalized.includes("resourceexhausted")
+                const errorContent = isUserStop
+                  ? "Execution stopped by user"
+                  : isQuotaError
+                    ? "Quota exhausted for the Gemini API. Please wait and try again, or upgrade your plan."
+                    : `Error: ${rawMessage}`
+                const errorMessage: Message = { id: messageId, role: "assistant", content: errorContent, timestamp: new Date(data.timestamp), workflowSteps: [...workflowRef.current] }
                 setNewlyGeneratedMessageIds(prev => new Set([...prev, messageId]))
                 updateSessionMessages(currentSessionId, [...newMessages, errorMessage])
                 setCurrentWorkflow([])
@@ -446,7 +496,14 @@ function ChatContent() {
       }
     } catch (error) {
       const messageId = `${Date.now()}-error-${Math.random().toString(36).substr(2, 9)}`
-      const errorMsg: Message = { id: messageId, role: "assistant", content: "Failed to process query. Please make sure the API server is running.", timestamp: new Date() }
+      let content = "Failed to process query. Please make sure the API server is running."
+      if (error instanceof Error) {
+        const normalized = error.message.toLowerCase()
+        if (normalized === "quota_exceeded" || normalized.includes("quota") || normalized.includes("rate limit")) {
+          content = "Quota exhausted for the Gemini API. Please wait a bit and try again."
+        }
+      }
+      const errorMsg: Message = { id: messageId, role: "assistant", content, timestamp: new Date() }
       setNewlyGeneratedMessageIds(prev => new Set([...prev, messageId]))
       updateSessionMessages(currentSessionId, [...newMessages, errorMsg])
     } finally {
@@ -596,14 +653,14 @@ function ChatContent() {
       <div className="flex h-screen w-full bg-black"></div>
     ) : (
     <div className="flex h-screen relative">
-      <div className="absolute inset-0 z-0" style={{ background: "radial-gradient(125% 125% at 50% 100%, #000000 40%, #2b0707 100%)" }} />
+      {/* <div className="absolute inset-0 z-0" style={{ background: "radial-gradient(125% 25% at 60% 100%, #000000 60%, #2b0707 200%)" }} /> */}
       <div className="relative z-10 w-full h-full">
         <AppSidebar
           isOpen={showSidebar}
           collapsedContent={(
             <>
               <div className="flex items-center justify-center mt-0">
-                <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => router.push('/chat')} title="Chat">
+                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-zinc-950" onClick={() => router.push('/chat')} title="Chat">
                   <img src="/logo.svg" alt="Logo" width={24} height={24} className="rounded-full" />
                 </Button>
               </div>
@@ -632,7 +689,7 @@ function ChatContent() {
           )}
         >
           <div className="p-4 border-b border-white/10 mx-2 space-y-4">
-            <div className="flex items-center gap-3 px-2 cursor-pointer" onClick={() => router.push('/chat')}>
+            <div className="flex items-center gap-3 px-2 cursor-pointer hover:bg-zinc-950 rounded-lg transition-colors" onClick={() => router.push('/chat')}>
               <img src="/logo.svg" alt="Logo" width={44} height={44} className="flex-shrink-0 rounded-full" />
               <span className="text-lg font-semibold">Yuki AI</span>
             </div>
