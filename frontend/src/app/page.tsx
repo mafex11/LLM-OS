@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import DarkVeil from "@/components/DarkVeil"
 
 export default function LandingPage() {
   const [inputValue, setInputValue] = useState("")
@@ -33,6 +34,18 @@ export default function LandingPage() {
 
   return (
 <div className="min-h-screen w-full relative">
+  {/* DarkVeil Background */}
+  <div className="absolute inset-0 z-0">
+    <DarkVeil 
+      hueShift={230}
+      noiseIntensity={0.02}
+      scanlineIntensity={0.1}
+      speed={0.3}
+      scanlineFrequency={2.0}
+      warpAmount={0.1}
+      resolutionScale={1}
+    />
+  </div>
   {/* Content */}
   <section className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-20">
     {/* Enhanced Logo with subtle animation */}
