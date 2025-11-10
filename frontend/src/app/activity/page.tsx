@@ -316,12 +316,12 @@ export default function ActivityPage() {
       </AppSidebar>
 
       <motion.div 
-        className="flex-1 flex flex-col overflow-hidden"
+        className="flex-1 flex flex-col h-screen overflow-hidden"
         animate={{ paddingLeft: showSidebar ? '16rem' : '4rem' }}
         transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
       >
         <div 
-          className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-50 flex-shrink-0"
+          className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm flex-shrink-0"
         >
           <div className="flex items-center gap-3">
             <div className="cursor-pointer p-2 hover:bg-black/20 rounded-lg transition-colors" onClick={() => setShowSidebar(!showSidebar)}>
@@ -355,7 +355,7 @@ export default function ActivityPage() {
             <div className="space-y-6">
             {/* Current Activity */}
             {currentActivity && currentActivity.app && (
-              <Card className="bg-black/20 border-white/10">
+              <Card className="bg-black/20 border-white/10 rounded-3xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TimeScheduleIcon size={18} />
@@ -380,7 +380,7 @@ export default function ActivityPage() {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="bg-black/20 border-white/10">
+              <Card className="bg-black/20 border-white/10 rounded-3xl">
                 <CardHeader className="pb-2">
                   <CardDescription>Total Active Time</CardDescription>
                   <CardTitle className="text-3xl">
@@ -407,7 +407,7 @@ export default function ActivityPage() {
                 const focusTime = mostUsedApp?.time || 0
                 
                 return mostUsedApp ? (
-                  <Card className="bg-black/20 border-white/10">
+                  <Card className="bg-black/20 border-white/10 rounded-3xl">
                     <CardHeader className="pb-2">
                       <CardDescription>Focus Time</CardDescription>
                       <CardTitle className="text-2xl">{mostUsedApp.app}</CardTitle>
@@ -422,7 +422,7 @@ export default function ActivityPage() {
 
             {/* Insights */}
             {/* {summary && summary.insights && (
-              <Card className="bg-black/20 border-white/10">
+              <Card className="bg-black/20 border-white/10 rounded-3xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <BulbIcon size={18} />
@@ -436,7 +436,7 @@ export default function ActivityPage() {
             )} */}
 
             {/* Activity Timeline */}
-            <Card className="bg-black/20 border-white/10">
+            <Card className="bg-black/20 border-white/10 rounded-3xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <TimeScheduleIcon size={18} />

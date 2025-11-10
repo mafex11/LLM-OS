@@ -73,6 +73,64 @@ interface SystemStatus {
   performance_stats: any
 }
 
+interface ChatInputProps {
+  isListening: boolean
+  isSpeaking: boolean
+  isLoading: boolean
+  input: string
+  setInput: (value: string) => void
+  sendMessage: () => void
+  handleMicClick: () => void
+  inputRef: React.RefObject<HTMLInputElement>
+  currentRequestId: string | null
+  stopRequested: boolean
+  setStopRequested: (value: boolean) => void
+}
+
+function ChatInput({ isListening, isSpeaking, isLoading, input, setInput, sendMessage, handleMicClick, inputRef, currentRequestId, stopRequested, setStopRequested }: ChatInputProps) {
+  return (
+    <div className="flex items-center gap-3">
+      <AnimatePresence mode="wait">
+        {!isListening ? (
+          <motion.div key="normal-input" initial={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="flex items-center gap-3 w-full">
+            <motion.div initial={{ opacity: 1, scale: 1 }} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} transition={{ duration: 0.2 }}>
+              <Button variant="ghost" size="sm" className={`h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border hover:shadow-lg hover:shadow-red-500/20 transition-shadow duration-300 ease-in-out ${isListening ? 'border-red-500/50 bg-red-500/10' : isSpeaking ? 'border-blue-500/50 bg-blue-500/10' : 'border-white/20 hover:border-white/30'}`} disabled={isLoading} title={isListening ? "Stop voice mode" : "Start voice mode (say 'yuki' + command)"} onClick={handleMicClick}>
+                {isListening ? (<motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 1, repeat: Infinity }}><VoiceIcon size={24} className="text-red-500" /></motion.div>) : isSpeaking ? (<motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 0.8, repeat: Infinity }}><VoiceIcon size={24} className="text-blue-500" /></motion.div>) : (<VoiceIcon size={24} className="text-white" />)}
+              </Button>
+            </motion.div>
+            <motion.div className="flex-1 relative" initial={{ opacity: 1, x: 0 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.3, ease: "easeInOut" }}>
+              <Input ref={inputRef} placeholder="What can I do for you?" value={input} onChange={(e) => setInput(e.target.value)} onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()} disabled={isLoading} className="w-full text-base sm:text-lg bg-black/30 border border-white/20 text-gray-100 placeholder:text-gray-500 rounded-3xl shadow-lg focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus:ring-0 h-12 sm:h-14 backdrop-blur-sm hover:border-white/30 hover:shadow-lg hover:shadow-red-500/20 transition-shadow duration-300 ease-in-out" />
+            </motion.div>
+            <motion.div initial={{ opacity: 1, x: 0 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.3, ease: "easeInOut" }}>
+              {isLoading ? (
+                <Button onClick={() => { if (!stopRequested && currentRequestId) { fetch("http://localhost:8000/api/query/stop", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ request_id: currentRequestId }) }).catch(console.error); setStopRequested(true) } }} variant="ghost" size="sm" className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-red-500/50"><span className="flex items-center justify-center w-full h-full text-red-500"><Cancel01Icon size={28} /></span></Button>
+              ) : (
+                <Button onClick={sendMessage} disabled={!input.trim()} variant="ghost" size="sm" className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-white/20 hover:border-white/30 hover:shadow-lg hover:shadow-red-500/20 transition-shadow duration-300 ease-in-out"><span className="flex items-center justify-center w-full h-full"><Navigation03Icon size={36} /></span></Button>
+              )}
+            </motion.div>
+          </motion.div>
+        ) : (
+          <motion.div key="listening-input" className="flex-1 relative" initial={{ width: "48px", opacity: 0 }} animate={{ width: "100%", opacity: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.3, ease: "easeInOut" }}>
+            <motion.div className="w-full text-base sm:text-lg bg-black/30 border border-white/20 text-gray-100 rounded-full shadow-lg h-12 sm:h-14 backdrop-blur-sm flex items-center justify-between px-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }}>
+              <motion.div className="flex items-center" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: 0.4 }}>
+                <motion.div className="flex items-center justify-center w-8 h-8 bg-red-500/20 rounded-lg  mr-2" animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+                  <VoiceIcon size={20} className="text-red-500" />
+                </motion.div>
+                <span className="text-gray-100 font-medium">Say &quot;yuki&quot; followed by your command...</span>
+              </motion.div>
+              <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3, delay: 0.5 }}>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full backdrop-blur-sm border border-white/20 hover:bg-black/20 hover:border-white/30" onClick={handleMicClick} title="Stop listening">
+                  <Cancel01Icon size={16} className="text-white" />
+                </Button>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function WorkflowSteps({ workflowSteps }: { workflowSteps: WorkflowStep[] }) {
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -312,7 +370,10 @@ function ChatContent() {
       setIsListening(false)
       setIsSpeaking(false)
       setShowVoiceInstructions(false)
-      console.log('[Voice Mode] State updated: listening=false, speaking=false, instructions=false')
+      setIsLoading(false)
+      setCurrentWorkflow([])
+      workflowRef.current = []
+      console.log('[Voice Mode] State updated: listening=false, speaking=false, instructions=false, loading=false')
     } catch (error) {
       console.error('[Voice Mode] Error stopping voice mode:', error)
     }
@@ -727,7 +788,19 @@ function ChatContent() {
           <div className="flex-1 px-4 py-2 overflow-auto">
             <div className="space-y-1">
               {chatSessions.map((session, index) => (
-                <motion.div key={session.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2, delay: index * 0.05 }} className={`group relative overflow-hidden flex items-center gap-2 rounded-full   px-3 py-3 text-md transition-colors w-full  ${currentSessionId === session.id ? "bg-black/60" : "hover:bg-zinc-950/50 hover:shadow-xl hover:shadow-white/20 hover:border-white/30 hover:border"}`}>
+                <motion.div 
+                  key={session.id} 
+                  initial={{ opacity: 0, x: -20 }} 
+                  animate={{ opacity: 1, x: 0 }} 
+                  transition={{ duration: 0.2, delay: index * 0.05 }} 
+                  className={`group relative overflow-hidden flex items-center gap-2 rounded-full px-3 py-3 text-md transition-colors w-full cursor-pointer ${currentSessionId === session.id ? "bg-black/60" : "hover:bg-zinc-950/50 hover:shadow-xl hover:shadow-white/20 hover:border-white/30 hover:border"}`}
+                  onClick={async () => { 
+                    // Stop all running tasks when switching chats
+                    await stopAllRunningTasks()
+                    setCurrentSessionId(session.id)
+                    setNewlyGeneratedMessageIds(new Set())
+                  }}
+                >
                   {currentSessionId === session.id && (
                     <div className="pointer-events-none absolute inset-0 border-1 border-black/20">
                       <motion.div className="absolute inset-y-0 left-0 w-2 rounded-r-full blur-2xl" style={{ backgroundColor: 'rgba(250,50,50,0.5)' }} initial={{ opacity: 0.8 }} animate={{ opacity: [0.7, 1, 0.7] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }} />
@@ -735,12 +808,7 @@ function ChatContent() {
                       <motion.div className="absolute top-0 bottom-0 -left-16 w-40 bg-gradient-to-r to-transparent blur-2xl" style={{ backgroundImage: 'linear-gradient(to right, rgba(250,50,50,0.5), transparent)' }} animate={{ x: [0, 56, 0], opacity: [0.6, 1, 0.6] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} />
                     </div>
                   )}
-                  <div className="flex-1 truncate cursor-pointer" onClick={async () => { 
-                    // Stop all running tasks when switching chats
-                    await stopAllRunningTasks()
-                    setCurrentSessionId(session.id)
-                    setNewlyGeneratedMessageIds(new Set())
-                  }}>{session.title}</div>
+                  <div className="flex-1 truncate">{session.title}</div>
                   {/* Menu temporarily removed to avoid Radix Presence loop */}
                 </motion.div>
               ))}
@@ -770,7 +838,7 @@ function ChatContent() {
           </div>
         </AppSidebar>
         <motion.div 
-          className="flex-1 flex flex-col"
+          className="flex-1 flex flex-col h-screen overflow-hidden"
           animate={{ paddingLeft: showSidebar ? '16rem' : '4rem' }}
           transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
         >
@@ -795,7 +863,7 @@ function ChatContent() {
               </div>
             </motion.div>
           )}
-        <div className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-50 flex-shrink-0">
+        <div className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="cursor-pointer p-2 hover:bg-black/20 rounded-lg transition-colors" onClick={() => setShowSidebar(!showSidebar)}>
                 {showSidebar ? <SidebarLeft01Icon size={24} /> : <SidebarRight01Icon size={24} />}
@@ -837,45 +905,19 @@ function ChatContent() {
                   <p className="text-sm sm:text-md text-white/40 px-4 max-w-2xl">Ask me to automate Windows tasks, open applications, or control your system.</p>
                 </motion.div>
                 <motion.div className="w-full max-w-2xl" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
-                  <div className="flex items-center gap-3">
-                    <AnimatePresence mode="wait">
-                      {!isListening ? (
-                        <motion.div key="normal-input" initial={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="flex items-center gap-3 w-full">
-                          <motion.div initial={{ opacity: 1, scale: 1 }} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} transition={{ duration: 0.2 }}>
-                            <Button variant="ghost" size="sm" className={`h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border hover:shadow-lg hover:shadow-red-500/20 transition-shadow duration-300 ease-in-out ${isListening ? 'border-red-500/50 bg-red-500/10' : isSpeaking ? 'border-blue-500/50 bg-blue-500/10' : 'border-white/20 hover:border-white/30'}`} disabled={isLoading} title={isListening ? "Stop voice mode" : "Start voice mode (say 'yuki' + command)"} onClick={handleMicClick}>
-                              {isListening ? (<motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 1, repeat: Infinity }}><VoiceIcon size={24} className="text-red-500" /></motion.div>) : isSpeaking ? (<motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 0.8, repeat: Infinity }}><VoiceIcon size={24} className="text-blue-500" /></motion.div>) : (<VoiceIcon size={24} className="text-white" />)}
-                            </Button>
-                          </motion.div>
-                          <motion.div className="flex-1 relative" initial={{ opacity: 1, x: 0 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.3, ease: "easeInOut" }}>
-                            <Input ref={inputRef} placeholder="What can I do for you?" value={input} onChange={(e) => setInput(e.target.value)} onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()} disabled={isLoading} className="w-full text-base sm:text-lg bg-black/30 border border-white/20 text-gray-100 placeholder:text-gray-500 rounded-3xl shadow-lg focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus:ring-0 h-12 sm:h-14 backdrop-blur-sm hover:border-white/30 hover:shadow-lg hover:shadow-red-500/20 transition-shadow duration-300 ease-in-out" />
-                          </motion.div>
-                          <motion.div initial={{ opacity: 1, x: 0 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.3, ease: "easeInOut" }}>
-                            {isLoading ? (
-                              <Button onClick={() => { if (!stopRequested && currentRequestId) { fetch("http://localhost:8000/api/query/stop", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ request_id: currentRequestId }) }).catch(console.error); setStopRequested(true) } }} variant="ghost" size="sm" className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-red-500/50"><span className="flex items-center justify-center w-full h-full text-red-500"><Cancel01Icon size={28} /></span></Button>
-                            ) : (
-                              <Button onClick={sendMessage} disabled={!input.trim()} variant="ghost" size="sm" className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-white/20 hover:border-white/30 hover:shadow-lg hover:shadow-red-500/20 transition-shadow duration-300 ease-in-out"><span className="flex items-center justify-center w-full h-full"><Navigation03Icon size={36} /></span></Button>
-                            )}
-                          </motion.div>
-                        </motion.div>
-                      ) : (
-                        <motion.div key="listening-input" className="flex-1 relative" initial={{ width: "48px", opacity: 0 }} animate={{ width: "100%", opacity: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.3, ease: "easeInOut" }}>
-                          <motion.div className="w-full text-base sm:text-lg bg-black/30 border border-white/20 text-gray-100 rounded-full shadow-lg h-12 sm:h-14 backdrop-blur-sm flex items-center justify-between px-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }}>
-                            <motion.div className="flex items-center" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: 0.4 }}>
-                              <motion.div className="flex items-center justify-center w-8 h-8 bg-red-500/20 rounded-lg  mr-2" animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
-                                <VoiceIcon size={20} className="text-red-500" />
-                              </motion.div>
-                              <span className="text-gray-100 font-medium">Say &quot;yuki&quot; followed by your command...</span>
-                            </motion.div>
-                            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3, delay: 0.5 }}>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full backdrop-blur-sm border border-white/20 hover:bg-black/20 hover:border-white/30" onClick={handleMicClick} title="Stop listening">
-                                <Cancel01Icon size={16} className="text-white" />
-                              </Button>
-                            </motion.div>
-                          </motion.div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
+                  <ChatInput 
+                    isListening={isListening}
+                    isSpeaking={isSpeaking}
+                    isLoading={isLoading}
+                    input={input}
+                    setInput={setInput}
+                    sendMessage={sendMessage}
+                    handleMicClick={handleMicClick}
+                    inputRef={inputRef}
+                    currentRequestId={currentRequestId}
+                    stopRequested={stopRequested}
+                    setStopRequested={setStopRequested}
+                  />
                   <p className="text-xs text-gray-500 text-center mt-2 hidden sm:block">Press Enter to send, Shift+Enter for new line, Ctrl+Shift+V for voice mode</p>
                 </motion.div>
               </motion.div>
@@ -950,45 +992,21 @@ function ChatContent() {
               transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1], delay: 0.4 }}
             >
               <div className="max-w-4xl mx-auto">
-                <div className="flex items-center gap-3">
-                    {!isListening ? (
-                      <motion.div key="normal-input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="flex items-center gap-3 w-full">
-                        <motion.div initial={{ opacity: 1, scale: 1 }} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} transition={{ duration: 0.2 }}>
-                          <Button variant="ghost" size="sm" className={`h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border ${isListening ? 'border-red-500/50 bg-red-500/10' : isSpeaking ? 'border-blue-500/50 bg-blue-500/10' : 'border-white/20 hover:border-white/30'}`} disabled={isLoading} title={isListening ? "Stop voice mode" : "Start voice mode (say 'yuki' + command)"} onClick={handleMicClick}>
-                            {isListening ? (<motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 1, repeat: Infinity }}><VoiceIcon size={24} className="text-red-500" /></motion.div>) : isSpeaking ? (<motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 0.8, repeat: Infinity }}><VoiceIcon size={24} className="text-blue-500" /></motion.div>) : (<VoiceIcon size={24} className="text-white" />)}
-                          </Button>
-                        </motion.div>
-                        <motion.div className="flex-1 relative" initial={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-                          <Input ref={inputRef} placeholder="What can I do for you?" value={input} onChange={(e) => setInput(e.target.value)} onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()} disabled={isLoading} className="w-full text-base sm:text-lg bg-black/30 border border-white/20 text-gray-100 placeholder:text-gray-500 rounded-3xl shadow-lg focus-visible:ring-0 focus-visible:ring-offset-0 h-12 sm:h-14 backdrop-blur-sm hover:border-white/30 focus:border-white/40" />
-                        </motion.div>
-                        <motion.div initial={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20, scale: 0.8 }} transition={{ duration: 0.3 }}>
-                          {isLoading ? (
-                            <Button onClick={() => { if (!stopRequested && currentRequestId) { fetch("http://localhost:8000/api/query/stop", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ request_id: currentRequestId }) }).catch(console.error); setStopRequested(true) } }} variant="ghost" size="sm" className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-red-500/50"><span className="flex items-center justify-center w-full h-full text-red-500"><Cancel01Icon size={36} /></span></Button>
-                          ) : (
-                            <Button onClick={sendMessage} disabled={!input.trim()} variant="ghost" size="sm" className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-white/20 hover:border-white/30"><span className="flex items-center justify-center w-full h-full"><Navigation03Icon size={46} /></span></Button>
-                          )}
-                        </motion.div>
-                      </motion.div>
-                    ) : (
-                      <motion.div key="listening-input" className="flex-1 relative" initial={{ width: "48px", opacity: 0 }} animate={{ width: "100%", opacity: 1 }} exit={{ width: "48px", opacity: 0 }} transition={{ duration: 0.5, ease: "easeInOut" }}>
-                        <motion.div className="w-full text-base sm:text-lg bg-black/30 border border-white/20 text-gray-100 rounded-full shadow-lg h-12 sm:h-14 backdrop-blur-sm flex items-center justify-between px-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }}>
-                          <motion.div className="flex items-center" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: 0.4 }}>
-                            <motion.div className="flex items-center justify-center w-8 h-8 bg-red-500/20 rounded-lg  mr-2" animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
-                              <VoiceIcon size={20} className="text-red-500" />
-                            </motion.div>
-                            <span className="text-gray-100 font-medium">Say &quot;yuki&quot; followed by your command...</span>
-                          </motion.div>
-                          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3, delay: 0.5 }}>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full backdrop-blur-sm border border-white/20 hover:bg-black/20 hover:border-white/30" onClick={handleMicClick} title="Stop listening">
-                              <Cancel01Icon size={16} className="text-white" />
-                            </Button>
-                          </motion.div>
-                        </motion.div>
-                      </motion.div>
-                    )}
-            </div>
+                <ChatInput 
+                  isListening={isListening}
+                  isSpeaking={isSpeaking}
+                  isLoading={isLoading}
+                  input={input}
+                  setInput={setInput}
+                  sendMessage={sendMessage}
+                  handleMicClick={handleMicClick}
+                  inputRef={inputRef}
+                  currentRequestId={currentRequestId}
+                  stopRequested={stopRequested}
+                  setStopRequested={setStopRequested}
+                />
                 <p className="text-xs text-gray-500 text-center mt-2 hidden sm:block">Press Enter to send, Shift+Enter for new line, Ctrl+Shift+V for voice mode</p>
-          </div>
+              </div>
             </motion.div>
           )}
         </motion.div>

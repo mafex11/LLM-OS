@@ -351,20 +351,20 @@ export default function ScheduledTasksPage() {
               </div>
               <Button 
                 onClick={() => router.push("/chat")} 
-                className="w-full gap-2 hover:bg-black/20 backdrop-blur-sm border text-center justify-center border-white/20 hover:border-white/30" 
+                className="w-full gap-2 hover:bg-black/20 backdrop-blur-sm border text-center justify-center border-white/20 hover:border-white/30 rounded-full hover:shadow-white/10 hover:shadow-xl" 
                 variant="ghost"
               >
                 Back to Chat
               </Button>
             </div>
-            <ScrollArea className="flex-1 px-2 py-2">
+            <ScrollArea className="flex-1 px-4 py-2">
               <div className="space-y-1">
                 <div className="px-3 py-2 text-sm font-normal text-muted-foreground">
                   Scheduled Tasks
                 </div>
                 <Button
                   variant="ghost"
-                  className="group w-full justify-start gap-2 hover:bg-zinc-950"
+                  className="group w-full justify-start gap-2 hover:bg-zinc-950 rounded-full hover:shadow-white/10 hover:shadow-xl hover:border hover:border-white/20"
                   onClick={() => document.getElementById('schedule-task')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                 >
                   Schedule Task
@@ -374,7 +374,7 @@ export default function ScheduledTasksPage() {
                 </Button>
                 <Button
                   variant="ghost"
-                  className="group w-full justify-start gap-2 hover:bg-zinc-950"
+                  className="group w-full justify-start gap-2 hover:bg-zinc-950 rounded-full hover:shadow-white/10 hover:shadow-xl hover:border hover:border-white/20"
                   onClick={() => document.getElementById('upcoming-tasks')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                 >
                   Upcoming Tasks
@@ -384,7 +384,7 @@ export default function ScheduledTasksPage() {
                 </Button>
                 <Button
                   variant="ghost"
-                  className="group w-full justify-start gap-2 hover:bg-zinc-950"
+                  className="group w-full justify-start gap-2 hover:bg-zinc-950 rounded-full hover:shadow-white/10 hover:shadow-xl hover:border hover:border-white/20"
                   onClick={() => document.getElementById('task-history')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                 >
                   Task History
@@ -418,12 +418,12 @@ export default function ScheduledTasksPage() {
             </div>
         </AppSidebar>
         <motion.div 
-          className="flex-1 flex flex-col"
+          className="flex-1 flex flex-col h-screen overflow-hidden"
           animate={{ paddingLeft: showSidebar ? '16rem' : '4rem' }}
           transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
         >
           <div 
-            className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-50 flex-shrink-0"
+            className="border-b border-white/10 px-4 py-3 flex items-center justify-between bg-black/20 backdrop-blur-sm flex-shrink-0"
           >
             <div className="flex items-center gap-3">
               <div className="cursor-pointer p-2 hover:bg-black/20 rounded-lg transition-colors" onClick={() => { setShowSidebar(!showSidebar) }}>
@@ -438,7 +438,7 @@ export default function ScheduledTasksPage() {
           </div>
           <ScrollArea className="flex-1 px-2 sm:px-4 pb-8">
             <div className="max-w-4xl mx-auto py-4 sm:py-8 space-y-6">
-                <Card id="schedule-task" className="bg-black/40 border border-white/20 ">
+                <Card id="schedule-task" className="bg-black/40 border border-white/20 rounded-3xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 font-normal text-white">
                     {/* <TimeScheduleIcon size={16} /> */}
@@ -619,7 +619,7 @@ export default function ScheduledTasksPage() {
                   </div>
                 </CardContent>
               </Card>
-              <Card id="upcoming-tasks" className="bg-black/40 border border-white/20 ">
+              <Card id="upcoming-tasks" className="bg-black/40 border border-white/20 rounded-3xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 font-normal text-white">Upcoming Tasks</CardTitle>
                   <CardDescription>Tasks that are scheduled or currently running</CardDescription>
@@ -701,7 +701,7 @@ export default function ScheduledTasksPage() {
                 </CardContent>
               </Card>
 
-              <Card id="task-history" className="bg-black/40 border border-white/20 ">
+              <Card id="task-history" className="bg-black/40 border border-white/20 rounded-3xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 font-normal text-white">Task History</CardTitle>
                   <CardDescription>Completed, failed, or cancelled tasks with quick repeat</CardDescription>

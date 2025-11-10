@@ -477,21 +477,21 @@ export default function SettingsPage() {
               </div>
               <Button 
                 onClick={() => router.push("/chat")} 
-                className="w-full gap-2 hover:bg-black/20 backdrop-blur-sm border text-center justify-center border-white/20 hover:border-white/30" 
+                className="w-full gap-2 hover:bg-black/20 backdrop-blur-sm border text-center justify-center border-white/20 hover:border-white/30 rounded-full hover:shadow-white/10 hover:shadow-xl" 
                 variant="ghost"
               >
                 Back to Chat
               </Button>
             </div>
             {/* Sidebar Content */}
-            <ScrollArea className="flex-1 px-2 py-2">
+            <ScrollArea className="flex-1 px-4 py-2">
               <div className="space-y-1">
                 <div className="px-3 py-2 text-sm font-normal text-muted-foreground">
                   Settings
                 </div>
               <Button
                 variant="ghost"
-                className="group w-full justify-start gap-2  hover:bg-zinc-950"
+                className="group w-full justify-start gap-2  hover:bg-zinc-950 rounded-full hover:shadow-white/10 hover:shadow-xl hover:border hover:border-white/20"
                 onClick={() => document.getElementById('api-keys')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
               >
                 API Keys
@@ -501,7 +501,7 @@ export default function SettingsPage() {
               </Button>
               <Button
                 variant="ghost"
-                className="group w-full justify-start gap-2 hover:bg-zinc-950"
+                className="group w-full justify-start gap-2 hover:bg-zinc-950 rounded-full hover:shadow-white/10 hover:shadow-xl hover:border hover:border-white/20"
                 onClick={() => document.getElementById('agent-settings')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
               >
                 Agent Settings
@@ -511,7 +511,7 @@ export default function SettingsPage() {
               </Button>
               <Button
                 variant="ghost"
-                className="group w-full justify-start gap-2 hover:bg-zinc-950"
+                className="group w-full justify-start gap-2 hover:bg-zinc-950 rounded-full hover:shadow-white/10 hover:shadow-xl hover:border hover:border-white/20"
                 onClick={() => document.getElementById('audio-settings')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
               >
                 Audio Settings
@@ -521,7 +521,7 @@ export default function SettingsPage() {
               </Button>
               <Button
                 variant="ghost"
-                className="group w-full justify-start gap-2 hover:bg-zinc-950"
+                className="group w-full justify-start gap-2 hover:bg-zinc-950 rounded-full hover:shadow-white/10 hover:shadow-xl hover:border hover:border-white/20"
                 onClick={() => document.getElementById('system-status')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
               >
                 System Status
@@ -606,7 +606,7 @@ export default function SettingsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.2 }}
               >
-              <Card id="api-keys" className="bg-black/40 border border-white/20 ">
+              <Card id="api-keys" className="bg-black/40 border border-white/20 rounded-3xl ">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 font-normal text-white">
                     {/* <Key01Icon size={20} /> */}
@@ -845,7 +845,7 @@ export default function SettingsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.25 }}
               >
-                <Card id="agent-settings" className="bg-black/40 border border-white/20">
+                <Card id="agent-settings" className="bg-black/40 border border-white/20 rounded-3xl">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-normal text-white">
                       Agent Settings
@@ -1226,7 +1226,7 @@ export default function SettingsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.3 }}
               >
-                <Card id="audio-settings" className="bg-black/40 border border-white/20">
+                <Card id="audio-settings" className="bg-black/40 border border-white/20 rounded-3xl">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-normal text-white">
                       {/* <BotIcon size={20} /> */}
@@ -1447,7 +1447,7 @@ export default function SettingsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.4 }}
               >
-                <Card id="system-status" className="bg-black/40 border border-white/20">
+                <Card id="system-status" className="bg-black/40 border border-white/20 rounded-3xl">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-normal text-white">
                       {/* <ComputerIcon size={20} /> */}
