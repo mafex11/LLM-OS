@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { AppSidebar } from "@/components/layout/Sidebar"
 import { useToast } from "@/hooks/use-toast"
+import { getApiUrlSync } from "@/lib/api"
 
 interface Activity {
   id: string
@@ -38,6 +39,14 @@ interface TabActivity extends Activity {
   is_entertainment?: boolean
 }
 
+interface AggregatedActivity {
+  app_name: string
+  total_duration: number
+  first_start_time: string
+  last_end_time?: string
+  sample_window_title?: string
+  occurrences: number
+}
 interface DailySummary {
   date: string
   total_focus_time: number
@@ -82,7 +91,7 @@ export default function ActivityPage() {
     setLoading(true)
     try {
       // Fetch activities
-      const activitiesResponse = await fetch(`http://localhost:8000/api/tracking/activity?date=${date}`)
+      const activitiesResponse = await fetch(getApiUrlSync(`/api/tracking/activity?date=${date}`))
       if (activitiesResponse.ok) {
         const activitiesData = await activitiesResponse.json()
         setActivities({
@@ -92,7 +101,7 @@ export default function ActivityPage() {
       }
 
       // Fetch summary
-      const summaryResponse = await fetch(`http://localhost:8000/api/tracking/summary?date=${date}`)
+      const summaryResponse = await fetch(getApiUrlSync(`/api/tracking/summary?date=${date}`))
       if (summaryResponse.ok) {
         const summaryData = await summaryResponse.json()
         setSummary(summaryData)
@@ -102,7 +111,7 @@ export default function ActivityPage() {
       }
 
       // Fetch current activity
-      const currentResponse = await fetch(`http://localhost:8000/api/tracking/current`)
+      const currentResponse = await fetch(getApiUrlSync(`/api/tracking/current`))
       if (currentResponse.ok) {
         const currentData = await currentResponse.json()
         setCurrentActivity(currentData)
@@ -202,7 +211,7 @@ export default function ActivityPage() {
     // Poll for notifications every 5 seconds
     const checkNotifications = async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/notifications?clear=true")
+        const response = await fetch(getApiUrlSync("/api/notifications?clear=true"))
         if (response.ok) {
           const data = await response.json()
           if (data.notifications && data.notifications.length > 0) {
@@ -239,16 +248,48 @@ export default function ActivityPage() {
   }
 
 
-  // Only use app activities (tabs disabled)
-  const allActivities = [
-    ...activities.app_activities.map(a => ({ ...a, type: 'app' as const }))
-    // Tab activities are disabled
-    // ...activities.tab_activities.map(a => ({ ...a, type: 'tab' as const }))
-  ].sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+  const aggregatedAppActivities = useMemo<AggregatedActivity[]>(() => {
+    const map = new Map<string, AggregatedActivity>()
 
-  // Calculate total active time from all activities
-  const totalActiveTime = allActivities.reduce((total, activity) => {
-    return total + (activity.duration_seconds || 0)
+    activities.app_activities.forEach(activity => {
+      const name = activity.app_name || "Unknown"
+      const existing = map.get(name)
+      const duration = activity.duration_seconds || 0
+      const startTime = activity.start_time
+      const endTime = activity.end_time
+      const windowTitle = activity.window_title && activity.window_title !== name
+        ? activity.window_title
+        : undefined
+
+      if (!existing) {
+        map.set(name, {
+          app_name: name,
+          total_duration: duration,
+          first_start_time: startTime,
+          last_end_time: endTime,
+          sample_window_title: windowTitle,
+          occurrences: 1
+        })
+      } else {
+        existing.total_duration += duration
+        existing.occurrences += 1
+        if (startTime && startTime < existing.first_start_time) {
+          existing.first_start_time = startTime
+        }
+        if (endTime && (!existing.last_end_time || endTime > existing.last_end_time)) {
+          existing.last_end_time = endTime
+        }
+        if (!existing.sample_window_title && windowTitle) {
+          existing.sample_window_title = windowTitle
+        }
+      }
+    })
+
+    return Array.from(map.values()).sort((a, b) => b.total_duration - a.total_duration)
+  }, [activities.app_activities])
+
+  const totalActiveTime = aggregatedAppActivities.reduce((total, activity) => {
+    return total + activity.total_duration
   }, 0)
 
   return (
@@ -389,35 +430,19 @@ export default function ActivityPage() {
                 </CardHeader>
               </Card>
 
-              {(() => {
-                // Calculate most used app from app activities only (no tabs)
-                const appUsage: Record<string, number> = {}
-                allActivities
-                  .filter(activity => activity.type === 'app')  // Only app activities, no tabs
-                  .forEach(activity => {
-                    const appName = activity.app_name
-                    appUsage[appName] = (appUsage[appName] || 0) + (activity.duration_seconds || 0)
-                  })
-                
-                const sortedApps = Object.entries(appUsage)
-                  .map(([app, time]) => ({ app, time }))
-                  .sort((a, b) => b.time - a.time)
-                
-                const mostUsedApp = sortedApps[0]
-                const focusTime = mostUsedApp?.time || 0
-                
-                return mostUsedApp ? (
-                  <Card className="bg-black/20 border-white/10 rounded-3xl">
-                    <CardHeader className="pb-2">
-                      <CardDescription>Focus Time</CardDescription>
-                      <CardTitle className="text-2xl">{mostUsedApp.app}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-lg text-white/60">{formatDuration(focusTime)}</p>
-                    </CardContent>
-                  </Card>
-                ) : null
-              })()}
+              {aggregatedAppActivities.length > 0 ? (
+                <Card className="bg-black/20 border-white/10 rounded-3xl">
+                  <CardHeader className="pb-2">
+                    <CardDescription>Focus Time</CardDescription>
+                    <CardTitle className="text-2xl">{aggregatedAppActivities[0].app_name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-lg text-white/60">
+                      {formatDuration(aggregatedAppActivities[0].total_duration)}
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : null}
             </div>
 
             {/* Insights */}
@@ -443,23 +468,21 @@ export default function ActivityPage() {
                   Activity Timeline
                 </CardTitle>
                 <CardDescription>
-                  {allActivities.filter(a => a.type === 'app').length} activities tracked
+                  {aggregatedAppActivities.length} programs tracked
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[600px]">
                   <div className="space-y-4">
-                    {allActivities.filter(a => a.type === 'app').length === 0 ? (
+                    {aggregatedAppActivities.length === 0 ? (
                       <div className="text-center py-12 text-white/40">
                         <p>No activities tracked for this date.</p>
                         <p className="text-sm mt-2">Activities will appear here as you use your computer.</p>
                       </div>
                     ) : (
-                      allActivities
-                        .filter(activity => activity.type === 'app')  // Only show app activities, no tabs
-                        .map((activity, index) => (
+                      aggregatedAppActivities.map((activity, index) => (
                         <motion.div
-                          key={activity.id || index}
+                          key={activity.app_name}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -474,14 +497,15 @@ export default function ActivityPage() {
                                     {activity.app_name}
                                   </span>
                                 </div>
-                                {activity.window_title && activity.window_title !== activity.app_name && (
-                                  <p className="text-sm text-white/60 truncate">{activity.window_title}</p>
+                                {activity.sample_window_title && (
+                                  <p className="text-sm text-white/60 truncate">{activity.sample_window_title}</p>
                                 )}
-                                {activity.duration_seconds && (
-                                  <div className="mt-2 text-xs text-white/50">
-                                    <span>{formatDuration(activity.duration_seconds)}</span>
-                                  </div>
-                                )}
+                                <div className="mt-2 text-xs text-white/50 flex items-center gap-3 flex-wrap">
+                                  <span>{formatDuration(activity.total_duration)}</span>
+                                  {activity.occurrences > 1 && (
+                                    <span>({activity.occurrences} sessions)</span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>

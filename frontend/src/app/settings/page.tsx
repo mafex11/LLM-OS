@@ -46,6 +46,7 @@ import { useAudioDevices } from "@/hooks/useAudioDevices"
 import { motion, AnimatePresence } from "framer-motion"
 import { AppSidebar } from "@/components/layout/Sidebar"
 import Image from "next/image"
+import { getApiUrlSync } from "@/lib/api"
 
 interface SystemStatus {
   agent_ready: boolean
@@ -77,7 +78,6 @@ const MODEL_OPTIONS: ModelOption[] = [
 ]
 
 type AgentSettingsState = {
-  enable_screenshot_analysis: boolean
   enable_activity_tracking: boolean
   enable_vision: boolean
   enable_conversation: boolean
@@ -142,7 +142,6 @@ export default function SettingsPage() {
     deepgram_api_key: ""
   })
   const [agentSettings, setAgentSettings] = useState<AgentSettingsState>({
-    enable_screenshot_analysis: true,
     enable_activity_tracking: true,
     enable_vision: false,
     enable_conversation: true,
@@ -161,7 +160,7 @@ export default function SettingsPage() {
 
   const fetchSystemStatus = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/status")
+      const response = await fetch(getApiUrlSync("/api/status"))
       if (response.ok) {
         const data = await response.json()
         setSystemStatus(data)
@@ -180,7 +179,7 @@ export default function SettingsPage() {
 
   const loadApiKeys = useCallback(async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/config/keys")
+      const response = await fetch(getApiUrlSync("/api/config/keys"))
       if (response.ok) {
         const data = await response.json()
         // Load API keys into input fields
@@ -198,7 +197,7 @@ export default function SettingsPage() {
 
   const loadAgentSettings = useCallback(async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/settings")
+      const response = await fetch(getApiUrlSync("/api/settings"))
       if (response.ok) {
         const data = await response.json()
         const parsedMaxSteps = Number(data.max_steps)
@@ -217,7 +216,6 @@ export default function SettingsPage() {
           ? data.tts_voice_id.trim()
           : "21m00Tcm4TlvDq8ikWAM"
         setAgentSettings({
-          enable_screenshot_analysis: data.enable_screenshot_analysis ?? true,
           enable_activity_tracking: data.enable_activity_tracking ?? true,
           enable_vision: data.enable_vision ?? false,
           enable_conversation: data.enable_conversation ?? true,
@@ -274,7 +272,7 @@ export default function SettingsPage() {
     
     try {
       // Save to backend config file
-      const response = await fetch("http://localhost:8000/api/config/keys", {
+      const response = await fetch(getApiUrlSync("/api/config/keys"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -369,7 +367,7 @@ export default function SettingsPage() {
       const formattedCacheTimeout = Number(boundedCacheTimeout.toFixed(2))
       const trimmedVoice = agentSettings.tts_voice_id.trim() || "21m00Tcm4TlvDq8ikWAM"
 
-      const response = await fetch("http://localhost:8000/api/settings", {
+      const response = await fetch(getApiUrlSync("/api/settings"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -377,7 +375,6 @@ export default function SettingsPage() {
           consecutive_failures: boundedFailures,
           browser: agentSettings.browser,
           literal_mode: agentSettings.literal_mode,
-          enable_screenshot_analysis: agentSettings.enable_screenshot_analysis,
           enable_activity_tracking: agentSettings.enable_activity_tracking,
           enable_vision: agentSettings.enable_vision,
           enable_conversation: agentSettings.enable_conversation,
@@ -1062,31 +1059,7 @@ export default function SettingsPage() {
                       <div className="space-y-4">
                         <Label className="text-sm font-normal">AI Features</Label>
                         
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                              <Label htmlFor="enable-screenshot-analysis" className="text-sm font-normal cursor-pointer">
-                                Screenshot Analysis
-                              </Label>
-                              <p className="text-xs text-muted-foreground">
-                                Enable AI analysis of screenshots for activity tracking
-                              </p>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setAgentSettings(prev => ({ ...prev, enable_screenshot_analysis: !prev.enable_screenshot_analysis }))}
-                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-black ${
-                                agentSettings.enable_screenshot_analysis ? 'bg-white' : 'bg-gray-600'
-                              }`}
-                            >
-                              <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-black transition-transform ${
-                                  agentSettings.enable_screenshot_analysis ? 'translate-x-6' : 'translate-x-1'
-                                }`}
-                              />
-                            </button>
-                          </div>
-
+                        {/* Screenshot analysis toggle disabled */}
                           <div className="flex items-center justify-between">
                             <div className="space-y-0.5">
                               <Label htmlFor="enable-activity-tracking" className="text-sm font-normal cursor-pointer">
@@ -1215,7 +1188,6 @@ export default function SettingsPage() {
                           )}
                         </Button>
                       </div>
-                    </div>
                   </CardContent>
                 </Card>
               </motion.div>

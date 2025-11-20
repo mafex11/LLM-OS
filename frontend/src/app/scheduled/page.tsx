@@ -30,6 +30,7 @@ import {
   ComputerIcon
 } from "hugeicons-react"
 import { motion } from "framer-motion"
+import { getApiUrlSync } from "@/lib/api"
 
 type ScheduledTask = {
   id: string
@@ -210,7 +211,7 @@ export default function ScheduledTasksPage() {
 
   const fetchTasks = async () => {
     try {
-      const r = await fetch("http://localhost:8000/api/scheduled-tasks")
+      const r = await fetch(getApiUrlSync("/api/scheduled-tasks"))
       if (r.ok) {
         const data = await r.json()
         setTasks(data)
@@ -276,10 +277,10 @@ export default function ScheduledTasksPage() {
         if (dialogDays.length > 0) body.days_of_week = []
       }
       if (editingTask) {
-        const r = await fetch(`http://localhost:8000/api/scheduled-tasks/${editingTask.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+        const r = await fetch(getApiUrlSync(`/api/scheduled-tasks/${editingTask.id}`), { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
         if (r.ok) { setDialogOpen(false); await fetchTasks() }
       } else {
-        const r = await fetch("http://localhost:8000/api/scheduled-tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+        const r = await fetch(getApiUrlSync("/api/scheduled-tasks"), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
         if (r.ok) { setDialogOpen(false); await fetchTasks() }
       }
     } finally { setLoading(false) }
@@ -287,17 +288,17 @@ export default function ScheduledTasksPage() {
 
   const deleteTask = async (id: string) => {
     setLoading(true)
-    try { await fetch(`http://localhost:8000/api/scheduled-tasks/${id}`, { method: "DELETE" }); await fetchTasks() } finally { setLoading(false) }
+    try { await fetch(getApiUrlSync(`/api/scheduled-tasks/${id}`), { method: "DELETE" }); await fetchTasks() } finally { setLoading(false) }
   }
 
   const cancelTask = async (id: string) => {
     setLoading(true)
-    try { await fetch(`http://localhost:8000/api/scheduled-tasks/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "cancelled" }) }); await fetchTasks() } finally { setLoading(false) }
+    try { await fetch(getApiUrlSync(`/api/scheduled-tasks/${id}`), { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "cancelled" }) }); await fetchTasks() } finally { setLoading(false) }
   }
 
   const repeatTask = async (id: string) => {
     setLoading(true)
-    try { await fetch(`http://localhost:8000/api/scheduled-tasks/${id}/repeat`, { method: "POST" }); await fetchTasks() } finally { setLoading(false) }
+    try { await fetch(getApiUrlSync(`/api/scheduled-tasks/${id}/repeat`), { method: "POST" }); await fetchTasks() } finally { setLoading(false) }
   }
 
   const badgeVariant = (status: string) => {
@@ -591,7 +592,7 @@ export default function ScheduledTasksPage() {
                                   body.days_of_week = repeatDays
                                 }
                               }
-                              const r = await fetch("http://localhost:8000/api/scheduled-tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+                              const r = await fetch(getApiUrlSync("/api/scheduled-tasks"), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
                               if (r.ok) {
                                 setTaskText("")
                                 setRepeatOption("none")

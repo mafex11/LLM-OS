@@ -42,6 +42,7 @@ import { AppSidebar } from "@/components/layout/Sidebar"
 // Avoid next/image in packaged Electron static export; use plain <img>
 import { TextGenerateEffect } from "@/components/ui/text-generate-effect"
 import { useToast } from "@/hooks/use-toast"
+import { getApiUrlSync } from "@/lib/api"
 
 interface Message {
   id?: string
@@ -103,7 +104,7 @@ function ChatInput({ isListening, isSpeaking, isLoading, input, setInput, sendMe
             </motion.div>
             <motion.div initial={{ opacity: 1, x: 0 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.3, ease: "easeInOut" }}>
               {isLoading ? (
-                <Button onClick={() => { if (!stopRequested && currentRequestId) { fetch("http://localhost:8000/api/query/stop", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ request_id: currentRequestId }) }).catch(console.error); setStopRequested(true) } }} variant="ghost" size="sm" className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-red-500/50"><span className="flex items-center justify-center w-full h-full text-red-500"><Cancel01Icon size={28} /></span></Button>
+                <Button onClick={() => { if (!stopRequested && currentRequestId) { fetch(getApiUrlSync("/api/query/stop"), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ request_id: currentRequestId }) }).catch(console.error); setStopRequested(true) } }} variant="ghost" size="sm" className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-red-500/50"><span className="flex items-center justify-center w-full h-full text-red-500"><Cancel01Icon size={28} /></span></Button>
               ) : (
                 <Button onClick={sendMessage} disabled={!input.trim()} variant="ghost" size="sm" className="h-12 w-12 sm:h-14 sm:w-14 p-0 hover:bg-black/20 rounded-full backdrop-blur-sm flex-shrink-0 border border-white/20 hover:border-white/30 hover:shadow-lg hover:shadow-red-500/20 transition-shadow duration-300 ease-in-out"><span className="flex items-center justify-center w-full h-full"><Navigation03Icon size={36} /></span></Button>
               )}
@@ -385,7 +386,7 @@ function ChatContent() {
     if (currentRequestId && !stopRequested) {
       setStopRequested(true)
       try {
-        await fetch("http://localhost:8000/api/query/stop", {
+        await fetch(getApiUrlSync("/api/query/stop"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ request_id: currentRequestId })
@@ -635,14 +636,14 @@ function ChatContent() {
   const saveConversationToServer = async (sessionId: string, messages: Message[]) => {
     try {
       const conversation = messages.map(msg => ({ role: msg.role, content: msg.content, timestamp: msg.timestamp.toISOString(), workflowSteps: msg.workflowSteps?.map(step => ({ ...step, timestamp: step.timestamp.toISOString() })) }))
-      await fetch(`http://localhost:8000/api/conversation/${sessionId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(conversation) })
+      await fetch(getApiUrlSync(`/api/conversation/${sessionId}`), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(conversation) })
     } catch {}
   }
 
   
 
   const deleteChat = async (sessionId: string) => {
-    try { await fetch(`http://localhost:8000/api/conversation/${sessionId}`, { method: 'DELETE' }) } catch {}
+    try { await fetch(getApiUrlSync(`/api/conversation/${sessionId}`), { method: 'DELETE' }) } catch {}
     const updatedSessions = chatSessions.filter(s => s.id !== sessionId)
     setChatSessions(updatedSessions)
     try { saveSessionsToStorage(updatedSessions) } catch {}
@@ -669,8 +670,8 @@ function ChatContent() {
       const apiKey = getApiKey('google_api_key')
       console.log('[Voice Mode] API key retrieved:', apiKey ? 'present' : 'missing')
       const requestBody = { api_key: apiKey }
-      console.log('[Voice Mode] Sending start request to backend:', { url: 'http://localhost:8000/api/voice/start', method: 'POST', body: requestBody })
-      const response = await fetch("http://localhost:8000/api/voice/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody) })
+      console.log('[Voice Mode] Sending start request to backend:', { url: getApiUrlSync('/api/voice/start'), method: 'POST', body: requestBody })
+      const response = await fetch(getApiUrlSync("/api/voice/start"), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody) })
       console.log('[Voice Mode] Start response status:', response.status, response.ok)
       const responseData = await response.json().catch(() => ({}))
       console.log('[Voice Mode] Start response data:', responseData)
@@ -698,8 +699,8 @@ function ChatContent() {
     }
   }, [getApiKey, toast, voiceModeStarting])
 
-  const stopSpeaking = async () => { try { await fetch("http://localhost:8000/api/tts/stop", { method: "POST" }) } catch {} }
-  const stopCurrentQuery = async () => { if (!currentRequestId || stopRequested) return; setStopRequested(true); try { await fetch("http://localhost:8000/api/query/stop", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ request_id: currentRequestId }) }) } catch {} }
+  const stopSpeaking = async () => { try { await fetch(getApiUrlSync("/api/tts/stop"), { method: "POST" }) } catch {} }
+  const stopCurrentQuery = async () => { if (!currentRequestId || stopRequested) return; setStopRequested(true); try { await fetch(getApiUrlSync("/api/query/stop"), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ request_id: currentRequestId }) }) } catch {} }
   
   const handleMicClick = async () => {
     console.log('[Voice Mode] handleMicClick called, current state:', { voiceMode, voiceModeStarting, isListening, isSpeaking })
