@@ -49,3 +49,5 @@ cache/
 desktop-app/dist/
 desktop-app/build/
 desktop-app/.cache/
+
+/waste
