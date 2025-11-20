@@ -266,7 +266,8 @@ async def initialize_agent():
         logger.info("Initializing Agent with parameters...")
         
         # Load agent settings from config file if available
-        enable_screenshot_analysis = config_data.get("enable_screenshot_analysis", True)
+        enable_screenshot_analysis = False
+        # enable_screenshot_analysis = config_data.get("enable_screenshot_analysis", True)
         enable_activity_tracking = config_data.get("enable_activity_tracking", True)
         enable_vision = config_data.get("enable_vision", False)
         enable_conversation = config_data.get("enable_conversation", True)
@@ -425,7 +426,7 @@ class SettingsRequest(BaseModel):
         "gemini-2.0-flash",
         "gemini-2.0-flash-lite",
     ] = DEFAULT_GEMINI_MODEL
-    enable_screenshot_analysis: bool = True
+    enable_screenshot_analysis: bool = False
     enable_activity_tracking: bool = True
     enable_vision: bool = False
     enable_conversation: bool = True
@@ -1069,7 +1070,8 @@ async def process_query_stream(request: QueryRequest):
                 literal_mode=getattr(agent, 'literal_mode', True),
                 max_steps=getattr(agent, 'max_steps', 50),
                 consecutive_failures=getattr(agent, 'consecutive_failures', 3),
-                enable_screenshot_analysis=getattr(agent, 'enable_screenshot_analysis', True),
+                enable_screenshot_analysis=False,
+                # enable_screenshot_analysis=getattr(agent, 'enable_screenshot_analysis', True),
                 enable_activity_tracking=getattr(agent, 'enable_activity_tracking', True),
                 enable_tts=False,  # We'll handle TTS separately
                 tts_voice_id=getattr(agent, 'tts_voice_id', "21m00Tcm4TlvDq8ikWAM")
@@ -1402,7 +1404,8 @@ async def get_settings():
             "browser": getattr(agent, 'browser', "chrome"),
             "literal_mode": getattr(agent, 'literal_mode', True),
             "model": getattr(agent, 'model_id', getattr(getattr(agent, 'llm', None), 'model', DEFAULT_GEMINI_MODEL)),
-            "enable_screenshot_analysis": getattr(agent, 'enable_screenshot_analysis', True),
+            "enable_screenshot_analysis": False,
+            # "enable_screenshot_analysis": getattr(agent, 'enable_screenshot_analysis', True),
             "enable_activity_tracking": getattr(agent, 'enable_activity_tracking', True),
             "enable_vision": getattr(agent, 'use_vision', False),
             "enable_conversation": getattr(agent, 'enable_conversation', True)
@@ -1498,10 +1501,11 @@ async def update_settings(request: SettingsRequest):
                 agent.conversation_history = []
         
         # Update screenshot analysis and activity tracking
-        screenshot_analysis_changed = getattr(agent, 'enable_screenshot_analysis', True) != request.enable_screenshot_analysis
+        screenshot_analysis_changed = False
+        # screenshot_analysis_changed = getattr(agent, 'enable_screenshot_analysis', True) != request.enable_screenshot_analysis
         activity_tracking_changed = getattr(agent, 'enable_activity_tracking', True) != request.enable_activity_tracking
         
-        agent.enable_screenshot_analysis = request.enable_screenshot_analysis
+        # agent.enable_screenshot_analysis = request.enable_screenshot_analysis
         agent.enable_activity_tracking = request.enable_activity_tracking
         
         # If screenshot analysis or activity tracking changed, reinitialize tracking
@@ -1521,7 +1525,7 @@ async def update_settings(request: SettingsRequest):
             
             # Reinitialize tracking with new settings
             agent._initialize_tracking()
-            logger.info(f"Activity tracking reinitialized (screenshot analysis: {request.enable_screenshot_analysis}, activity tracking: {request.enable_activity_tracking})")
+            logger.info(f"Activity tracking reinitialized (screenshot analysis disabled, activity tracking: {request.enable_activity_tracking})")
         
         # Reset system prompt when core planning parameters change
         if should_reset_prompt and hasattr(agent, 'system_message'):
@@ -1546,7 +1550,7 @@ async def update_settings(request: SettingsRequest):
         # Save settings to config file for persistence
         try:
             # Update agent settings in config
-            config_data["enable_screenshot_analysis"] = request.enable_screenshot_analysis
+            # config_data["enable_screenshot_analysis"] = request.enable_screenshot_analysis
             config_data["enable_activity_tracking"] = request.enable_activity_tracking
             config_data["enable_vision"] = request.enable_vision
             config_data["enable_conversation"] = request.enable_conversation

@@ -39,6 +39,16 @@ class ChromeTracker:
         if not active_app:
             return False
         
+        # Check process name first (more reliable), then fall back to window title
+        if active_app.process_name:
+            process_name_lower = active_app.process_name.lower()
+            # Remove .exe extension for comparison
+            if process_name_lower.endswith('.exe'):
+                process_name_lower = process_name_lower[:-4]
+            if any(browser in process_name_lower for browser in self.chrome_process_names):
+                return True
+        
+        # Fallback: check window title
         app_name_lower = active_app.name.lower()
         return any(browser in app_name_lower for browser in self.chrome_process_names)
     

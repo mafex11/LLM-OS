@@ -71,18 +71,24 @@ class Tree:
 
         interactive_nodes,informative_nodes,scrollable_nodes=[],[],[]
         # Parallel traversal (using ThreadPoolExecutor) to get nodes from each app
-        with ThreadPoolExecutor() as executor:
+        # Limit to 4 workers to avoid overwhelming the system
+        with ThreadPoolExecutor(max_workers=4) as executor:
             future_to_node = {executor.submit(self.get_nodes, app,self.desktop.is_app_browser(app)): app for app in apps}
-            for future in as_completed(future_to_node):
+            for future in as_completed(future_to_node, timeout=15.0):  # 15 second total timeout
                 try:
-                    result = future.result()
+                    result = future.result(timeout=5.0)  # 5 second timeout per app
                     if result:
                         element_nodes,text_nodes,scroll_nodes=result
                         interactive_nodes.extend(element_nodes)
                         informative_nodes.extend(text_nodes)
                         scrollable_nodes.extend(scroll_nodes)
                 except Exception as e:
-                    print(f"Error processing node {future_to_node[future].Name}: {e}")
+                    app_name = "Unknown"
+                    try:
+                        app_name = future_to_node[future].Name
+                    except:
+                        pass
+                    print(f"Error processing node {app_name}: {e}")
         return interactive_nodes,informative_nodes,scrollable_nodes
 
     def get_nodes(self, node: Control, is_browser=False) -> tuple[list[TreeElementNode],list[TextElementNode],list[ScrollElementNode]]:
@@ -219,7 +225,11 @@ class Tree:
                     app_name=app_name
                 ))
             
-        def tree_traversal(node: Control):
+        def tree_traversal(node: Control, depth: int = 0, max_depth: int = 25):
+            # Prevent infinite recursion by limiting depth
+            if depth > max_depth:
+                return None
+            
             # Checks to skip the nodes that are not interactive
             if node.IsOffscreen and (node.ControlTypeName not in set(["EditControl","TitleBarControl"])) and node.ClassName not in set(["Popup","Windows.UI.Core.CoreComponentInputSource"]):
                 return None
@@ -266,7 +276,7 @@ class Tree:
                 ))
             # Recursively check all children
             for child in node.GetChildren():
-                tree_traversal(child)
+                tree_traversal(child, depth + 1, max_depth)
 
         tree_traversal(node)
         return (interactive_nodes,informative_nodes,scrollable_nodes)

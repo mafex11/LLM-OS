@@ -5,12 +5,12 @@ Configuration and initialization for activity tracking.
 import os
 import json
 import logging
-from pathlib import Path
 from typing import Optional, Callable
 from windows_use.tracking.storage import ActivityStorage
 from windows_use.tracking.service import ActivityTracker
 from windows_use.tracking.analyzer import ActivityAnalyzer
-from windows_use.tracking.screenshot_service import ScreenshotService
+# Screenshot analysis temporarily disabled across the stack
+# from windows_use.tracking.screenshot_service import ScreenshotService
 from windows_use.desktop.service import Desktop
 
 logger = logging.getLogger(__name__)
@@ -61,44 +61,16 @@ def initialize_tracking(
     
     # Initialize screenshot service
     screenshot_service = None
-    if enable_screenshots:
-        # Callback for screenshot analysis
-        def on_screenshot_capture(file_path: Path, timestamp):
-            """Callback when screenshot is captured - analyze it."""
-            try:
-                # Get current activity
-                current_activity = tracker.get_current_activity()
-                app_name = current_activity.get("app", {}).get("name") if current_activity else None
-                window_title = current_activity.get("app", {}).get("title") if current_activity else None
-                
-                # Analyze screenshot
-                analysis = analyzer.analyze_screenshot(file_path, app_name, window_title)
-                
-                # Update screenshot metadata
-                metadata = {
-                    "id": str(timestamp.timestamp()),
-                    "filename": file_path.name,
-                    "file_path": str(file_path),
-                    "timestamp": timestamp.isoformat(),
-                    "app_name": app_name,
-                    "window_title": window_title,
-                    "ai_analysis": analysis.get("ai_analysis", ""),
-                    "activity_category": analysis.get("activity_category", "unknown"),
-                    "focus_score": analysis.get("focus_score", 50),
-                    "file_size_bytes": file_path.stat().st_size if file_path.exists() else 0
-                }
-                
-                storage.save_screenshot_metadata(metadata)
-                logger.debug(f"Screenshot analyzed: {file_path}")
-            
-            except Exception as e:
-                logger.error(f"Error analyzing screenshot: {e}")
-        
-        screenshot_service = ScreenshotService(
-            storage,
-            capture_interval=screenshot_interval,
-            on_capture=on_screenshot_capture
-        )
+    # Screenshot capture/analysis disabled temporarily.
+    # if enable_screenshots:
+    #     def on_screenshot_capture(file_path: Path, timestamp):
+    #         """Callback when screenshot is captured - analyze it."""
+    #         ...
+    #     screenshot_service = ScreenshotService(
+    #         storage,
+    #         capture_interval=screenshot_interval,
+    #         on_capture=on_screenshot_capture
+    #     )
     
     # Create default configuration files if they don't exist
     _create_default_configs(storage)

@@ -14,6 +14,7 @@ import pyautogui
 logger = logging.getLogger(__name__)
 
 
+"""
 class ScreenshotService:
     """Service for capturing screenshots periodically or on demand."""
     
@@ -131,4 +132,25 @@ class ScreenshotService:
         """Update capture interval."""
         self.capture_interval = interval
         logger.info(f"Screenshot capture interval updated to {interval}s")
+"""
+
+
+class ScreenshotService:
+    """Disabled stub for screenshot capture."""
+    
+    def __init__(self, *args, **kwargs):
+        logger.info("Screenshot service disabled; no screenshots will be captured.")
+    
+    def start_capturing(self):
+        logger.debug("start_capturing() ignored because screenshot service is disabled.")
+    
+    def stop_capturing(self):
+        logger.debug("stop_capturing() ignored because screenshot service is disabled.")
+    
+    def capture_now(self):
+        logger.debug("capture_now() ignored because screenshot service is disabled.")
+        return None
+    
+    def set_capture_interval(self, interval: float):
+        logger.debug("set_capture_interval() ignored because screenshot service is disabled.")
 

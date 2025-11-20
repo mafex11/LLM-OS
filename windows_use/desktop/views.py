@@ -5,14 +5,16 @@ from dataclasses import dataclass
 
 @dataclass
 class App:
-    name:str
+    name:str  # Window title for backwards compatibility
     depth:int
     status:Literal['Maximized','Minimized','Normal']
     size:'Size'
     handle: int
+    process_name: Optional[str] = None  # Actual process/executable name
 
     def to_string(self):
-        return f'Name: {self.name}|Depth: {self.depth}|Status: {self.status}|Size: {self.size.to_string()} Handle: {self.handle}'
+        process_part = f'|Process: {self.process_name}' if self.process_name else ''
+        return f'Name: {self.name}|Depth: {self.depth}|Status: {self.status}|Size: {self.size.to_string()}{process_part} Handle: {self.handle}'
 
 @dataclass
 class Size:

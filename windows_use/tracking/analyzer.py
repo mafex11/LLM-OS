@@ -4,14 +4,16 @@ Analyzes screenshots and calculates productivity metrics.
 """
 
 import logging
-import base64
 from pathlib import Path
 from typing import Dict, List, Optional
 from datetime import datetime, timedelta
-from langchain_core.messages import HumanMessage
-from langchain_google_genai import ChatGoogleGenerativeAI
-from PIL import Image
-import io
+
+# Screenshot analysis dependencies disabled temporarily
+# import base64
+# from langchain_core.messages import HumanMessage
+# from langchain_google_genai import ChatGoogleGenerativeAI
+# from PIL import Image
+# import io
 
 logger = logging.getLogger(__name__)
 
@@ -19,13 +21,17 @@ logger = logging.getLogger(__name__)
 class ActivityAnalyzer:
     """Analyzes activities and screenshots using AI."""
     
-    def __init__(self, llm: Optional[ChatGoogleGenerativeAI] = None, google_api_key: Optional[str] = None):
+    def __init__(self, llm: Optional[object] = None, google_api_key: Optional[str] = None):
         """
         Initialize activity analyzer.
         
         Args:
             llm: Pre-initialized LLM instance (optional)
             google_api_key: Google API key for Gemini (if llm not provided)
+        """
+        # Screenshot analysis initialization disabled.
+        self.llm = None
+        logger.info("Screenshot analysis disabled: skipping LLM initialization.")
         """
         if llm:
             self.llm = llm
@@ -56,6 +62,7 @@ class ActivityAnalyzer:
             else:
                 self.llm = None
                 logger.warning("No LLM provided for activity analyzer. Screenshot analysis will be disabled.")
+        """
     
     def analyze_screenshot(self, screenshot_path: Path, app_name: str = None, window_title: str = None) -> Dict:
         """
@@ -69,6 +76,16 @@ class ActivityAnalyzer:
         Returns:
             Dict with analysis results including category, focus_score, and description
         """
+        logger.info("Screenshot analysis temporarily disabled. Returning default payload.")
+        return {
+            "ai_analysis": "Screenshot analysis disabled",
+            "activity_category": "unknown",
+            "focus_score": 50,
+            "description": "No analysis generated while feature is disabled."
+        }
+
+        """
+        Legacy implementation preserved for quick restoration.
         if not self.llm:
             logger.warning("LLM not available for screenshot analysis")
             return {
@@ -147,6 +164,7 @@ Format your response as JSON:
                 "activity_category": "unknown",
                 "focus_score": 50
             }
+        """
     
     def _parse_analysis_text(self, text: str) -> Dict:
         """Parse analysis text when JSON parsing fails."""

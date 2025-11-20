@@ -79,7 +79,9 @@ class Agent:
         self.literal_mode=literal_mode
         self.enable_tts=enable_tts
         self.tts_voice_id=tts_voice_id
-        self.enable_screenshot_analysis=enable_screenshot_analysis
+        # Screenshot analysis feature disabled globally
+        self.enable_screenshot_analysis=False
+        # self.enable_screenshot_analysis=enable_screenshot_analysis
         self.enable_activity_tracking=enable_activity_tracking
         self.llm = llm or ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.7)
         self.model_id = getattr(self.llm, "model", "gemini-2.0-flash")
@@ -1198,8 +1200,9 @@ Be specific with numbers and insights. Be encouraging and helpful."""
             # Use WINDOWS_USE_DATA_PATH (set by Electron) or fallback to YUKI_DATA_PATH or default
             storage_path = os.getenv('WINDOWS_USE_DATA_PATH') or os.getenv('YUKI_DATA_PATH') or os.path.join(os.getcwd(), 'data')
             
-            # Use enable_screenshot_analysis setting to control screenshot capture and analysis
-            enable_screenshots = self.enable_screenshot_analysis
+            # Screenshot capture disabled regardless of setting
+            enable_screenshots = False
+            # enable_screenshots = self.enable_screenshot_analysis
             
             # Initialize tracking with screenshot analysis setting
             # Pass LLM instance for AI-based productivity classification
@@ -1236,8 +1239,8 @@ Be specific with numbers and insights. Be encouraging and helpful."""
             # Start tracking
             if self.activity_tracker:
                 self.activity_tracker.start_tracking()
-            if self.screenshot_service and enable_screenshots:
-                self.screenshot_service.start_capturing()
+            # if self.screenshot_service and enable_screenshots:
+            #     self.screenshot_service.start_capturing()
             
             logger.info(f"Activity tracking initialized and started (screenshot analysis: {enable_screenshots})")
         
@@ -1261,8 +1264,9 @@ Be specific with numbers and insights. Be encouraging and helpful."""
             except Exception as e:
                 logger.error(f"Error stopping activity tracker: {e}")
         
-        if self.screenshot_service:
-            try:
-                self.screenshot_service.stop_capturing()
-            except Exception as e:
-                logger.error(f"Error stopping screenshot service: {e}")   
+        # Screenshot service disabled
+        # if self.screenshot_service:
+        #     try:
+        #         self.screenshot_service.stop_capturing()
+        #     except Exception as e:
+        #         logger.error(f"Error stopping screenshot service: {e}")

@@ -151,8 +151,14 @@ class ActivityTracker:
             # Get window title from the handle
             window_title = self._get_window_title(active_app.handle)
             
+            # Use process name if available, otherwise fall back to window title
+            app_name = active_app.process_name if active_app.process_name else active_app.name
+            # Clean up process name (remove .exe extension)
+            if app_name and app_name.lower().endswith('.exe'):
+                app_name = app_name[:-4]
+            
             current_app_info = {
-                "name": active_app.name,
+                "name": app_name,  # Use process name instead of window title
                 "title": window_title,
                 "process_id": active_app.handle  # Using handle as process identifier
             }
@@ -180,12 +186,8 @@ class ActivityTracker:
                         tab_url = tab_info.get("tab_url") or ""
                         tab_title = tab_info.get("tab_title") or ""
                         # Use URL as primary key, fallback to title if URL not available
-                        # For browser tabs, extract browser name from window title (e.g., "Home / X - Comet" -> "Comet")
-                        browser_app_name = active_app.name
-                        if " - " in browser_app_name:
-                            parts = browser_app_name.split(" - ")
-                            if len(parts) > 1:
-                                browser_app_name = parts[-1].strip()  # Get browser name from end
+                        # Use process name for browser (e.g., "chrome.exe", "firefox.exe")
+                        browser_app_name = app_name  # Already extracted process name above
                         tab_key = (browser_app_name, tab_url if tab_url else tab_title)
                         resumed = self._try_resume_tab(tab_key, tab_info, current_app_info)
                         if not resumed:
@@ -329,16 +331,8 @@ class ActivityTracker:
         self.tab_start_time = time.time()
         self.current_tab_id = str(uuid.uuid4())
         
-        # For browsers, use a normalized app name (extract from window title or use process name)
-        # The window title often contains " - BrowserName" at the end
-        app_name = app_info["name"]
-        # Try to extract browser name from title (e.g., "Home / X - Comet" -> "Comet")
-        # Or use the process name if available
-        browser_name = app_name
-        if " - " in app_name:
-            parts = app_name.split(" - ")
-            if len(parts) > 1:
-                browser_name = parts[-1].strip()  # Get the browser name from the end
+        # Use process name directly (already extracted in _check_activity)
+        browser_name = app_info["name"]
         
         activity = {
             "id": self.current_tab_id,
@@ -394,12 +388,8 @@ class ActivityTracker:
         if self.current_tab and self.current_app:
             tab_url = self.current_tab.get("tab_url") or ""
             tab_title = self.current_tab.get("tab_title") or ""
-            # Use normalized browser name for the key, not the full window title
+            # Use process name for the key (already normalized)
             app_name = self.current_app.get("name", "")
-            if " - " in app_name:
-                parts = app_name.split(" - ")
-                if len(parts) > 1:
-                    app_name = parts[-1].strip()  # Get browser name from end
             tab_key = (app_name, tab_url if tab_url else tab_title)
             self.recent_tabs[tab_key] = (self.current_tab_id, end_time)
         
