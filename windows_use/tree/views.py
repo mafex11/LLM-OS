@@ -37,6 +37,13 @@ class BoundingBox:
         x1,y1=self.left,self.top
         x2,y2=self.left+self.width,self.top+self.height
         return x1,y1,x2,y2
+    
+    def get_center(self) -> 'Center':
+        """Calculate and return the center point of the bounding box"""
+        return Center(
+            x=(self.left + self.right) // 2,
+            y=(self.top + self.bottom) // 2
+        )
 
 @dataclass
 class Center:

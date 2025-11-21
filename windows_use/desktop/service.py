@@ -351,6 +351,12 @@ class Desktop:
         dpi = user32.GetDpiForSystem()
         return dpi / 96.0
     
+    def get_screen_size(self)->Size:
+        """Get the screen size using uiautomation"""
+        from uiautomation import GetScreenSize
+        width, height = GetScreenSize()
+        return Size(width=width, height=height)
+    
     def screenshot_in_bytes(self,screenshot:PILImage)->bytes:
         buffer=BytesIO()
         # Use JPEG with quality 85 for faster processing and smaller size

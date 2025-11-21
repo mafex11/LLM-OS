@@ -17,6 +17,15 @@ class Tree:
     def __init__(self,desktop:'Desktop'):
         self.desktop=desktop
         self.precise_detector = PreciseElementDetector(desktop)
+        screen_size = self.desktop.get_screen_size()
+        from windows_use.desktop.views import Size
+        self.screen_box = BoundingBox(
+            top=0, left=0, bottom=screen_size.height if isinstance(screen_size, Size) else screen_size[1],
+            right=screen_size.width if isinstance(screen_size, Size) else screen_size[0],
+            width=screen_size.width if isinstance(screen_size, Size) else screen_size[0],
+            height=screen_size.height if isinstance(screen_size, Size) else screen_size[1]
+        )
+        self.dom_bounding_box = None
 
     def get_state(self)->TreeState:
         sleep(0.2)  # Reduced from 0.5 to 0.2 seconds
@@ -58,6 +67,37 @@ class Tree:
             scrollable_nodes=scrollable_nodes,
         )
     
+    def iou_bounding_box(self, window_box, element_box) -> BoundingBox:
+        """Calculate intersection of element with window and screen boundaries"""
+        # Step 1: Intersection of element and window
+        intersection_left = max(window_box.left, element_box.left)
+        intersection_top = max(window_box.top, element_box.top)
+        intersection_right = min(window_box.right, element_box.right)
+        intersection_bottom = min(window_box.bottom, element_box.bottom)
+
+        # Step 2: Clamp to screen boundaries
+        intersection_left = max(self.screen_box.left, intersection_left)
+        intersection_top = max(self.screen_box.top, intersection_top)
+        intersection_right = min(self.screen_box.right, intersection_right)
+        intersection_bottom = min(self.screen_box.bottom, intersection_bottom)
+
+        # Step 3: Validate intersection
+        if (intersection_right > intersection_left and intersection_bottom > intersection_top):
+            bounding_box = BoundingBox(
+                left=intersection_left,
+                top=intersection_top,
+                right=intersection_right,
+                bottom=intersection_bottom,
+                width=intersection_right - intersection_left,
+                height=intersection_bottom - intersection_top
+            )
+        else:
+            # No valid visible intersection
+            bounding_box = BoundingBox(
+                left=0, top=0, right=0, bottom=0, width=0, height=0
+            )
+        return bounding_box
+    
     def get_appwise_nodes(self,node:Control) -> tuple[list[TreeElementNode],list[TextElementNode]]:
         apps:list[Control]=[]
 
@@ -92,9 +132,10 @@ class Tree:
         return interactive_nodes,informative_nodes,scrollable_nodes
 
     def get_nodes(self, node: Control, is_browser=False) -> tuple[list[TreeElementNode],list[TextElementNode],list[ScrollElementNode]]:
-        interactive_nodes, informative_nodes, scrollable_nodes = [], [], []
+        interactive_nodes, dom_interactive_nodes, informative_nodes, scrollable_nodes = [], [], [], []
         app_name=node.Name.strip()
         app_name='Desktop' if node.ClassName=='Progman' else app_name
+        window_bounding_box = node.BoundingRectangle
         
         def is_element_visible(node:Control,threshold:int=0):
             is_control=node.IsControlElement
@@ -183,90 +224,71 @@ class Tree:
         
         def dom_correction(node:Control):
             if element_has_child_element(node,'list item','link') or element_has_child_element(node,'item','link'):
-                interactive_nodes.pop()
+                dom_interactive_nodes.pop()
                 return None
-            elif group_has_no_name(node):
-                interactive_nodes.pop()
+            elif node.ControlTypeName=='GroupControl':
+                dom_interactive_nodes.pop()
                 if is_keyboard_focusable(node):
                     child=node
                     try:
                         while child.GetFirstChildControl() is not None:
+                            if child.ControlTypeName in INTERACTIVE_CONTROL_TYPE_NAMES:
+                                return None
                             child=child.GetFirstChildControl()
                     except Exception:
                         return None
                     if child.ControlTypeName!='TextControl':
                         return None
-                    control_type='Edit'
-                    box = node.BoundingRectangle
-                    # Use exact center for better accuracy on search bars
-                    x,y=box.xcenter(),box.ycenter()
-                    center = Center(x=x,y=y)
-                    interactive_nodes.append(TreeElementNode(
+                    legacy_pattern=node.GetLegacyIAccessiblePattern()
+                    value=legacy_pattern.Value if legacy_pattern else ""
+                    element_bounding_box = node.BoundingRectangle
+                    bounding_box=self.iou_bounding_box(self.dom_bounding_box, element_bounding_box)
+                    center = bounding_box.get_center() if hasattr(bounding_box, 'get_center') else Center(x=(bounding_box.left + bounding_box.right)//2, y=(bounding_box.top + bounding_box.bottom)//2)
+                    is_focused=node.HasKeyboardFocus
+                    dom_interactive_nodes.append(TreeElementNode(
                         name=child.Name.strip() or "''",
-                        control_type=control_type,
+                        control_type=node.LocalizedControlType,
                         shortcut=node.AcceleratorKey or "''",
-                        bounding_box=BoundingBox(left=box.left,top=box.top,right=box.right,bottom=box.bottom,width=box.width(),height=box.height()),
+                        bounding_box=bounding_box,
                         center=center,
                         app_name=app_name
                     ))
             elif element_has_child_element(node,'link','heading'):
-                interactive_nodes.pop()
+                dom_interactive_nodes.pop()
                 node=node.GetFirstChildControl()
                 control_type='link'
-                box = node.BoundingRectangle
-                x,y=box.xcenter(),box.ycenter()
-                center = Center(x=x,y=y)
-                interactive_nodes.append(TreeElementNode(
+                legacy_pattern=node.GetLegacyIAccessiblePattern()
+                value=legacy_pattern.Value if legacy_pattern else node.Name.strip()
+                element_bounding_box = node.BoundingRectangle
+                bounding_box=self.iou_bounding_box(self.dom_bounding_box, element_bounding_box)
+                center = bounding_box.get_center() if hasattr(bounding_box, 'get_center') else Center(x=(bounding_box.left + bounding_box.right)//2, y=(bounding_box.top + bounding_box.bottom)//2)
+                is_focused=node.HasKeyboardFocus
+                dom_interactive_nodes.append(TreeElementNode(
                     name=node.Name.strip() or "''",
                     control_type=control_type,
                     shortcut=node.AcceleratorKey or "''",
-                    bounding_box=BoundingBox(left=box.left,top=box.top,right=box.right,bottom=box.bottom,width=box.width(),height=box.height()),
+                    bounding_box=bounding_box,
                     center=center,
                     app_name=app_name
                 ))
             
-        def tree_traversal(node: Control, depth: int = 0, max_depth: int = 25):
+        def tree_traversal(node: Control, is_dom: bool = False, is_dialog: bool = False, depth: int = 0, max_depth: int = 30):
             # Prevent infinite recursion by limiting depth
             if depth > max_depth:
                 return None
             
             # Checks to skip the nodes that are not interactive
-            if node.IsOffscreen and (node.ControlTypeName not in set(["EditControl","TitleBarControl"])) and node.ClassName not in set(["Popup","Windows.UI.Core.CoreComponentInputSource"]):
+            if node.IsOffscreen and (node.ControlTypeName not in set(["GroupControl","EditControl","TitleBarControl"])) and node.ClassName not in set(["Popup","Windows.UI.Core.CoreComponentInputSource"]):
                 return None
             
-            if is_element_interactive(node):
-                box = node.BoundingRectangle
-                
-                # For search bars and input fields, use exact center for better accuracy
-                if node.ControlTypeName in ['EditControl', 'ComboBoxControl']:
-                    x, y = box.xcenter(), box.ycenter()
-                else:
-                    x,y=random_point_within_bounding_box(node=node,scale_factor=0.8)
-                
-                center = Center(x=x,y=y)
-                interactive_nodes.append(TreeElementNode(
-                    name=node.Name.strip() or "''",
-                    control_type=node.LocalizedControlType.title(),
-                    shortcut=node.AcceleratorKey or "''",
-                    bounding_box=BoundingBox(left=box.left,top=box.top,right=box.right,bottom=box.bottom,width=box.width(),height=box.height()),
-                    center=center,
-                    app_name=app_name
-                ))
-                if is_browser:
-                    dom_correction(node)
-            elif is_element_text(node):
-                informative_nodes.append(TextElementNode(
-                    name=node.Name.strip() or "''",
-                    app_name=app_name
-                ))
-            elif is_element_scrollable(node):
+            # Check if element is scrollable
+            if is_element_scrollable(node):
                 scroll_pattern:ScrollPattern=node.GetScrollPattern()
                 box = node.BoundingRectangle
-                # Get the center
                 x,y=random_point_within_bounding_box(node=node,scale_factor=0.8)
                 center = Center(x=x,y=y)
                 scrollable_nodes.append(ScrollElementNode(
-                    name=node.Name.strip() or node.LocalizedControlType.capitalize() or "''",
+                    name=node.Name.strip() or node.AutomationId or node.LocalizedControlType.capitalize() or "''",
                     app_name=app_name,
                     control_type=node.LocalizedControlType.title(),
                     bounding_box=BoundingBox(left=box.left,top=box.top,right=box.right,bottom=box.bottom,width=box.width(),height=box.height()),
@@ -274,11 +296,92 @@ class Tree:
                     horizontal_scrollable=scroll_pattern.HorizontallyScrollable,
                     vertical_scrollable=scroll_pattern.VerticallyScrollable
                 ))
-            # Recursively check all children
-            for child in node.GetChildren():
-                tree_traversal(child, depth + 1, max_depth)
+            
+            # Check if element is interactive
+            if is_element_interactive(node):
+                legacy_pattern=node.GetLegacyIAccessiblePattern()
+                value=legacy_pattern.Value.strip() if (legacy_pattern and legacy_pattern.Value) else ""
+                is_focused=node.HasKeyboardFocus
+                name=node.Name.strip()
+                element_bounding_box = node.BoundingRectangle
+                
+                if is_browser and is_dom:
+                    # DOM element - use DOM bounding box
+                    bounding_box=self.iou_bounding_box(self.dom_bounding_box, element_bounding_box)
+                    center = bounding_box.get_center() if hasattr(bounding_box, 'get_center') else Center(x=(bounding_box.left + bounding_box.right)//2, y=(bounding_box.top + bounding_box.bottom)//2)
+                    tree_node=TreeElementNode(
+                        name=name or "''",
+                        control_type=node.LocalizedControlType.title(),
+                        shortcut=node.AcceleratorKey or "''",
+                        bounding_box=bounding_box,
+                        center=center,
+                        app_name=app_name
+                    )
+                    dom_interactive_nodes.append(tree_node)
+                    dom_correction(node)
+                else:
+                    # Regular element - use window bounding box
+                    bounding_box=self.iou_bounding_box(window_bounding_box, element_bounding_box)
+                    center = bounding_box.get_center() if hasattr(bounding_box, 'get_center') else Center(x=(bounding_box.left + bounding_box.right)//2, y=(bounding_box.top + bounding_box.bottom)//2)
+                    tree_node=TreeElementNode(
+                        name=name or "''",
+                        control_type=node.LocalizedControlType.title(),
+                        shortcut=node.AcceleratorKey or "''",
+                        bounding_box=bounding_box,
+                        center=center,
+                        app_name=app_name
+                    )
+                    interactive_nodes.append(tree_node)
+            elif is_element_text(node):
+                informative_nodes.append(TextElementNode(
+                    name=node.Name.strip() or "''",
+                    app_name=app_name
+                ))
+            
+            # Get children for recursion
+            children=node.GetChildren()
+            
+            # Recursively traverse (right to left for normal apps, left to right for DOM)
+            for child in (children if is_dom else children[::-1]):
+                # Check if the child is a browser DOM element
+                if is_browser and child.ClassName in ["Chrome_RenderWidgetHostHWND", "Internet Explorer_Server", "MozillaWindowClass"]:
+                    bounding_box=child.BoundingRectangle
+                    self.dom_bounding_box=BoundingBox(
+                        left=bounding_box.left, top=bounding_box.top,
+                        right=bounding_box.right, bottom=bounding_box.bottom,
+                        width=bounding_box.width(), height=bounding_box.height()
+                    )
+                    # Enter DOM subtree
+                    tree_traversal(child, is_dom=True, is_dialog=is_dialog, depth=depth+1, max_depth=max_depth)
+                # Check if the child is a dialog/window
+                elif child.ControlType == 0xC370:  # WindowControl = 0xC370
+                    from uiautomation import WindowControl
+                    if isinstance(child, WindowControl) and not child.IsOffscreen:
+                        if is_dom:
+                            bounding_box=child.BoundingRectangle
+                            if bounding_box.width() > 0.8 * self.dom_bounding_box.width:
+                                # Window covers majority of DOM - clear DOM nodes
+                                dom_interactive_nodes.clear()
+                        else:
+                            # Check if window is modal
+                            try:
+                                window_pattern=child.GetWindowPattern()
+                                if window_pattern and window_pattern.IsModal:
+                                    # Modal window - clear interactive nodes
+                                    interactive_nodes.clear()
+                            except Exception:
+                                pass
+                    # Enter dialog subtree
+                    tree_traversal(child, is_dom=is_dom, is_dialog=True, depth=depth+1, max_depth=max_depth)
+                else:
+                    # Normal non-dialog children
+                    tree_traversal(child, is_dom=is_dom, is_dialog=is_dialog, depth=depth+1, max_depth=max_depth)
 
-        tree_traversal(node)
+        tree_traversal(node, is_dom=False, is_dialog=False)
+        
+        # Merge DOM interactive nodes with regular interactive nodes
+        interactive_nodes.extend(dom_interactive_nodes)
+        
         return (interactive_nodes,informative_nodes,scrollable_nodes)
     
     def get_random_color(self):
