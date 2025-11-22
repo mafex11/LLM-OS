@@ -46,6 +46,12 @@ class PreciseElementDetector:
 
         resolved_name = (app_name or window.Name or window.ClassName or "Window").strip()
 
+        # OPTIMIZATION: For browsers, precise detection is too slow (20-40 seconds)
+        # Return empty to force fallback to faster generic traversal
+        browser_keywords = ['chrome', 'firefox', 'edge', 'opera', 'brave', 'vivaldi']
+        if any(keyword in resolved_name.lower() for keyword in browser_keywords):
+            return [], [], []  # Force fallback to faster method
+
         # Ensure the window is in a stable, visible state before traversing.
         self._prepare_window(window)
 
@@ -75,7 +81,7 @@ class PreciseElementDetector:
             hwnd = window.NativeWindowHandle
             if IsIconic(hwnd):
                 ShowWindow(hwnd, cmdShow=9)  # SW_RESTORE
-                time.sleep(0.3)
+                time.sleep(0.1)  # Optimized: reduced from 300ms to 100ms
         except Exception:
             # If we cannot restore the window, continue; traversal may still succeed.
             pass

@@ -218,8 +218,8 @@ def click_tool(loc:tuple[int,int],button:Literal['left','right','middle']='left'
     if x < 0 or x >= screen_width or y < 0 or y >= screen_height:
         return f'Error: Coordinates ({x},{y}) are outside screen bounds ({screen_width}x{screen_height})'
     
-    # CRITICAL: If we have desktop state with active app, validate coordinates are within that app's window
-    # This prevents clicking outside the target app (e.g., Calculator)
+    # OPTIMIZATION: Relaxed coordinate validation to allow clicks on window edges and borders
+    # Only validate if we have a specific target app and strict validation is needed
     if desktop and desktop.desktop_state and desktop.desktop_state.active_app:
         try:
             from uiautomation import ControlFromHandle
@@ -229,20 +229,20 @@ def click_tool(loc:tuple[int,int],button:Literal['left','right','middle']='left'
             app_box = app_control.BoundingRectangle
             
             if not app_box.isempty():
-                # Check if coordinates are within the active app's window bounds
-                # Allow 5px margin for elements that might be on window edges
-                margin = 5
+                # Allow 50px margin for window edges, title bars, and browser tabs
+                # More lenient than before (was 5px) to avoid false positives
+                margin = 50
                 if (x < app_box.left - margin or x > app_box.right + margin or
                     y < app_box.top - margin or y > app_box.bottom + margin):
-                    # Coordinates are outside the active app window
-                    # This is likely a mistake - raise error to prevent wrong clicks
-                    raise ValueError(f'Coordinates ({x},{y}) are outside active app "{active_app.name}" window bounds ({app_box.left},{app_box.top},{app_box.right},{app_box.bottom})')
-        except ValueError:
-            # Re-raise ValueError (coordinate validation failure)
-            raise
+                    # Only warn, don't fail - coordinates might be valid for adjacent windows
+                    print(f"Info: Coordinates ({x},{y}) are near edge of app '{active_app.name}' window bounds ({app_box.left},{app_box.top},{app_box.right},{app_box.bottom})")
         except Exception as e:
-            # If validation fails for other reasons, log but continue (better to try than fail completely)
+            # If validation fails for any reason, log but continue
             print(f"Warning: Could not validate coordinates against active app: {e}")
+    
+    # Invalidate UI cache after click to force refresh on next state query
+    if desktop:
+        desktop.invalidate_ui_cache()
     
     # OPTIMIZATION: Direct click without cursor pre-positioning or redundant element detection
     # Trust the coordinates from desktop.get_state() - they're already precise
@@ -274,16 +274,20 @@ def type_tool(loc:tuple[int,int],text:str,clear:Literal['true','false']='false',
     if x < 0 or x >= screen_width or y < 0 or y >= screen_height:
         return f'Error: Coordinates ({x},{y}) are outside screen bounds ({screen_width}x{screen_height})'
     
+    # Invalidate UI cache after typing to force refresh on next state query
+    if desktop:
+        desktop.invalidate_ui_cache()
+    
     # OPTIMIZATION: Direct click instead of HumanCursor for speed
     pg.click(x=x, y=y)
-    pg.sleep(0.05)  # Brief delay for focus to settle
+    pg.sleep(0.03)  # Optimized: reduced from 50ms to 30ms
     
     # OPTIMIZATION: Batch key operations with minimal delays
     if clear == 'true':
         pg.hotkey('ctrl', 'a')  # Select all
-        pg.sleep(0.02)          # Minimal delay
+        pg.sleep(0.01)          # Optimized: reduced from 20ms to 10ms
         pg.press('backspace')   # Clear
-        pg.sleep(0.02)          # Minimal delay
+        pg.sleep(0.01)          # Optimized: reduced from 20ms to 10ms
     
     # Position caret efficiently
     if caret_position == 'start':
@@ -299,7 +303,7 @@ def type_tool(loc:tuple[int,int],text:str,clear:Literal['true','false']='false',
     
     # Press enter if requested
     if press_enter == 'true':
-        pg.sleep(0.02)  # Brief pause before enter
+        pg.sleep(0.01)  # Optimized: reduced from 20ms to 10ms
         pg.press('enter')
     
     # Get element info for response (post-typing is fine for reporting)

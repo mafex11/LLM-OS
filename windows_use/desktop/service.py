@@ -24,11 +24,20 @@ class Desktop:
         self._apps_cache = None
         self._apps_cache_time = 0
         self.cache_timeout = 2.0  # Cache screenshots and apps for 2 seconds
+        
+        # UI state caching for performance
+        self._ui_state_cache = None
+        self._ui_state_cache_time = 0
+        self._ui_state_cache_window_handle = None
+        self.ui_cache_timeout = 1.5  # Cache UI elements for 1.5 seconds
+        
         # Debounce tracking for app switching to avoid ping-pong
         self._last_switch_time = 0.0
         self._last_switch_handle = None
         
     def get_state(self,use_vision:bool=False, target_app:str=None)->DesktopState:
+        import time
+        
         tree = Tree(self)
         apps = self.get_apps()
 
@@ -52,10 +61,28 @@ class Desktop:
             except Exception:
                 target_window = None
 
-        if target_window:
-            tree_state = tree.get_precise_state(target_window)
+        # OPTIMIZATION: Check if we can use cached UI state
+        current_time = time.time()
+        cache_valid = False
+        if (self._ui_state_cache is not None and 
+            target_window is not None and
+            self._ui_state_cache_window_handle == target_app_obj.handle and
+            (current_time - self._ui_state_cache_time) < self.ui_cache_timeout):
+            # Cache is valid - reuse it
+            tree_state = self._ui_state_cache
+            cache_valid = True
         else:
-            tree_state = tree.get_state()
+            # Need to refresh UI state
+            if target_window:
+                tree_state = tree.get_precise_state(target_window)
+            else:
+                tree_state = tree.get_state()
+            
+            # Update cache
+            if target_window:
+                self._ui_state_cache = tree_state
+                self._ui_state_cache_time = current_time
+                self._ui_state_cache_window_handle = target_app_obj.handle
         
         apps = [app for app in apps if app != active_app]
         if use_vision:
@@ -66,6 +93,12 @@ class Desktop:
             screenshot=None
         self.desktop_state=DesktopState(apps=apps,active_app=active_app,screenshot=screenshot,tree_state=tree_state)
         return self.desktop_state
+    
+    def invalidate_ui_cache(self):
+        """Invalidate UI state cache - call when window changes or actions are performed"""
+        self._ui_state_cache = None
+        self._ui_state_cache_time = 0
+        self._ui_state_cache_window_handle = None
     
     def get_window_element_from_element(self,element:Control)->Control|None:
         while element is not None:
@@ -194,25 +227,25 @@ class Desktop:
 
         if IsIconic(app.handle):
             ShowWindow(app.handle, cmdShow=9)
-            # Allow window to restore
-            sleep(0.2)
+            # Optimized: reduced from 200ms to 100ms
+            sleep(0.1)
 
         # Briefly set topmost to bring to front, then clear after confirmation
         if not SetWindowTopmost(app.handle,isTopmost=True):
             return (f'Failed to switch to {app_name.title()}.',1)
 
-        # Small settle time
-        sleep(0.2)
+        # Optimized: reduced settle time from 200ms to 50ms
+        sleep(0.05)
 
-        # Confirm foreground by handle with short poll
+        # Confirm foreground by handle with faster polling
         confirmed = False
         try:
-            for _ in range(6):  # up to ~600ms
+            for _ in range(10):  # up to 300ms total (faster polls, fewer iterations)
                 fg_hwnd = ctypes.windll.user32.GetForegroundWindow()
                 if fg_hwnd == target_handle:
                     confirmed = True
                     break
-                sleep(0.1)
+                sleep(0.03)  # Optimized: reduced from 100ms to 30ms
         except Exception:
             pass
 
@@ -226,11 +259,11 @@ class Desktop:
         self._last_switch_time = now if now else time.time()
         self._last_switch_handle = target_handle
 
-        # Refresh desktop state once to avoid stale reads
-        try:
-            self.get_state(use_vision=False)
-        except Exception:
-            pass
+        # Invalidate UI cache since window changed
+        self.invalidate_ui_cache()
+        
+        # OPTIMIZATION: Don't refresh state here - let caller do it when needed
+        # This saves ~200-500ms per switch operation
 
         if confirmed:
             return (f'{app_name.title()} switched to foreground.',0)

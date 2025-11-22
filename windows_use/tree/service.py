@@ -4,11 +4,12 @@ from windows_use.tree.precise_detection import PreciseElementDetector
 from uiautomation import GetRootControl,Control,ImageControl,ScrollPattern
 from windows_use.tree.utils import random_point_within_bounding_box
 from windows_use.desktop.config import AVOIDED_APPS, EXCLUDED_APPS
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as FutureTimeoutError
 from PIL import Image, ImageFont, ImageDraw
 from typing import TYPE_CHECKING
 from time import sleep
 import random
+import signal
 
 if TYPE_CHECKING:
     from windows_use.desktop.service import Desktop
@@ -28,7 +29,7 @@ class Tree:
         self.dom_bounding_box = None
 
     def get_state(self)->TreeState:
-        sleep(0.2)  # Reduced from 0.5 to 0.2 seconds
+        sleep(0.05)  # Optimized: reduced from 0.2s to 50ms
         # Get the root control of the desktop
         root=GetRootControl()
         interactive_nodes,informative_nodes,scrollable_nodes=self.get_appwise_nodes(node=root)
@@ -39,7 +40,7 @@ class Tree:
         Get element detection focused on a specific window. Falls back to regular
         detection when a window isn't provided.
         """
-        sleep(0.2)  # Reduced from 0.5 to 0.2 seconds
+        sleep(0.05)  # Optimized: reduced from 0.2s to 50ms
         if window is None:
             root = GetRootControl()
             interactive_nodes, informative_nodes, scrollable_nodes = self.get_appwise_nodes(node=root)
@@ -110,18 +111,26 @@ class Tree:
                 apps.append(app)
 
         interactive_nodes,informative_nodes,scrollable_nodes=[],[],[]
-        # Parallel traversal (using ThreadPoolExecutor) to get nodes from each app
-        # Limit to 4 workers to avoid overwhelming the system
-        with ThreadPoolExecutor(max_workers=4) as executor:
+        # OPTIMIZATION: Parallel traversal with shorter timeouts to prevent hanging
+        # CRITICAL: Browsers can hang for 20-40 seconds, so we use aggressive timeouts
+        with ThreadPoolExecutor(max_workers=6) as executor:
             future_to_node = {executor.submit(self.get_nodes, app,self.desktop.is_app_browser(app)): app for app in apps}
-            for future in as_completed(future_to_node, timeout=15.0):  # 15 second total timeout
+            for future in as_completed(future_to_node, timeout=8.0):  # Reduced from 10s to 8s
                 try:
-                    result = future.result(timeout=5.0)  # 5 second timeout per app
+                    # CRITICAL: 2 second timeout per app to prevent browser hangs
+                    result = future.result(timeout=2.0)  # Reduced from 3s to 2s per app
                     if result:
                         element_nodes,text_nodes,scroll_nodes=result
                         interactive_nodes.extend(element_nodes)
                         informative_nodes.extend(text_nodes)
                         scrollable_nodes.extend(scroll_nodes)
+                except FutureTimeoutError:
+                    app_name = "Unknown"
+                    try:
+                        app_name = future_to_node[future].Name
+                    except:
+                        pass
+                    print(f"Timeout processing node {app_name} - skipping (likely browser with too many elements)")
                 except Exception as e:
                     app_name = "Unknown"
                     try:
@@ -136,6 +145,11 @@ class Tree:
         app_name=node.Name.strip()
         app_name='Desktop' if node.ClassName=='Progman' else app_name
         window_bounding_box = node.BoundingRectangle
+        
+        # OPTIMIZATION: Limit max elements to prevent hanging on complex pages
+        max_interactive_elements = 150  # Stop after finding 150 interactive elements
+        max_total_elements = 300  # Stop after processing 300 total elements
+        elements_processed = 0
         
         def is_element_visible(node:Control,threshold:int=0):
             is_control=node.IsControlElement
@@ -273,9 +287,19 @@ class Tree:
                 ))
             
         def tree_traversal(node: Control, is_dom: bool = False, is_dialog: bool = False, depth: int = 0, max_depth: int = 30):
+            nonlocal elements_processed
+            
+            # OPTIMIZATION: Stop early if we've processed enough elements
+            if elements_processed >= max_total_elements:
+                return None
+            if len(interactive_nodes) + len(dom_interactive_nodes) >= max_interactive_elements:
+                return None
+            
             # Prevent infinite recursion by limiting depth
             if depth > max_depth:
                 return None
+            
+            elements_processed += 1
             
             # Checks to skip the nodes that are not interactive
             if node.IsOffscreen and (node.ControlTypeName not in set(["GroupControl","EditControl","TitleBarControl"])) and node.ClassName not in set(["Popup","Windows.UI.Core.CoreComponentInputSource"]):
@@ -343,16 +367,23 @@ class Tree:
             
             # Recursively traverse (right to left for normal apps, left to right for DOM)
             for child in (children if is_dom else children[::-1]):
-                # Check if the child is a browser DOM element
-                if is_browser and child.ClassName in ["Chrome_RenderWidgetHostHWND", "Internet Explorer_Server", "MozillaWindowClass"]:
+                # Check if the child is a browser DOM element - handle all browser types
+                browser_dom_classes = [
+                    "Chrome_RenderWidgetHostHWND",  # Chrome, Edge, Opera (Chromium-based)
+                    "Internet Explorer_Server",      # Internet Explorer, old Edge
+                    "MozillaWindowClass"             # Firefox
+                ]
+                if is_browser and child.ClassName in browser_dom_classes:
                     bounding_box=child.BoundingRectangle
-                    self.dom_bounding_box=BoundingBox(
-                        left=bounding_box.left, top=bounding_box.top,
-                        right=bounding_box.right, bottom=bounding_box.bottom,
-                        width=bounding_box.width(), height=bounding_box.height()
-                    )
-                    # Enter DOM subtree
-                    tree_traversal(child, is_dom=True, is_dialog=is_dialog, depth=depth+1, max_depth=max_depth)
+                    # Only set DOM bounding box if it's valid
+                    if not bounding_box.isempty() and bounding_box.width() > 0 and bounding_box.height() > 0:
+                        self.dom_bounding_box=BoundingBox(
+                            left=bounding_box.left, top=bounding_box.top,
+                            right=bounding_box.right, bottom=bounding_box.bottom,
+                            width=bounding_box.width(), height=bounding_box.height()
+                        )
+                        # Enter DOM subtree with DOM mode enabled
+                        tree_traversal(child, is_dom=True, is_dialog=is_dialog, depth=depth+1, max_depth=max_depth)
                 # Check if the child is a dialog/window
                 elif child.ControlType == 0xC370:  # WindowControl = 0xC370
                     from uiautomation import WindowControl

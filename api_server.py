@@ -331,7 +331,9 @@ async def initialize_agent():
         logger.info("Pre-warming system for faster response...")
         print("Pre-warming system for faster response...")
         try:
+            import time
             agent.desktop.get_state(use_vision=False)
+            agent.desktop._last_state_time = time.time()  # Set timestamp for caching
             logger.info("System pre-warmed successfully")
             print("System pre-warmed successfully!")
         except Exception as e:

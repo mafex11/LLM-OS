@@ -374,9 +374,9 @@ class Agent:
             current_time = time.time()
             state_age = current_time - getattr(self.desktop, '_last_state_time', 0) if hasattr(self.desktop, '_last_state_time') else float('inf')
             
-            # Only refresh if state is stale (older than 1.5s)
+            # OPTIMIZATION: Increased staleness threshold to 2.5s to reduce refresh frequency
             # This prevents refreshing right after switching, which could capture wrong window
-            if state_age > 1.5:
+            if state_age > 2.5:
                 # Use precise detection if we have a target app
                 target_app = self._target_app_for_precise_detection
                 if target_app:
@@ -391,7 +391,7 @@ class Agent:
                             try:
                                 switch_result, switch_status = self.desktop.switch_app(target_app)
                                 if switch_status == 0:
-                                    time.sleep(0.3)  # Wait for switch to complete
+                                    time.sleep(0.1)  # Optimized: reduced from 300ms to 100ms
                                 else:
                                     self.show_status("Warning", "Focus", f"Failed to switch to {target_app}: {switch_result}")
                             except Exception as e:
@@ -415,7 +415,7 @@ class Agent:
                         try:
                             switch_result, switch_status = self.desktop.switch_app(self._target_app_for_precise_detection)
                             if switch_status == 0:
-                                time.sleep(0.3)  # Wait for switch to complete
+                                time.sleep(0.1)  # Optimized: reduced from 300ms to 100ms
                                 self.desktop.get_state(use_vision=self.use_vision, target_app=self._target_app_for_precise_detection)
                                 self.show_status("Refreshing", "Desktop State", f"Target app lost focus, refreshed precise coordinates")
                             else:
@@ -582,11 +582,11 @@ class Agent:
             # Use precise detection if we have a target app
             current_time = time.time()
             if (not hasattr(self.desktop, '_last_state_time') or 
-                current_time - getattr(self.desktop, '_last_state_time', 0) > 1.0):
+                current_time - getattr(self.desktop, '_last_state_time', 0) > 1.5):  # OPTIMIZATION: increased from 1.0s to 1.5s
                 # Add small delay after actions to let UI settle before refreshing
                 # This prevents focus shifts from state refresh interfering with the action
                 if name not in ['Launch Tool']:  # Launch Tool already refreshed above
-                    time.sleep(0.1)  # 100ms delay to let UI settle
+                    time.sleep(0.05)  # Optimized: reduced from 100ms to 50ms
                 
                 # Use precise detection if we have a target app and it's still active
                 target_app = self._target_app_for_precise_detection
@@ -1039,18 +1039,35 @@ Be specific with numbers and insights. Be encouraging and helpful."""
         
         steps=1
         
-        # Parallel execution of independent operations for faster startup
-        from concurrent.futures import ThreadPoolExecutor
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            # Submit parallel tasks
-            desktop_future = executor.submit(self.desktop.get_state, self.use_vision)
-            language_future = executor.submit(self.desktop.get_default_language)
-            tools_future = executor.submit(self.registry.get_tools_prompt)
+        # OPTIMIZATION: Check if desktop state is recent (within 5 seconds) to avoid slow refresh
+        current_time = time.time()
+        if (self.desktop.desktop_state is not None and 
+            hasattr(self.desktop, '_last_state_time') and
+            (current_time - self.desktop._last_state_time) < 5.0):
+            # Reuse recent desktop state instead of refreshing
+            desktop_state = self.desktop.desktop_state
+            language = self.desktop.get_default_language()
+            tools_prompt = self.registry.get_tools_prompt()
+        else:
+            # Parallel execution of independent operations for faster startup
+            from concurrent.futures import ThreadPoolExecutor
+            with ThreadPoolExecutor(max_workers=3) as executor:
+                # Submit parallel tasks
+                desktop_future = executor.submit(self.desktop.get_state, self.use_vision)
+                language_future = executor.submit(self.desktop.get_default_language)
+                tools_future = executor.submit(self.registry.get_tools_prompt)
+                
+                # Collect results with timeout to prevent hanging
+                try:
+                    desktop_state = desktop_future.result(timeout=10.0)  # 10 second timeout
+                except Exception as e:
+                    logger.warning(f"Desktop state refresh timed out or failed: {e}, using cached state")
+                    desktop_state = self.desktop.desktop_state or self.desktop.get_state(self.use_vision)
+                language = language_future.result()
+                tools_prompt = tools_future.result()
             
-            # Collect results
-            desktop_state = desktop_future.result()
-            language = language_future.result()
-            tools_prompt = tools_future.result()
+            # Update timestamp
+            self.desktop._last_state_time = current_time
         
         # Create or reuse system message
         if self.system_message is None or not self.enable_conversation:

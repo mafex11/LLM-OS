@@ -83,9 +83,9 @@ class ActivityAnalyzer:
             "focus_score": 50,
             "description": "No analysis generated while feature is disabled."
         }
-
+        
+        # Legacy implementation preserved for quick restoration - commented out
         """
-        Legacy implementation preserved for quick restoration.
         if not self.llm:
             logger.warning("LLM not available for screenshot analysis")
             return {
