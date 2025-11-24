@@ -271,6 +271,7 @@ async def initialize_agent():
         enable_activity_tracking = config_data.get("enable_activity_tracking", True)
         enable_vision = config_data.get("enable_vision", False)
         enable_conversation = config_data.get("enable_conversation", True)
+        enable_voice_mode = config_data.get("enable_voice_mode", False)
         max_steps_setting = int(config_data.get("max_steps", 100) or 100)
         literal_mode_setting = bool(config_data.get("literal_mode", True))
         browser_setting = config_data.get("browser", "chrome")
@@ -296,7 +297,8 @@ async def initialize_agent():
             enable_tts=enable_tts,
             tts_voice_id=tts_voice_id,
             enable_screenshot_analysis=enable_screenshot_analysis,
-            enable_activity_tracking=enable_activity_tracking
+            enable_activity_tracking=enable_activity_tracking,
+            enable_voice_mode=enable_voice_mode
         )
         agent_instance.model_id = model_setting
         agent_instance.desktop.cache_timeout = cache_timeout_setting
@@ -414,7 +416,7 @@ class SystemStatus(BaseModel):
     performance_stats: Dict[str, Any]
 
 class SettingsRequest(BaseModel):
-    enable_tts: bool = True
+    enable_voice_mode: bool = False
     tts_voice_id: str = "21m00Tcm4TlvDq8ikWAM"
     cache_timeout: float = 2.0
     max_steps: int = 50
@@ -1398,7 +1400,7 @@ async def get_settings():
     
     try:
         settings = {
-            "enable_tts": getattr(agent, 'enable_tts', False),
+            "enable_voice_mode": getattr(agent, 'enable_voice_mode', False),
             "tts_voice_id": getattr(agent, 'tts_voice_id', "21m00Tcm4TlvDq8ikWAM"),
             "cache_timeout": getattr(agent.desktop, 'cache_timeout', 2.0) if hasattr(agent, 'desktop') else 2.0,
             "max_steps": getattr(agent, 'max_steps', 50),
@@ -1452,28 +1454,8 @@ async def update_settings(request: SettingsRequest):
             or model_changed
         )
 
-        # Update TTS settings
-        tts_service = getattr(agent, 'tts_service', None)
-        if request.enable_tts:
-            if tts_service:
-                tts_service.enabled = True
-                tts_service.voice_id = request.tts_voice_id
-            else:
-                try:
-                    from windows_use.agent.tts_service import TTSService
-                    agent.tts_service = TTSService(voice_id=request.tts_voice_id, enable_tts=True)
-                except Exception as tts_error:
-                    logger.warning(f"Failed to initialize TTS service: {tts_error}")
-        else:
-            if tts_service:
-                tts_service.enabled = False
-                try:
-                    tts_service.stop_current_speech()
-                except Exception:
-                    pass
-        
-        # Update agent TTS flags
-        agent.enable_tts = request.enable_tts
+        # Update voice mode setting and TTS voice ID
+        agent.enable_voice_mode = request.enable_voice_mode
         agent.tts_voice_id = request.tts_voice_id
         
         # Update browser and literal mode
@@ -1556,9 +1538,9 @@ async def update_settings(request: SettingsRequest):
             config_data["enable_activity_tracking"] = request.enable_activity_tracking
             config_data["enable_vision"] = request.enable_vision
             config_data["enable_conversation"] = request.enable_conversation
+            config_data["enable_voice_mode"] = request.enable_voice_mode
             config_data["max_steps"] = bounded_max_steps
             config_data["cache_timeout"] = bounded_cache_timeout
-            config_data["enable_tts"] = request.enable_tts
             config_data["tts_voice_id"] = request.tts_voice_id
             config_data["consecutive_failures"] = bounded_consecutive_failures
             config_data["browser"] = request.browser
@@ -1772,9 +1754,19 @@ async def start_voice_mode(request: VoiceModeRequest):
             agent.stt_service = voice_stt_service
             print("[Voice Mode Backend] STT service assigned to agent")
         
-        # Enable TTS for voice mode if not already enabled
+        # Check if voice mode (listen-only) is enabled
+        enable_voice_mode = getattr(agent, 'enable_voice_mode', False)
+        print(f"[Voice Mode Backend] Voice mode (listen-only) setting: {enable_voice_mode}")
+        
+        # Enable TTS for voice mode if not already enabled, unless voice_mode is enabled
         print("[Voice Mode Backend] Checking TTS service...")
-        if not hasattr(agent, 'tts_service') or not agent.tts_service or not agent.tts_service.enabled:
+        if enable_voice_mode:
+            print("[Voice Mode Backend] Voice mode enabled - TTS will be disabled (listen-only mode)")
+            # Disable TTS if voice mode is enabled
+            if hasattr(agent, 'tts_service') and agent.tts_service:
+                agent.tts_service.enabled = False
+                print("[Voice Mode Backend] TTS service disabled for listen-only mode")
+        elif not hasattr(agent, 'tts_service') or not agent.tts_service or not agent.tts_service.enabled:
             print("[Voice Mode Backend] TTS not enabled, initializing...")
             from windows_use.agent.tts_service import TTSService
             tts_service = TTSService(enable_tts=True)
@@ -1975,8 +1967,9 @@ async def start_voice_mode(request: VoiceModeRequest):
                             "workflowSteps": workflow_steps
                         })
                     
-                    # Speak the response if TTS is available
-                    if hasattr(agent, 'tts_service') and agent.tts_service and agent.tts_service.enabled:
+                    # Speak the response if TTS is available and voice mode is not enabled
+                    enable_voice_mode = getattr(agent, 'enable_voice_mode', False)
+                    if not enable_voice_mode and hasattr(agent, 'tts_service') and agent.tts_service and agent.tts_service.enabled:
                         print(f"TTS: Speaking response: {response.content[:50]}...")
                         success = agent.tts_service.speak_async(response.content)
                         if not success:
@@ -2008,6 +2001,8 @@ async def start_voice_mode(request: VoiceModeRequest):
                                     print("TTS: Fallback TTS also not available")
                             except Exception as e:
                                 print(f"TTS: Fallback TTS failed: {e}")
+                    elif enable_voice_mode:
+                        print("TTS: Voice mode enabled (listen-only) - skipping TTS")
                     else:
                         print("TTS: Not available or disabled")
                         # Try to create a fallback TTS service with config file API key

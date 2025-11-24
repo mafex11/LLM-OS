@@ -5,7 +5,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  trailingSlash: true,
+  trailingSlash: false,
   generateBuildId: async () => {
     return 'build-' + Date.now()
   },

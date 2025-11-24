@@ -61,7 +61,7 @@ class Agent:
     Returns:
         Agent
     '''
-    def __init__(self,instructions:list[str]=[],additional_tools:list[BaseTool]=[],browser:Literal['edge','chrome','firefox']='edge', llm: BaseChatModel=None,consecutive_failures:int=3,max_steps:int=20,use_vision:bool=False,enable_conversation:bool=True,literal_mode:bool=True,enable_tts:bool=False,tts_voice_id:str="21m00Tcm4TlvDq8ikWAM",enable_screenshot_analysis:bool=True,enable_activity_tracking:bool=True):
+    def __init__(self,instructions:list[str]=[],additional_tools:list[BaseTool]=[],browser:Literal['edge','chrome','firefox']='edge', llm: BaseChatModel=None,consecutive_failures:int=3,max_steps:int=20,use_vision:bool=False,enable_conversation:bool=True,literal_mode:bool=True,enable_tts:bool=False,tts_voice_id:str="21m00Tcm4TlvDq8ikWAM",enable_screenshot_analysis:bool=True,enable_activity_tracking:bool=True,enable_voice_mode:bool=False):
         self.name='Yuki AI'
         self.description='An agent that can interact with GUI elements on Windows' 
         from windows_use.agent.tools.service import activity_tool, timeline_tool
@@ -79,6 +79,7 @@ class Agent:
         self.literal_mode=literal_mode
         self.enable_tts=enable_tts
         self.tts_voice_id=tts_voice_id
+        self.enable_voice_mode=enable_voice_mode
         # Screenshot analysis feature disabled globally
         self.enable_screenshot_analysis=False
         # self.enable_screenshot_analysis=enable_screenshot_analysis

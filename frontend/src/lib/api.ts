@@ -2,7 +2,7 @@
  * API URL configuration and helper functions
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ''
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 /**
  * Get the full API URL for a given endpoint (synchronous)
@@ -12,6 +12,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ''
 export function getApiUrlSync(endpoint: string): string {
   // Remove leading slash if present to avoid double slashes
   const normalizedEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
+  
+  // Return the full URL with the backend server base URL
   return `${API_BASE_URL}/${normalizedEndpoint}`
 }
 

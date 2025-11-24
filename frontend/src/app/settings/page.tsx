@@ -81,7 +81,7 @@ type AgentSettingsState = {
   enable_activity_tracking: boolean
   enable_vision: boolean
   enable_conversation: boolean
-  enable_tts: boolean
+  enable_voice_mode: boolean
   cache_timeout: number
   tts_voice_id: string
   browser: BrowserOption
@@ -145,7 +145,7 @@ export default function SettingsPage() {
     enable_activity_tracking: true,
     enable_vision: false,
     enable_conversation: true,
-    enable_tts: false,
+    enable_voice_mode: false,
     cache_timeout: 2.0,
     tts_voice_id: "21m00Tcm4TlvDq8ikWAM",
     browser: "chrome",
@@ -219,7 +219,7 @@ export default function SettingsPage() {
           enable_activity_tracking: data.enable_activity_tracking ?? true,
           enable_vision: data.enable_vision ?? false,
           enable_conversation: data.enable_conversation ?? true,
-          enable_tts: data.enable_tts ?? false,
+          enable_voice_mode: data.enable_voice_mode ?? false,
           cache_timeout: Number(boundedCacheTimeout.toFixed(2)),
           tts_voice_id: ttsVoice,
           browser,
@@ -378,7 +378,7 @@ export default function SettingsPage() {
           enable_activity_tracking: agentSettings.enable_activity_tracking,
           enable_vision: agentSettings.enable_vision,
           enable_conversation: agentSettings.enable_conversation,
-          enable_tts: agentSettings.enable_tts,
+          enable_voice_mode: agentSettings.enable_voice_mode,
           cache_timeout: formattedCacheTimeout,
           tts_voice_id: trimmedVoice,
           model: agentSettings.model
@@ -1134,23 +1134,23 @@ export default function SettingsPage() {
 
                           <div className="flex items-center justify-between">
                             <div className="space-y-0.5">
-                              <Label htmlFor="enable-tts" className="text-sm font-normal cursor-pointer">
-                                Text-to-Speech
+                              <Label htmlFor="enable-voice-mode" className="text-sm font-normal cursor-pointer">
+                                Voice Mode (Listen Only)
                               </Label>
                               <p className="text-xs text-muted-foreground">
-                                Speak agent responses aloud
+                                Agent listens via voice but won't speak back
                               </p>
                             </div>
                             <button
                               type="button"
-                              onClick={() => setAgentSettings(prev => ({ ...prev, enable_tts: !prev.enable_tts }))}
+                              onClick={() => setAgentSettings(prev => ({ ...prev, enable_voice_mode: !prev.enable_voice_mode }))}
                               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-black ${
-                                agentSettings.enable_tts ? 'bg-white' : 'bg-gray-600'
+                                agentSettings.enable_voice_mode ? 'bg-white' : 'bg-gray-600'
                               }`}
                             >
                               <span
                                 className={`inline-block h-4 w-4 transform rounded-full bg-black transition-transform ${
-                                  agentSettings.enable_tts ? 'translate-x-6' : 'translate-x-1'
+                                  agentSettings.enable_voice_mode ? 'translate-x-6' : 'translate-x-1'
                                 }`}
                               />
                             </button>
@@ -1159,19 +1159,18 @@ export default function SettingsPage() {
 
                         <div className="space-y-2 pt-2">
                           <Label htmlFor="tts-voice-id" className="text-sm font-normal">
-                            TTS voice ID
+                            Voice ID (for TTS)
                           </Label>
                           <Input
                             id="tts-voice-id"
                             type="text"
                             value={agentSettings.tts_voice_id}
                             onChange={(e) => setAgentSettings(prev => ({ ...prev, tts_voice_id: e.target.value }))}
-                            disabled={!agentSettings.enable_tts}
                             placeholder="21m00Tcm4TlvDq8ikWAM"
-                            className="rounded-full bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white focus:outline-none focus:ring-0 focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-full bg-transparent border border-white/20 hover:border-white/30 focus:border-white/40 text-white focus:outline-none focus:ring-0 focus-visible:ring-0"
                           />
                           <p className="text-xs text-muted-foreground">
-                            Use a voice ID from ElevenLabs. Leave the default if unsure.
+                            ElevenLabs voice ID for when agent speaks back (when listen-only is OFF)
                           </p>
                         </div>
                       </div>
