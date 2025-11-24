@@ -14,7 +14,7 @@ import pyperclip as pc
 import pyautogui as pg
 import requests
 
-cursor=SystemCursor()
+cursor=SystemCursor()  # Smooth cursor movement via duration parameter in move_to calls
 pg.FAILSAFE=False
 pg.PAUSE=0.01  # Reduced from 0.1 for better performance
 
@@ -244,9 +244,9 @@ def click_tool(loc:tuple[int,int],button:Literal['left','right','middle']='left'
     if desktop:
         desktop.invalidate_ui_cache()
     
-    # OPTIMIZATION: Direct click without cursor pre-positioning or redundant element detection
-    # Trust the coordinates from desktop.get_state() - they're already precise
-    pg.click(x=x, y=y, button=button, clicks=clicks)
+    # Smooth cursor movement before clicking
+    cursor.move_to((x, y), duration=0.8)
+    pg.click(button=button, clicks=clicks)
     
     # OPTIMIZATION: Adaptive delay based on control type instead of fixed 1.0s
     delay = get_optimal_click_delay(control_type or 'Unknown')
@@ -278,8 +278,9 @@ def type_tool(loc:tuple[int,int],text:str,clear:Literal['true','false']='false',
     if desktop:
         desktop.invalidate_ui_cache()
     
-    # OPTIMIZATION: Direct click instead of HumanCursor for speed
-    pg.click(x=x, y=y)
+    # Smooth cursor movement before clicking
+    cursor.move_to((x, y), duration=0.8)
+    pg.click()
     pg.sleep(0.03)  # Optimized: reduced from 50ms to 30ms
     
     # OPTIMIZATION: Batch key operations with minimal delays
@@ -321,7 +322,7 @@ def type_tool(loc:tuple[int,int],text:str,clear:Literal['true','false']='false',
 def scroll_tool(loc:tuple[int,int]=None,type:Literal['horizontal','vertical']='vertical',direction:Literal['up','down','left','right']='down',wheel_times:int=1,desktop:Desktop=None)->str:
     'Move cursor to a specific location or current location, start scrolling in the specified direction. Use wheel_times to control scroll amount (1 wheel = ~3-5 lines). Essential for navigating lists, web pages, and long content.'
     if loc:
-        cursor.move_to(loc)
+        cursor.move_to(loc, duration=0.8)
     match type:
         case 'vertical':
             match direction:
@@ -355,13 +356,13 @@ def scroll_tool(loc:tuple[int,int]=None,type:Literal['horizontal','vertical']='v
 def drag_tool(from_loc:tuple[int,int],to_loc:tuple[int,int],desktop:Desktop=None)->str:
     'Drag and drop operation from source coordinates to destination coordinates. Useful for moving files, resizing windows, or drag-and-drop interactions.'
     control=desktop.get_element_under_cursor()
-    cursor.drag_and_drop(from_loc,to_loc)
+    cursor.drag_and_drop(from_loc, to_loc)
     return f'Dragged {control.Name}.'
 
 @tool('Move Tool',args_schema=Move)
 def move_tool(to_loc:tuple[int,int],desktop:Desktop=None)->str:
     'Move mouse cursor to specific coordinates without clicking. Useful for hovering over elements or positioning cursor before other actions.'
-    cursor.move_to(to_loc)
+    cursor.move_to(to_loc, duration=0.8)
     return f'Moved mouse to position.'
 
 @tool('Shortcut Tool',args_schema=Shortcut)

@@ -143,6 +143,7 @@ At every step, Windows-Use will be given the state:
 12. You can perform `deep research` on any topic, too know more about it by going through multiple resources and analysising them to gain more knowledge.
 13. Deep research is a concept that covers the topic in both depth and breadth, each study is performed on seperate tab in the browser for proper organizing the research.
 14. When performing deep research make sure you SEO optimized search queries to the search engine.
+15. **ALWAYS WAIT AFTER NAVIGATION**: After typing a URL and pressing Enter, after clicking a link, or after any action that loads a new page, you MUST use `Wait Tool` with 0.5-1 second before interacting with page elements. This ensures the page has fully loaded and prevents clicking on random elements or videos that appear during page load.
 </browsing_rules>
 
 <app_management_rules>
@@ -193,7 +194,14 @@ At every step, Windows-Use will be given the state:
 <!-- 10. The <memory> contains the information gained from the internet or apps and essential context this included the 
 data from <user_query> such as credentials. -->
 11. Remember to complete the task within `{max_steps} steps` and ALWAYS output 1 reasonable action per step.
-12. During opening of an app or any window or going from one website to another then wait for 5sec and check, if ready proceed else wait using `Wait Tool`. After launching an application, ALWAYS wait for it to fully load and render before attempting to interact with its UI elements.
+12. **WAITING AFTER NAVIGATION AND PAGE LOADS (CRITICAL)**: After any action that causes a page to load or navigate, you MUST use `Wait Tool` with 0.5 to 1 second duration before attempting to interact with the page. Specifically:
+    - After typing a URL in the address bar and pressing Enter → Use `Wait Tool` with 0.5-1 second
+    - After clicking on a link that navigates to a new page → Use `Wait Tool` with 0.5-1 second
+    - After opening a new tab → Use `Wait Tool` with 0.5-1 second before typing or clicking
+    - After submitting a search query → Use `Wait Tool` with 0.5-1 second for results to load
+    - After launching an application → Use `Wait Tool` with 0.5-1 second for the app to fully load and render
+    - After any action that triggers a page refresh or navigation → Use `Wait Tool` with 0.5-1 second
+    **DO NOT** attempt to click or interact with elements immediately after navigation. Always wait for pages to load first. Choose the wait duration (0.5 or 1 second) based on the complexity of the page - simple pages need 0.5s, complex pages with videos/images need 1s.
 13. When encountering situations like you don't know how to perform this subtask such as fixing errors in a program, steps to change a setting in an app/system, get latest context for a topic to add on to any docs, ppts, csv,...etc beyond your knowledge, ALWAYS ask the user for permission using `Human Tool` before searching the web or trying alternative methods.
 14. Before start operating make sure to understand the `default language` of the system, because the name of the apps, buttons, ..etc will be in this language.
 15. BE LITERAL: Only perform exactly what the user asks for. Do NOT add extra steps like saving, closing, or completing tasks that weren't explicitly requested.

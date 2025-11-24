@@ -57,11 +57,11 @@ export default function LandingPage() {
 
     {/* Enhanced Main Headline */}
     <h1 className="mb-6 text-balance text-center text-4xl font-normal md:text-5xl lg:text-7xl">
-      Your AI copilot for{' '}
-      <span className="bg-gradient-to-r from-white to-red-200 bg-clip-text text-transparent">
+      Your AI copilot
+      {/* <span className="bg-gradient-to-r from-white to-red-200 bg-clip-text text-transparent">
         devices
-      </span>
-      .
+      </span> */}
+      
     </h1>
 
     {/* Enhanced Supporting Text */}

@@ -516,7 +516,7 @@ function ChatContent() {
     setCurrentRequestId(null)
     try {
       const conversationHistory = messages.map(msg => ({ role: msg.role, content: msg.content, timestamp: msg.timestamp.toISOString() }))
-      const response = await fetch("http://127.0.0.1:8000/api/query/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query: userMessage.content, use_vision: false, conversation_history: conversationHistory, api_key: getApiKey('google_api_key') }) })
+      const response = await fetch(getApiUrlSync("/api/query/stream"), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query: userMessage.content, use_vision: false, conversation_history: conversationHistory, api_key: getApiKey('google_api_key') }) })
       if (!response.ok) {
         let errorText = ""
         try {
