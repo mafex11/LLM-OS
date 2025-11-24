@@ -6,27 +6,84 @@ This directory contains all testing resources for the Windows-Use Agent project.
 
 ```
 tests/
-├── unit/                    # Unit tests for individual components
-│   ├── agent/              # Agent-specific tests
-│   ├── desktop/            # Desktop service tests
-│   └── tree/               # Tree parsing tests
+├── conftest.py                # Shared pytest fixtures and configuration
+├── pytest.ini                 # Pytest settings
+├── requirements-test.txt      # Test dependencies
+├── run_all_tests.py          # Main test runner
+├── run_quick_tests.bat       # Quick smoke tests (Windows)
+├── TESTING_GUIDE.md          # Complete testing guide (NEW!)
+├── README.md                 # This file
 │
-├── automated/              # Automated integration testing ⭐ NEW
-│   ├── results/           # Test results and reports
-│   ├── run_tests.py       # Main test runner
-│   ├── test_cases.py      # Test definitions
-│   ├── test_logger.py     # Logging system
-│   ├── benchmark.py       # Performance benchmarks
-│   ├── quick_test.bat     # Windows quick start
-│   ├── README.md          # Detailed documentation
-│   ├── TESTING_GUIDE.md   # Complete testing guide
-│   ├── EXAMPLE_REPORT.md  # Sample test reports
-│   └── QUICK_REFERENCE.md # Quick reference card
+├── unit/                     # Unit tests for individual components ⭐ ENHANCED
+│   ├── tools/               # Agent tool tests (NEW!)
+│   │   ├── test_tools_basic.py         # Done, Wait, Launch, Switch
+│   │   ├── test_tools_input.py         # Click, Type, Key, Shortcut, Clipboard
+│   │   ├── test_tools_navigation.py    # Scroll, Drag, Move, Resize
+│   │   ├── test_tools_system.py        # System, Shell, Human, Scrape
+│   │   └── test_tools_tracking.py      # Activity, Timeline, Schedule
+│   │
+│   ├── tracking/            # Activity tracking tests (NEW!)
+│   │   ├── test_tracking_service.py    # ActivityTracker
+│   │   ├── test_tracking_storage.py    # ActivityStorage
+│   │   └── test_tracking_analyzer.py   # ActivityAnalyzer
+│   │
+│   ├── tree/                # UI tree parsing tests
+│   │   └── test_tree_service.py        # Tree service (ENHANCED)
+│   │
+│   ├── desktop/             # Desktop service tests
+│   │   └── test_desktop_service.py     # Desktop operations (ENHANCED)
+│   │
+│   └── agent/               # Agent core tests
+│       └── test_agent_service.py       # Agent execution
 │
-└── README.md              # This file
+├── integration/             # Integration tests (NEW!)
+│   └── test_tool_execution.py          # End-to-end tool flow
+│
+└── automated/              # Automated integration testing
+    ├── results/           # Test results and reports
+    ├── run_tests.py       # Main test runner
+    ├── test_cases.py      # Test definitions
+    ├── test_logger.py     # Logging system
+    ├── benchmark.py       # Performance benchmarks
+    ├── quick_test.bat     # Windows quick start
+    ├── README.md          # Detailed documentation
+    ├── TESTING_GUIDE.md   # Complete testing guide
+    ├── EXAMPLE_REPORT.md  # Sample test reports
+    └── QUICK_REFERENCE.md # Quick reference card
 ```
 
 ## Quick Start
+
+### Run All Tests (NEW!)
+
+```cmd
+# Run all tests with the main test runner
+python tests/run_all_tests.py
+
+# Run quick smoke tests (Windows)
+tests\run_quick_tests.bat
+
+# Run only unit tests
+python tests/run_all_tests.py --type unit
+
+# Run with coverage report
+python tests/run_all_tests.py --coverage
+```
+
+### Run Unit Tests
+
+```cmd
+# Run all unit tests
+pytest tests/unit/ -v
+
+# Run specific test category
+pytest tests/unit/tools/ -v          # All tool tests
+pytest tests/unit/tracking/ -v       # Tracking tests
+pytest tests/unit/desktop/ -v        # Desktop tests
+
+# Run specific test file
+pytest tests/unit/tools/test_tools_basic.py -v
+```
 
 ### Run Automated Tests
 
@@ -40,24 +97,64 @@ venv\Scripts\activate
 python tests\automated\run_tests.py
 ```
 
-### Run Unit Tests
-
-```cmd
-# Run all unit tests
-pytest tests/unit/
-
-# Run specific test file
-pytest tests/unit/agent/test_agent_service.py
-```
-
 ## Test Types
 
-### 1. Automated Integration Tests (NEW) ⭐
+### 1. Unit Tests (ENHANCED) ⭐
+
+**Location:** `tests/unit/`
+
+**What it tests:**
+- **Tools** (`tests/unit/tools/`): All 20+ agent tools
+  - Basic tools (Done, Wait, Launch, Switch)
+  - Input tools (Click, Type, Key, Shortcut, Clipboard)
+  - Navigation tools (Scroll, Drag, Move, Resize)
+  - System tools (System, Shell, Human, Scrape)
+  - Tracking tools (Activity, Timeline, Schedule)
+- **Tracking** (`tests/unit/tracking/`): Activity tracking components
+  - ActivityTracker, ActivityStorage, ActivityAnalyzer
+- **Desktop** (`tests/unit/desktop/`): Desktop service operations
+- **Tree** (`tests/unit/tree/`): UI element parsing
+- **Agent** (`tests/unit/agent/`): Core agent functionality
+
+**Features:**
+- Fast execution (< 1 second per test)
+- Isolated testing with mocks
+- 100+ test cases covering all tools
+- Comprehensive edge case coverage
+
+**Framework:** pytest with fixtures
+
+**Usage:**
+```bash
+pytest tests/unit/ -v
+```
+
+### 2. Integration Tests (NEW) ⭐
+
+**Location:** `tests/integration/`
+
+**What it tests:**
+- Complete tool execution flow (agent → registry → tool → desktop)
+- Multi-step operations
+- Error handling across components
+- Tool interaction with real services
+
+**Features:**
+- End-to-end workflow validation
+- Real component integration
+- Error propagation testing
+
+**Usage:**
+```bash
+pytest tests/integration/ -v
+```
+
+### 3. Automated Integration Tests
 
 **Location:** `tests/automated/`
 
 **What it tests:**
-- All 15+ agent tools
+- All 15+ agent tools with real LLM
 - Reasoning capabilities
 - Conversation flow
 - Error handling
@@ -80,18 +177,6 @@ pytest tests/unit/agent/test_agent_service.py
 
 **Usage:**
 See `automated/README.md` for complete guide.
-
-### 2. Unit Tests
-
-**Location:** `tests/unit/`
-
-**What it tests:**
-- Individual functions
-- Component isolation
-- Edge cases
-- Input validation
-
-**Framework:** pytest
 
 ## Test Results
 
@@ -136,26 +221,57 @@ Category Grades:
 
 ## Test Coverage
 
-### Automated Tests Cover:
+### Comprehensive Coverage (NEW!) ⭐
 
-**Tools (15+):**
-- ✓ Launch Tool
-- ✓ Click Tool
-- ✓ Type Tool
-- ✓ Switch Tool
-- ✓ Scroll Tool
-- ✓ Drag Tool
-- ✓ Move Tool
-- ✓ Shortcut Tool
-- ✓ Key Tool
-- ✓ Wait Tool
-- ✓ Clipboard Tool
-- ✓ Shell Tool
-- ✓ System Tool
-- ✓ Human Tool
-- ✓ Done Tool
+**All Tools (20+):** Unit + Integration Tests
+- ✓ Launch Tool - App launching
+- ✓ Switch Tool - App switching
+- ✓ Done Tool - Task completion
+- ✓ Wait Tool - Delays
+- ✓ Click Tool - Mouse clicks
+- ✓ Type Tool - Keyboard input
+- ✓ Key Tool - Individual keys
+- ✓ Shortcut Tool - Key combinations
+- ✓ Clipboard Tool - Copy/paste
+- ✓ Scroll Tool - Scrolling
+- ✓ Drag Tool - Drag and drop
+- ✓ Move Tool - Cursor movement
+- ✓ Resize Tool - Window management
+- ✓ System Tool - System information
+- ✓ Shell Tool - PowerShell commands
+- ✓ Human Tool - User interaction
+- ✓ Scrape Tool - Web scraping
+- ✓ Activity Tool - Activity tracking queries
+- ✓ Timeline Tool - Timeline analysis
+- ✓ Schedule Tool - Task scheduling
+
+**Tracking Module:**
+- ✓ ActivityTracker - Activity monitoring
+- ✓ ActivityStorage - Data persistence
+- ✓ ActivityAnalyzer - AI analysis
+
+**Desktop Module:**
+- ✓ App listing and switching
+- ✓ Window management
+- ✓ Command execution
+- ✓ UI element detection
+- ✓ State management
+
+**Tree Module:**
+- ✓ UI element parsing
+- ✓ Interactive element detection
+- ✓ Scrollable element identification
+- ✓ Coordinate calculation
+
+**Agent Core:**
+- ✓ Agent service initialization
+- ✓ Tool registry
+- ✓ Reasoning and planning
+- ✓ Error handling
+- ✓ Multi-step execution
 
 **Capabilities:**
+- ✓ Complete tool execution flow
 - ✓ Multi-step reasoning
 - ✓ Context understanding
 - ✓ Error recovery
@@ -163,15 +279,49 @@ Category Grades:
 - ✓ Memory management
 - ✓ Edge case handling
 
-### Unit Tests Cover:
-
-- Agent service initialization
-- Tool registry
-- Desktop state management
-- Tree parsing utilities
-- Prompt generation
-
 ## Adding Tests
+
+### Add Unit Test (NEW!)
+
+Create test file in appropriate `unit/` subdirectory:
+
+```python
+"""
+Tests for MyNewTool.
+"""
+
+import pytest
+from unittest.mock import MagicMock, patch
+from windows_use.agent.tools.service import my_new_tool
+
+
+class TestMyNewTool:
+    """Tests for MyNewTool."""
+    
+    @patch('windows_use.agent.tools.service.pg')
+    def test_my_new_tool_basic(self, mock_pg):
+        """Test basic functionality."""
+        result = my_new_tool(param="value")
+        
+        assert result is not None
+        assert "expected" in result.lower()
+    
+    def test_my_new_tool_error_handling(self):
+        """Test error handling."""
+        with pytest.raises(ValueError):
+            my_new_tool(param=None)
+```
+
+### Add Integration Test
+
+Create in `integration/`:
+
+```python
+def test_my_feature_integration(self, agent):
+    """Test complete workflow."""
+    result = agent.invoke("Test my feature")
+    assert result.is_done or not result.error
+```
 
 ### Add Automated Test
 
@@ -185,16 +335,6 @@ def test_my_feature(self):
         lambda: self.agent.invoke("test query"),
         expected_keywords=["expected", "result"]
     )
-```
-
-### Add Unit Test
-
-Create in `unit/` with pytest:
-
-```python
-def test_my_function():
-    result = my_function(input)
-    assert result == expected
 ```
 
 ## CI/CD Integration
@@ -289,7 +429,72 @@ When adding features:
 - ✓ Performance benchmarking
 - ✓ Unit test foundation
 
+## New Testing Features (v2.0) ⭐
+
+### What's New
+
+1. **Comprehensive Unit Tests**
+   - 100+ tests covering all 20+ tools
+   - Tests for tracking, desktop, and tree modules
+   - Fast execution with mocked dependencies
+
+2. **Integration Tests**
+   - End-to-end workflow validation
+   - Tool execution flow testing
+   - Error propagation testing
+
+3. **Better Organization**
+   - Clear test structure by category
+   - Shared fixtures in `conftest.py`
+   - Pytest configuration
+
+4. **Enhanced Documentation**
+   - Complete testing guide (`TESTING_GUIDE.md`)
+   - Clear examples and templates
+   - Troubleshooting section
+
+5. **Test Runners**
+   - Main test runner (`run_all_tests.py`)
+   - Quick smoke tests (`run_quick_tests.bat`)
+   - Flexible filtering options
+
+### Getting Started
+
+1. **Install test dependencies:**
+   ```bash
+   pip install -r tests/requirements-test.txt
+   ```
+
+2. **Run quick smoke tests:**
+   ```bash
+   tests\run_quick_tests.bat
+   ```
+
+3. **Run all tests:**
+   ```bash
+   python tests/run_all_tests.py
+   ```
+
+4. **View coverage:**
+   ```bash
+   python tests/run_all_tests.py --coverage
+   ```
+
+## Documentation
+
+| File | Purpose |
+|------|---------|
+| `TESTING_GUIDE.md` | Complete testing guide with examples |
+| `automated/README.md` | Automated testing documentation |
+| `automated/TESTING_GUIDE.md` | Detailed automated test guide |
+| `automated/EXAMPLE_REPORT.md` | Sample test output |
+| `automated/QUICK_REFERENCE.md` | Quick reference card |
+
 ---
 
-**Quick Start:** Run `tests\automated\quick_test.bat` to see it in action!
+**Quick Start:** 
+- Unit Tests: `pytest tests/unit/ -v`
+- Integration Tests: `pytest tests/integration/ -v`
+- Automated Tests: `tests\automated\quick_test.bat`
+- Full Guide: See `tests/TESTING_GUIDE.md`
 
