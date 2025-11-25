@@ -248,3 +248,4 @@ class TestClipboardTool:
         
         assert "invalid mode" in str(exc_info.value).lower()
 
+

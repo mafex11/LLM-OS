@@ -182,3 +182,4 @@ class TestActivityAnalyzer:
         assert summary["total_active_time"] == 0
         assert summary["focus_score"] >= 0
 
+

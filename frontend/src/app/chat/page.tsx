@@ -30,7 +30,8 @@ import {
   Cancel01Icon,
   AiBrain01Icon,
   TimeScheduleIcon,
-  ComputerIcon
+  ComputerIcon,
+  Copy01Icon
 } from "hugeicons-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -702,6 +703,14 @@ function ChatContent() {
   const stopSpeaking = async () => { try { await fetch(getApiUrlSync("/api/tts/stop"), { method: "POST" }) } catch {} }
   const stopCurrentQuery = async () => { if (!currentRequestId || stopRequested) return; setStopRequested(true); try { await fetch(getApiUrlSync("/api/query/stop"), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ request_id: currentRequestId }) }) } catch {} }
   
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      toast({ title: "Copied to clipboard", description: "Message content copied successfully" })
+    } catch (error) {
+      toast({ title: "Copy failed", description: "Could not copy to clipboard", variant: "destructive" })
+    }
+  }
   const handleMicClick = async () => {
     console.log('[Voice Mode] handleMicClick called, current state:', { voiceMode, voiceModeStarting, isListening, isSpeaking })
     if (voiceModeStarting) {
@@ -932,18 +941,44 @@ function ChatContent() {
                       </div>
                       <div className="flex-1 space-y-2 min-w-0">
                         {message.role === "user" ? (
-                          <div className="prose dark:prose-invert max-w-none bg-zinc-800/50 px-4 py-3 rounded-2xl">
-                            <p className="whitespace-pre-wrap text-sm sm:text-base leading-relaxed text-gray-100">{message.content}</p>
+                          <div className="space-y-1">
+                            <div className="prose dark:prose-invert max-w-none bg-zinc-800/50 px-4 py-3 rounded-2xl">
+                              <p className="whitespace-pre-wrap text-sm sm:text-base leading-relaxed text-gray-100">{message.content}</p>
+                            </div>
+                            <div className="flex justify-end">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/10 rounded-full"
+                                onClick={() => copyToClipboard(message.content)}
+                                title="Copy message"
+                              >
+                                <Copy01Icon size={14} className="text-gray-400" />
+                              </Button>
+                            </div>
                           </div>
                         ) : (
                           <div className="space-y-2">
                             {message.workflowSteps && message.workflowSteps.length > 0 && (<WorkflowSteps workflowSteps={message.workflowSteps} />)}
-                            <div className="prose dark:prose-invert max-w-none">
-                              {message.id && newlyGeneratedMessageIds.has(message.id) && mounted ? (
-                                <TextGenerateEffect words={message.content} className="text-sm sm:text-base leading-relaxed text-gray-100 font-normal [&>div>div]:text-sm [&>div>div]:sm:text-base [&>div>div]:leading-relaxed [&>div>div]:text-gray-100 [&>div>div]:font-normal [&>div]:mt-0" duration={0.3} filter={false} />
-                              ) : (
-                                <p className="text-sm sm:text-base leading-relaxed text-gray-100 font-normal whitespace-pre-wrap">{message.content}</p>
-                              )}
+                            <div className="space-y-1">
+                              <div className="prose dark:prose-invert max-w-none">
+                                {message.id && newlyGeneratedMessageIds.has(message.id) && mounted ? (
+                                  <TextGenerateEffect words={message.content} className="text-sm sm:text-base leading-relaxed text-gray-100 font-normal [&>div>div]:text-sm [&>div>div]:sm:text-base [&>div>div]:leading-relaxed [&>div>div]:text-gray-100 [&>div>div]:font-normal [&>div]:mt-0" duration={0.3} filter={false} />
+                                ) : (
+                                  <p className="text-sm sm:text-base leading-relaxed text-gray-100 font-normal whitespace-pre-wrap">{message.content}</p>
+                                )}
+                              </div>
+                              <div className="flex">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 hover:bg-white/10 rounded-full"
+                                  onClick={() => copyToClipboard(message.content)}
+                                  title="Copy response"
+                                >
+                                  <Copy01Icon size={14} className="text-gray-400" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         )}

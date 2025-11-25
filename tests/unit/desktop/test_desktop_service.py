@@ -194,3 +194,4 @@ class TestDesktop:
         assert state is not None
         assert hasattr(state, 'tree_state') or hasattr(state, 'apps')
 
+

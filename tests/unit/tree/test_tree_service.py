@@ -158,3 +158,4 @@ class TestTree:
         assert center["x"] == 150  # (100 + 200) / 2
         assert center["y"] == 125  # (100 + 150) / 2
 
+

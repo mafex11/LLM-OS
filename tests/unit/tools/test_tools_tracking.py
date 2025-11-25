@@ -288,3 +288,4 @@ class TestScheduleTool:
         
         assert "failed" in result.lower()
 
+

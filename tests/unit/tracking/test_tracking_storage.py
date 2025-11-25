@@ -192,3 +192,4 @@ class TestActivityStorage:
         assert isinstance(categories, dict)
         assert len(categories) > 0
 
+

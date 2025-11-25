@@ -164,3 +164,4 @@ class TestToolExecutionFlow:
         mock_desktop.execute_command.assert_called_once_with("Get-Date")
         assert result.is_success
 
+

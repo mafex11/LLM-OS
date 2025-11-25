@@ -249,3 +249,4 @@ class TestScrapeTool:
             result = scrape_tool(url=url)
             mock_requests.get.assert_called_once_with(url, timeout=10)
 
+

@@ -139,3 +139,4 @@ class TestActivityTracker:
         # Should handle gracefully
         assert tracker.current_activity is None or tracker.current_activity.get("app_name") == "Unknown"
 
+

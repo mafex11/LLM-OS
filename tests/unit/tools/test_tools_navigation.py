@@ -185,3 +185,4 @@ class TestResizeTool:
         
         assert "not found" in result.lower()
 
+

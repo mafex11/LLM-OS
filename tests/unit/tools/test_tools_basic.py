@@ -142,3 +142,4 @@ class TestSwitchTool:
         
         mock_desktop.switch_app.assert_called_once_with("NoTePaD")
 
+
