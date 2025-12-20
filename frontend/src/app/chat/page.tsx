@@ -302,7 +302,7 @@ function ChatContent() {
             createdAt: new Date()
           }
           try {
-            const response = await fetch(`http://127.0.0.1:8000/api/conversation/${sessionId}`)
+            const response = await fetch(getApiUrlSync(`/api/conversation/${sessionId}`))
             if (response.ok) {
               const data = await response.json()
               if (data.conversation && data.conversation.length > 0) {
@@ -339,6 +339,11 @@ function ChatContent() {
             }
           } catch (error) {
             console.error('Error fetching conversation:', error)
+            toast({
+              title: "Backend Connection Failed",
+              description: "Can't connect to the backend server. Please ensure it's running on port 8000.",
+              variant: "destructive",
+            })
           }
           const updatedSessions = [newSession, ...existingSessions]
           setChatSessions(updatedSessions)
@@ -365,7 +370,7 @@ function ChatContent() {
     console.log('[Voice Mode] stopVoiceMode called')
     try {
       console.log('[Voice Mode] Sending stop request to backend...')
-      const response = await fetch("http://127.0.0.1:8000/api/voice/stop", { method: "POST" })
+      const response = await fetch(getApiUrlSync("/api/voice/stop"), { method: "POST" })
       console.log('[Voice Mode] Stop response status:', response.status, response.ok)
       const data = await response.json().catch(() => ({}))
       console.log('[Voice Mode] Stop response data:', data)
@@ -596,8 +601,8 @@ function ChatContent() {
 
   useEffect(() => {
     if (!voiceMode) return
-    const pollVoiceStatus = async () => { try { const r = await fetch("http://127.0.0.1:8000/api/voice/status"); if (r.ok) { const s = await r.json(); setIsListening(s.is_listening); setIsSpeaking(s.is_speaking) } } catch {} }
-    const pollVoiceConversation = async () => { try { const r = await fetch("http://127.0.0.1:8000/api/voice/conversation"); if (r.ok) { const d = await r.json(); if (d.conversation && d.conversation.length > 0) { const voiceMessages = d.conversation.map((m: any) => ({ role: m.role, content: m.content, timestamp: new Date(m.timestamp * 1000), workflowSteps: m.workflowSteps ? m.workflowSteps.map((s: any) => ({ type: s.type, message: s.message, timestamp: new Date(s.timestamp * 1000), status: s.status, actionName: s.actionName })) : undefined })); const latestPlaceholder = [...voiceMessages].reverse().find((m: any) => m.role === 'assistant' && (!m.content || m.content.trim() === '') && m.workflowSteps && m.workflowSteps.length > 0); if (latestPlaceholder) { const steps: WorkflowStep[] = latestPlaceholder.workflowSteps.map((s: any) => ({ type: s.type, message: s.message, timestamp: new Date(s.timestamp), status: s.status, actionName: s.actionName })); setCurrentWorkflow(steps); setIsLoading(true) } const filtered = voiceMessages.filter((m: any) => !(m.role === 'assistant' && (!m.content || m.content.trim() === ''))); const newMsgs = filtered.filter((vm: any) => !messages.some(em => (em.role === vm.role && em.content === vm.content))); if (newMsgs.length > 0) { updateSessionMessages(currentSessionId, [...messages, ...newMsgs]); if (newMsgs.some((m: any) => m.role === 'assistant' && m.content && m.content.trim() !== '')) { setCurrentWorkflow([]); setIsLoading(false) } } } } } catch {} }
+    const pollVoiceStatus = async () => { try { const r = await fetch(getApiUrlSync("/api/voice/status")); if (r.ok) { const s = await r.json(); setIsListening(s.is_listening); setIsSpeaking(s.is_speaking) } } catch {} }
+    const pollVoiceConversation = async () => { try { const r = await fetch(getApiUrlSync("/api/voice/conversation")); if (r.ok) { const d = await r.json(); if (d.conversation && d.conversation.length > 0) { const voiceMessages = d.conversation.map((m: any) => ({ role: m.role, content: m.content, timestamp: new Date(m.timestamp * 1000), workflowSteps: m.workflowSteps ? m.workflowSteps.map((s: any) => ({ type: s.type, message: s.message, timestamp: new Date(s.timestamp * 1000), status: s.status, actionName: s.actionName })) : undefined })); const latestPlaceholder = [...voiceMessages].reverse().find((m: any) => m.role === 'assistant' && (!m.content || m.content.trim() === '') && m.workflowSteps && m.workflowSteps.length > 0); if (latestPlaceholder) { const steps: WorkflowStep[] = latestPlaceholder.workflowSteps.map((s: any) => ({ type: s.type, message: s.message, timestamp: new Date(s.timestamp), status: s.status, actionName: s.actionName })); setCurrentWorkflow(steps); setIsLoading(true) } const filtered = voiceMessages.filter((m: any) => !(m.role === 'assistant' && (!m.content || m.content.trim() === ''))); const newMsgs = filtered.filter((vm: any) => !messages.some(em => (em.role === vm.role && em.content === vm.content))); if (newMsgs.length > 0) { updateSessionMessages(currentSessionId, [...messages, ...newMsgs]); if (newMsgs.some((m: any) => m.role === 'assistant' && m.content && m.content.trim() !== '')) { setCurrentWorkflow([]); setIsLoading(false) } } } } } catch {} }
     const sInt = setInterval(pollVoiceStatus, 1000)
     const cInt = setInterval(pollVoiceConversation, 2000)
     return () => { clearInterval(sInt); clearInterval(cInt) }
@@ -622,14 +627,14 @@ function ChatContent() {
 
   // Poll scheduled tasks to show count in header icon
   useEffect(() => {
-    const poll = async () => { try { const r = await fetch('http://127.0.0.1:8000/api/scheduled-tasks'); if (r.ok) { const list = await r.json(); const upcoming = (list || []).filter((t: any) => ['scheduled','running'].includes((t.status||'').toLowerCase())); setScheduledCount(upcoming.length) } } catch {} }
+    const poll = async () => { try { const r = await fetch(getApiUrlSync('/api/scheduled-tasks')); if (r.ok) { const list = await r.json(); const upcoming = (list || []).filter((t: any) => ['scheduled','running'].includes((t.status||'').toLowerCase())); setScheduledCount(upcoming.length) } } catch {} }
     poll()
     const id = setInterval(poll, 5000)
     return () => clearInterval(id)
   }, [])
 
   const fetchSystemStatus = async () => {
-    try { const r = await fetch("http://127.0.0.1:8000/api/status"); if (r.ok) setSystemStatus(await r.json()) } catch {}
+    try { const r = await fetch(getApiUrlSync("/api/status")); if (r.ok) setSystemStatus(await r.json()) } catch {}
   }
 
   const saveSessionsToStorage = (sessions: ChatSession[]) => { try { const s = sessions.filter(session => session.messages.length > 0); localStorage.setItem('chatSessions', JSON.stringify(s)) } catch {} }

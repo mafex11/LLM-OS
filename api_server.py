@@ -18,15 +18,34 @@ import logging
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
+# Detect if running as packaged app (PyInstaller)
+def is_packaged():
+    """Check if running as a PyInstaller bundle"""
+    return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
+
 # Determine data paths (from environment or defaults)
-DATA_PATH = os.getenv('WINDOWS_USE_DATA_PATH', os.path.join(os.getcwd(), 'data'))
-LOGS_PATH = os.getenv('WINDOWS_USE_LOGS_PATH', os.path.join(os.getcwd(), 'logs'))
-CONFIG_PATH = os.getenv('WINDOWS_USE_CONFIG_PATH', os.path.join(os.getcwd(), 'config'))
-CACHE_PATH = os.getenv('WINDOWS_USE_CACHE_PATH', os.path.join(os.getcwd(), 'cache'))
+if is_packaged():
+    # When packaged, use AppData for user-writable files
+    appdata = os.getenv('APPDATA') or os.path.expanduser('~\\AppData\\Roaming')
+    app_folder = os.path.join(appdata, 'Yuki')
+    DATA_PATH = os.getenv('WINDOWS_USE_DATA_PATH', os.path.join(app_folder, 'data'))
+    LOGS_PATH = os.getenv('WINDOWS_USE_LOGS_PATH', os.path.join(app_folder, 'logs'))
+    CONFIG_PATH = os.getenv('WINDOWS_USE_CONFIG_PATH', os.path.join(app_folder, 'config'))
+    CACHE_PATH = os.getenv('WINDOWS_USE_CACHE_PATH', os.path.join(app_folder, 'cache'))
+else:
+    # When running from source, use current directory
+    DATA_PATH = os.getenv('WINDOWS_USE_DATA_PATH', os.path.join(os.getcwd(), 'data'))
+    LOGS_PATH = os.getenv('WINDOWS_USE_LOGS_PATH', os.path.join(os.getcwd(), 'logs'))
+    CONFIG_PATH = os.getenv('WINDOWS_USE_CONFIG_PATH', os.path.join(os.getcwd(), 'config'))
+    CACHE_PATH = os.getenv('WINDOWS_USE_CACHE_PATH', os.path.join(os.getcwd(), 'cache'))
 
 # Create directories if they don't exist
 for path in [DATA_PATH, LOGS_PATH, CONFIG_PATH, CACHE_PATH]:
     os.makedirs(path, exist_ok=True)
+
+# Log the config location for debugging
+if is_packaged():
+    print(f"Running as packaged app - Config location: {CONFIG_PATH}")
 
 # Configure logging
 log_file = os.path.join(LOGS_PATH, 'api_server.log')
@@ -63,6 +82,7 @@ from windows_use.agent.service import Agent
 from windows_use.agent.logger import agent_logger
 from windows_use.agent.streaming_wrapper import StreamingAgentWrapper
 from langchain_google_genai.chat_models import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage
 from main import get_running_programs
 import threading
@@ -77,6 +97,10 @@ VALID_GEMINI_MODELS: List[str] = [
     "gemini-2.0-flash-lite",
 ]
 DEFAULT_GEMINI_MODEL: str = "gemini-2.0-flash"
+
+# DeepSeek configuration
+DEEPSEEK_API_BASE = "https://api.deepseek.com"
+DEEPSEEK_MODEL = "deepseek-chat"
 
 # Lifespan context manager for startup/shutdown
 @asynccontextmanager
@@ -97,6 +121,7 @@ async def lifespan(app: FastAPI):
                 "google_api_key": "",
                 "elevenlabs_api_key": "",
                 "deepgram_api_key": "",
+                "deepseek_api_key": "",
                 "last_updated": datetime.now().isoformat(),
                 "version": "1.0",
                 "model": DEFAULT_GEMINI_MODEL
@@ -230,20 +255,35 @@ async def initialize_agent():
             agent_initialized = False
             return False
         
-        model_setting = DEFAULT_GEMINI_MODEL
-        if config_data:
-            model_setting = config_data.get("model", DEFAULT_GEMINI_MODEL)
-        if model_setting not in VALID_GEMINI_MODELS:
-            logger.warning(f"Requested model '{model_setting}' is not supported. Falling back to default.")
+        # Check for DeepSeek API key in environment or config
+        deepseek_api_key = os.getenv("DEEPSEEK_API_KEY") or config_data.get("deepseek_api_key", "")
+        
+        # Use DeepSeek if API key is available, otherwise fall back to Gemini
+        if deepseek_api_key and deepseek_api_key.strip():
+            logger.info(f"Initializing DeepSeek with model: {DEEPSEEK_MODEL}")
+            llm = ChatOpenAI(
+                model=DEEPSEEK_MODEL,
+                temperature=0.3,
+                openai_api_key=deepseek_api_key,
+                openai_api_base=DEEPSEEK_API_BASE
+            )
+            model_setting = DEEPSEEK_MODEL  # Set model_setting for tracking
+            logger.info("DeepSeek initialized successfully")
+        else:
             model_setting = DEFAULT_GEMINI_MODEL
+            if config_data:
+                model_setting = config_data.get("model", DEFAULT_GEMINI_MODEL)
+            if model_setting not in VALID_GEMINI_MODELS:
+                logger.warning(f"Requested model '{model_setting}' is not supported. Falling back to default.")
+                model_setting = DEFAULT_GEMINI_MODEL
 
-        logger.info(f"Initializing ChatGoogleGenerativeAI with model: {model_setting}")
-        llm = ChatGoogleGenerativeAI(
-            model=model_setting,
-            temperature=0.3,
-            google_api_key=google_api_key
-        )
-        logger.info("ChatGoogleGenerativeAI initialized successfully")
+            logger.info(f"Initializing ChatGoogleGenerativeAI with model: {model_setting}")
+            llm = ChatGoogleGenerativeAI(
+                model=model_setting,
+                temperature=0.3,
+                google_api_key=google_api_key
+            )
+            logger.info("ChatGoogleGenerativeAI initialized successfully")
         
         # TTS configuration - check if ElevenLabs API key is available
         enable_tts = False
@@ -329,18 +369,18 @@ async def initialize_agent():
         agent.running_programs = running_programs
         logger.info(f"Found {len(running_programs)} running programs")
         
-        # Pre-warm the system
-        logger.info("Pre-warming system for faster response...")
-        print("Pre-warming system for faster response...")
-        try:
-            import time
-            agent.desktop.get_state(use_vision=False)
-            agent.desktop._last_state_time = time.time()  # Set timestamp for caching
-            logger.info("System pre-warmed successfully")
-            print("System pre-warmed successfully!")
-        except Exception as e:
-            logger.warning(f"Pre-warming failed: {e}")
-            print(f"Pre-warming failed: {e}")
+        # Pre-warm the system (DISABLED)
+        logger.info("Pre-warming disabled for faster startup")
+        print("Pre-warming disabled - first query will initialize the system.")
+        # try:
+        #     import time
+        #     agent.desktop.get_state(use_vision=False)
+        #     agent.desktop._last_state_time = time.time()  # Set timestamp for caching
+        #     logger.info("System pre-warmed successfully")
+        #     print("System pre-warmed successfully!")
+        # except Exception as e:
+        #     logger.warning(f"Pre-warming failed: {e}")
+        #     print(f"Pre-warming failed: {e}")
         
         # Show TTS status
         if enable_tts:
@@ -1045,25 +1085,41 @@ async def process_query_stream(request: QueryRequest):
                 except:
                     pass
             
-            # Use frontend API key if provided, otherwise use config file
-            if request.api_key and request.api_key.strip():
-                google_api_key = request.api_key.strip()
-                print("Using API key from frontend")
-            elif google_api_key:
-                print("Using API key from config file")
-            else:
-                yield f"data: {json.dumps({'type': 'error', 'timestamp': datetime.now().isoformat(), 'data': {'message': 'API key is required. Please set it in settings.'}})}\n\n"
-                return
+            # Check for DeepSeek API key first (prefer DeepSeek over Gemini)
+            deepseek_api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
+            if not deepseek_api_key and config_data:
+                deepseek_api_key = config_data.get("deepseek_api_key", "").strip()
             
-            # Create new agent instance with API key
-            current_model = getattr(agent, 'model_id', DEFAULT_GEMINI_MODEL)
-            if current_model not in VALID_GEMINI_MODELS:
-                current_model = DEFAULT_GEMINI_MODEL
-            llm = ChatGoogleGenerativeAI(
-                model=current_model, 
-                temperature=0.3,
-                google_api_key=google_api_key
-            )
+            # Use DeepSeek if available, otherwise fall back to Gemini
+            if deepseek_api_key:
+                print("Using DeepSeek as LLM provider")
+                llm = ChatOpenAI(
+                    model=DEEPSEEK_MODEL,
+                    temperature=0.3,
+                    openai_api_key=deepseek_api_key,
+                    openai_api_base=DEEPSEEK_API_BASE
+                )
+                current_model = DEEPSEEK_MODEL
+            else:
+                # Use frontend API key if provided, otherwise use config file
+                if request.api_key and request.api_key.strip():
+                    google_api_key = request.api_key.strip()
+                    print("Using Gemini with API key from frontend")
+                elif google_api_key:
+                    print("Using Gemini with API key from config file")
+                else:
+                    yield f"data: {json.dumps({'type': 'error', 'timestamp': datetime.now().isoformat(), 'data': {'message': 'API key is required. Please set it in settings.'}})}\n\n"
+                    return
+                
+                # Create Gemini LLM
+                current_model = getattr(agent, 'model_id', DEFAULT_GEMINI_MODEL)
+                if current_model not in VALID_GEMINI_MODELS:
+                    current_model = DEFAULT_GEMINI_MODEL
+                llm = ChatGoogleGenerativeAI(
+                    model=current_model, 
+                    temperature=0.3,
+                    google_api_key=google_api_key
+                )
             
             # Create a new agent instance with the frontend API key
             frontend_agent = Agent(
@@ -1133,6 +1189,13 @@ async def process_query_stream(request: QueryRequest):
             def run_agent():
                 """Run agent in background thread"""
                 try:
+                    # Initialize COM for this thread (required for UIAutomation)
+                    import ctypes
+                    try:
+                        ctypes.windll.ole32.CoInitializeEx(0, 2)  # COINIT_APARTMENTTHREADED
+                    except Exception:
+                        pass  # Already initialized or not needed
+                    
                     result_container["response"] = frontend_agent.invoke(request.query)
                     result_container["done"] = True
                 except Exception as e:
@@ -1517,17 +1580,32 @@ async def update_settings(request: SettingsRequest):
         
         # Reinitialize LLM if model changed and API key available
         try:
+            # Check for DeepSeek first
+            deepseek_api_key = os.getenv("DEEPSEEK_API_KEY", "").strip() or config_data.get("deepseek_api_key", "").strip()
             google_api_key = config_data.get("google_api_key", "")
-            if model_changed and google_api_key:
+            
+            if model_changed:
                 temperature = getattr(agent.llm, "temperature", 0.3) if hasattr(agent, "llm") else 0.3
-                agent.llm = ChatGoogleGenerativeAI(
-                    model=request.model,
-                    temperature=temperature,
-                    google_api_key=google_api_key,
-                )
-                logger.info(f"Agent language model updated to {request.model}")
-            elif model_changed and not google_api_key:
-                logger.warning("Cannot update language model because Google API key is missing.")
+                
+                # If requested model is deepseek-chat, use DeepSeek
+                if request.model == DEEPSEEK_MODEL and deepseek_api_key:
+                    agent.llm = ChatOpenAI(
+                        model=DEEPSEEK_MODEL,
+                        temperature=temperature,
+                        openai_api_key=deepseek_api_key,
+                        openai_api_base=DEEPSEEK_API_BASE
+                    )
+                    logger.info(f"Agent language model updated to {request.model}")
+                # Otherwise use Gemini if it's a valid Gemini model
+                elif request.model in VALID_GEMINI_MODELS and google_api_key:
+                    agent.llm = ChatGoogleGenerativeAI(
+                        model=request.model,
+                        temperature=temperature,
+                        google_api_key=google_api_key,
+                    )
+                    logger.info(f"Agent language model updated to {request.model}")
+                else:
+                    logger.warning(f"Cannot update to model {request.model} - missing API key or invalid model")
         except Exception as llm_error:
             logger.warning(f"Failed to update language model: {llm_error}")
         
@@ -1846,23 +1924,35 @@ async def start_voice_mode(request: VoiceModeRequest):
                 # Process the transcript through the agent with workflow step capture
                 # Create a new agent instance for voice processing (isolated from global agent)
                 from langchain_google_genai.chat_models import ChatGoogleGenerativeAI
-                # Get Google API key from config file
+                # Get API keys from config file
                 config_file = os.path.join(CONFIG_PATH, "api_keys.json")
                 google_api_key = ""
+                deepseek_api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
                 
                 if os.path.exists(config_file):
                     try:
                         with open(config_file, "r", encoding="utf-8") as f:
                             config_data = json.load(f)
                             google_api_key = config_data.get("google_api_key", "")
+                            if not deepseek_api_key:
+                                deepseek_api_key = config_data.get("deepseek_api_key", "").strip()
                     except:
                         pass
                 
-                llm = ChatGoogleGenerativeAI(
-                    model="gemini-2.0-flash", 
-                    temperature=0.3,
-                    google_api_key=google_api_key
-                )
+                # Prefer DeepSeek over Gemini for voice mode
+                if deepseek_api_key:
+                    llm = ChatOpenAI(
+                        model=DEEPSEEK_MODEL,
+                        temperature=0.3,
+                        openai_api_key=deepseek_api_key,
+                        openai_api_base=DEEPSEEK_API_BASE
+                    )
+                else:
+                    llm = ChatGoogleGenerativeAI(
+                        model="gemini-2.0-flash", 
+                        temperature=0.3,
+                        google_api_key=google_api_key
+                    )
                 
                 voice_agent = Agent(
                     llm=llm,

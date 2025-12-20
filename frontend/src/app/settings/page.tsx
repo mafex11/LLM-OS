@@ -59,6 +59,7 @@ interface ApiKeys {
   google_api_key: string
   elevenlabs_api_key: string
   deepgram_api_key: string
+  deepseek_api_key: string
 }
 
 type BrowserOption = "edge" | "chrome" | "firefox"
@@ -128,7 +129,8 @@ export default function SettingsPage() {
   const [showApiKeys, setShowApiKeys] = useState({
     google_api_key: false,
     elevenlabs_api_key: false,
-    deepgram_api_key: false
+    deepgram_api_key: false,
+    deepseek_api_key: false
   })
   const [savingKeys, setSavingKeys] = useState(false)
   const [savingAgentSettings, setSavingAgentSettings] = useState(false)
@@ -139,7 +141,8 @@ export default function SettingsPage() {
   const [apiKeyInputs, setApiKeyInputs] = useState<ApiKeys>({
     google_api_key: "",
     elevenlabs_api_key: "",
-    deepgram_api_key: ""
+    deepgram_api_key: "",
+    deepseek_api_key: ""
   })
   const [agentSettings, setAgentSettings] = useState<AgentSettingsState>({
     enable_activity_tracking: true,
@@ -185,6 +188,7 @@ export default function SettingsPage() {
         // Load API keys into input fields
         setApiKeyInputs({
           google_api_key: data.google_api_key || "",
+          deepseek_api_key: data.deepseek_api_key || "",
           elevenlabs_api_key: data.elevenlabs_api_key || "",
           deepgram_api_key: data.deepgram_api_key || ""
         })
@@ -287,6 +291,7 @@ export default function SettingsPage() {
             await window.desktop.setSecret('google_api_key', apiKeyInputs.google_api_key || '');
             await window.desktop.setSecret('elevenlabs_api_key', apiKeyInputs.elevenlabs_api_key || '');
             await window.desktop.setSecret('deepgram_api_key', apiKeyInputs.deepgram_api_key || '');
+            await window.desktop.setSecret('deepseek_api_key', apiKeyInputs.deepseek_api_key || '');
           } catch (keytarError) {
             console.warn('Failed to save API keys to keytar (this is OK if not in Electron):', keytarError);
           }
@@ -320,7 +325,8 @@ export default function SettingsPage() {
     setApiKeyInputs({
       google_api_key: "",
       elevenlabs_api_key: "",
-      deepgram_api_key: ""
+      deepgram_api_key: "",
+      deepseek_api_key: ""
     })
     toast({
       title: "API Keys Cleared",
@@ -734,6 +740,64 @@ export default function SettingsPage() {
                     <Separator />
 
                     <div className="space-y-2">
+                      <Label htmlFor="deepseek_api_key" className="text-sm font-normal">
+                        DeepSeek API Key
+                      </Label>
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <Input
+                            id="deepseek_api_key"
+                            type={showApiKeys.deepseek_api_key ? "text" : "password"}
+                            value={apiKeyInputs.deepseek_api_key}
+                            onChange={(e) => handleApiKeyChange('deepseek_api_key', e.target.value)}
+                            placeholder="Enter your DeepSeek API key (optional)"
+                            className="pr-10 rounded-full bg-transparent border border-white/40 hover:border-white/30 text-white outline-none focus:- placeholder:text-gray-500"
+                          />
+                          <div className="absolute right-0 top-0 h-full flex items-center pr-2 pt-0.5">
+                            <motion.div
+                              whileTap={{ scale: 0.85, rotate: 180 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <Button
+                                type="button"
+                                variant="default"
+                                size="icon"
+                                className="h-6 w-6 bg-white hover:bg-gray-400  text-black rounded-full"
+                                onClick={() => setShowApiKeys({ ...showApiKeys, deepseek_api_key: !showApiKeys.deepseek_api_key })}
+                              >
+                                <motion.div
+                                  animate={{ rotate: showApiKeys.deepseek_api_key ? 360 : 0 }}
+                                  transition={{ duration: 0.3 }}
+                                >
+                                  {showApiKeys.deepseek_api_key ? <ViewOffIcon size={14} /> : <ViewIcon size={14} />}
+                                </motion.div>
+                              </Button>
+                            </motion.div>
+                          </div>
+                        </div>
+                        <div 
+                          className={`h-9 w-9 flex items-center justify-center rounded-full cursor-pointer ${apiKeyInputs.deepseek_api_key ? 'bg-white' : 'bg-zinc-800'}`}
+                          onClick={() => apiKeyInputs.deepseek_api_key && clearApiKey('deepseek_api_key')}
+                        >
+                          <Tick02Icon size={16} className={apiKeyInputs.deepseek_api_key ? 'text-green-700' : 'text-gray-500'} />
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        Optional for DeepSeek AI models. Get your key from{" "}
+                        <a 
+                          href="https://platform.deepseek.com/" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="underline hover:text-foreground"
+                        >
+                          DeepSeek Platform
+                        </a>
+                      </p>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-2">
                       <Label htmlFor="deepgram_api_key" className="text-sm font-normal">
                         Deepgram API Key
                       </Label>
@@ -799,7 +863,7 @@ export default function SettingsPage() {
                           onClick={() => {
                             toast({
                               title: "API Keys Status",
-                              description: `Google: ${apiKeyInputs.google_api_key ? 'Working' : 'Not Found'}, ElevenLabs: ${apiKeyInputs.elevenlabs_api_key ? 'Working' : 'Not Found'}, Deepgram: ${apiKeyInputs.deepgram_api_key ? 'Working' : 'Not Found'}`,
+                              description: `Google: ${apiKeyInputs.google_api_key ? 'Working' : 'Not Found'}, DeepSeek: ${apiKeyInputs.deepseek_api_key ? 'Working' : 'Not Found'}, ElevenLabs: ${apiKeyInputs.elevenlabs_api_key ? 'Working' : 'Not Found'}, Deepgram: ${apiKeyInputs.deepgram_api_key ? 'Working' : 'Not Found'}`,
                             })
                           }}
                           className="text-xs rounded-full border-white/30 bg-zinc-950 hover:bg-zinc-950 hover:shadow-[0_0_22px_rgba(255,255,255,0.2)] ring-1 ring-white/10 hover:ring-white/30 transition-all"
@@ -1138,7 +1202,7 @@ export default function SettingsPage() {
                                 Voice Mode (Listen Only)
                               </Label>
                               <p className="text-xs text-muted-foreground">
-                                Agent listens via voice but won't speak back
+                                Agent listens via voice but won&apos;t speak back
                               </p>
                             </div>
                             <button

@@ -19,6 +19,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from windows_use.agent.service import Agent
 from langchain_google_genai.chat_models import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from main import get_running_programs, display_running_programs
 
 class WindowsUseGUI:
@@ -224,8 +225,18 @@ class WindowsUseGUI:
                 # Get running programs
                 running_programs = get_running_programs()
                 
-                # Initialize agent with optimized settings
-                llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.3)
+                # Initialize LLM - prefer DeepSeek over Gemini
+                deepseek_api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
+                
+                if deepseek_api_key:
+                    llm = ChatOpenAI(
+                        model="deepseek-chat",
+                        temperature=0.3,
+                        openai_api_key=deepseek_api_key,
+                        openai_api_base="https://api.deepseek.com"
+                    )
+                else:
+                    llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.3)
                 self.agent = Agent(
                     llm=llm, 
                     browser='chrome', 
@@ -238,13 +249,13 @@ class WindowsUseGUI:
                 # Store running programs in agent
                 self.agent.running_programs = running_programs
                 
-                # Pre-warm the system
-                self.update_status("Pre-warming system...")
-                try:
-                    self.agent.desktop.get_state(use_vision=False)
-                    self.update_status("System pre-warmed successfully!")
-                except Exception as e:
-                    self.update_status(f"Pre-warming failed: {e}")
+                # Pre-warm the system (DISABLED)
+                # self.update_status("Pre-warming system...")
+                # try:
+                #     self.agent.desktop.get_state(use_vision=False)
+                #     self.update_status("System pre-warmed successfully!")
+                # except Exception as e:
+                #     self.update_status(f"Pre-warming failed: {e}")
                 
                 self.update_status("Ready - Enter your query above")
                 self.add_response("🤖 Yuki AI Agent initialized successfully!")

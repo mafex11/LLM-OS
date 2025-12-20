@@ -4,7 +4,7 @@ from windows_use.tree.precise_detection import PreciseElementDetector
 from uiautomation import GetRootControl,Control,ImageControl,ScrollPattern
 from windows_use.tree.utils import random_point_within_bounding_box
 from windows_use.desktop.config import AVOIDED_APPS, EXCLUDED_APPS
-from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as FutureTimeoutError
+from concurrent.futures import ThreadPoolExecutor
 from PIL import Image, ImageFont, ImageDraw
 from typing import TYPE_CHECKING
 from time import sleep
@@ -111,33 +111,23 @@ class Tree:
                 apps.append(app)
 
         interactive_nodes,informative_nodes,scrollable_nodes=[],[],[]
-        # OPTIMIZATION: Parallel traversal with shorter timeouts to prevent hanging
-        # CRITICAL: Browsers can hang for 20-40 seconds, so we use aggressive timeouts
-        with ThreadPoolExecutor(max_workers=6) as executor:
-            future_to_node = {executor.submit(self.get_nodes, app,self.desktop.is_app_browser(app)): app for app in apps}
-            for future in as_completed(future_to_node, timeout=8.0):  # Reduced from 10s to 8s
+        # Sequential traversal to avoid COM threading issues
+        # COM objects (UIAutomation Control) cannot be safely used across threads
+        for app in apps:
+            try:
+                result = self.get_nodes(app, self.desktop.is_app_browser(app))
+                if result:
+                    element_nodes, text_nodes, scroll_nodes = result
+                    interactive_nodes.extend(element_nodes)
+                    informative_nodes.extend(text_nodes)
+                    scrollable_nodes.extend(scroll_nodes)
+            except Exception as e:
+                app_name = "Unknown"
                 try:
-                    # CRITICAL: 2 second timeout per app to prevent browser hangs
-                    result = future.result(timeout=2.0)  # Reduced from 3s to 2s per app
-                    if result:
-                        element_nodes,text_nodes,scroll_nodes=result
-                        interactive_nodes.extend(element_nodes)
-                        informative_nodes.extend(text_nodes)
-                        scrollable_nodes.extend(scroll_nodes)
-                except FutureTimeoutError:
-                    app_name = "Unknown"
-                    try:
-                        app_name = future_to_node[future].Name
-                    except:
-                        pass
-                    print(f"Timeout processing node {app_name} - skipping (likely browser with too many elements)")
-                except Exception as e:
-                    app_name = "Unknown"
-                    try:
-                        app_name = future_to_node[future].Name
-                    except:
-                        pass
-                    print(f"Error processing node {app_name}: {e}")
+                    app_name = app.Name
+                except:
+                    pass
+                print(f"Error processing node {app_name}: {e}")
         return interactive_nodes,informative_nodes,scrollable_nodes
 
     def get_nodes(self, node: Control, is_browser=False) -> tuple[list[TreeElementNode],list[TextElementNode],list[ScrollElementNode]]:

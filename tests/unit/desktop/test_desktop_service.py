@@ -195,3 +195,8 @@ class TestDesktop:
         assert hasattr(state, 'tree_state') or hasattr(state, 'apps')
 
 
+
+
+
+
+

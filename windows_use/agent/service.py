@@ -84,8 +84,25 @@ class Agent:
         self.enable_screenshot_analysis=False
         # self.enable_screenshot_analysis=enable_screenshot_analysis
         self.enable_activity_tracking=enable_activity_tracking
-        self.llm = llm or ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.7)
-        self.model_id = getattr(self.llm, "model", "gemini-2.0-flash")
+        
+        # Default LLM - prefer DeepSeek over Gemini
+        if llm is None:
+            import os
+            deepseek_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
+            if deepseek_key:
+                from langchain_openai import ChatOpenAI
+                self.llm = ChatOpenAI(
+                    model="deepseek-chat",
+                    temperature=0.7,
+                    openai_api_key=deepseek_key,
+                    openai_api_base="https://api.deepseek.com"
+                )
+            else:
+                self.llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.7)
+        else:
+            self.llm = llm
+        
+        self.model_id = getattr(self.llm, "model", "unknown")
         self.watch_cursor = WatchCursor()
         self.desktop = Desktop()
         self.console=Console(file=sys.stderr)  # Use stderr to avoid interfering with stdin
@@ -1050,22 +1067,16 @@ Be specific with numbers and insights. Be encouraging and helpful."""
             language = self.desktop.get_default_language()
             tools_prompt = self.registry.get_tools_prompt()
         else:
-            # Parallel execution of independent operations for faster startup
-            from concurrent.futures import ThreadPoolExecutor
-            with ThreadPoolExecutor(max_workers=3) as executor:
-                # Submit parallel tasks
-                desktop_future = executor.submit(self.desktop.get_state, self.use_vision)
-                language_future = executor.submit(self.desktop.get_default_language)
-                tools_future = executor.submit(self.registry.get_tools_prompt)
-                
-                # Collect results with timeout to prevent hanging
-                try:
-                    desktop_state = desktop_future.result(timeout=10.0)  # 10 second timeout
-                except Exception as e:
-                    logger.warning(f"Desktop state refresh timed out or failed: {e}, using cached state")
-                    desktop_state = self.desktop.desktop_state or self.desktop.get_state(self.use_vision)
-                language = language_future.result()
-                tools_prompt = tools_future.result()
+            # Sequential execution to avoid COM threading issues
+            # COM objects (UIAutomation) cannot be safely used across threads
+            try:
+                desktop_state = self.desktop.get_state(self.use_vision)
+            except Exception as e:
+                logger.warning(f"Desktop state refresh failed: {e}, using cached state")
+                desktop_state = self.desktop.desktop_state or self.desktop.get_state(self.use_vision)
+            
+            language = self.desktop.get_default_language()
+            tools_prompt = self.registry.get_tools_prompt()
             
             # Update timestamp
             self.desktop._last_state_time = current_time

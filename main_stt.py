@@ -1,4 +1,5 @@
 from langchain_google_genai.chat_models import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from windows_use.agent import Agent
 from windows_use.agent.stt_service import STTService
 from windows_use.agent.logger import agent_logger
@@ -115,8 +116,20 @@ def main():
     running_programs = get_running_programs()
     display_running_programs(running_programs)
     
-    # Initialize agent
-    llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.3)
+    # Initialize LLM - prefer DeepSeek over Gemini
+    deepseek_api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
+    
+    if deepseek_api_key:
+        print("Using DeepSeek as LLM provider")
+        llm = ChatOpenAI(
+            model="deepseek-chat",
+            temperature=0.3,
+            openai_api_key=deepseek_api_key,
+            openai_api_base="https://api.deepseek.com"
+        )
+    else:
+        print("Using Gemini as LLM provider (no DeepSeek key found)")
+        llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.3)
     
     # TTS configuration
     enable_tts = os.getenv("ENABLE_TTS", "false").lower() == "true"
@@ -136,14 +149,15 @@ def main():
     # Store running programs in agent for context
     agent.running_programs = running_programs
     
-    # Pre-warm the system
-    print("Pre-warming system for faster response...")
-    try:
-        agent.desktop.get_state(use_vision=False)
-        print("System pre-warmed successfully!")
-    except Exception as e:
-        print(f"Pre-warming failed: {e}")
-        print("System will still work, but first response may be slower.")
+    # Pre-warm the system (DISABLED)
+    # print("Pre-warming system for faster response...")
+    # try:
+    #     agent.desktop.get_state(use_vision=False)
+    #     print("System pre-warmed successfully!")
+    # except Exception as e:
+    #     print(f"Pre-warming failed: {e}")
+    #     print("System will still work, but first response may be slower.")
+    print("Pre-warming disabled - first query will initialize the system.")
     
     # Show TTS status
     if enable_tts:
