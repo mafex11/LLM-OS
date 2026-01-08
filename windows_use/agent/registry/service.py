@@ -6,6 +6,14 @@ from textwrap import dedent
 class Registry:
     def __init__(self,tools:list[Tool]):
         self.tools=tools
+        # Allow common alias spellings to avoid needless failures
+        self.alias_map = {
+            'DoneTool': 'Done Tool',
+            'doneTool': 'Done Tool',
+            'donetool': 'Done Tool',
+            'Done': 'Done Tool',
+            'done': 'Done Tool',
+        }
         self.tools_registry=self.registry()
 
     def tool_prompt(self, tool_name: str) -> str:
@@ -31,7 +39,9 @@ class Registry:
         return '\n\n'.join(tools_prompt)
     
     def execute(self, tool_name: str, desktop: Desktop, **kwargs) -> ToolResult:
-        tool = self.tools_registry.get(tool_name)
+        # Normalize known aliases first
+        normalized_name = self.alias_map.get(tool_name, tool_name)
+        tool = self.tools_registry.get(normalized_name)
         if tool is None:
             return ToolResult(is_success=False, error=f"Tool '{tool_name}' not found.")
         try:

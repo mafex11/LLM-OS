@@ -3,7 +3,7 @@ FastAPI Server for Yuki AI Agent
 Provides REST API endpoints for the Next.js frontend
 """
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -204,6 +204,28 @@ agent_initialized = False
 _notification_queue: List[Dict[str, str]] = []
 _notification_lock = threading.Lock()
 
+# Helper: bool env parser (case-insensitive)
+def _env_bool(name: str, default: bool) -> bool:
+    val = os.getenv(name)
+    if val is None:
+        return default
+    return val.strip().lower() in ("1", "true", "yes", "on")
+
+# Status caching to avoid hammering PowerShell on frequent polls
+STATUS_CACHE_TTL = float(os.getenv("STATUS_CACHE_TTL", "2.0"))
+STATUS_INCLUDE_PROGRAMS_DEFAULT = _env_bool("STATUS_INCLUDE_PROGRAMS_DEFAULT", False)
+RUNNING_PROGRAMS_CACHE_TTL = float(os.getenv("RUNNING_PROGRAMS_CACHE_TTL", "3.0"))
+
+# Cache keyed by include_programs flag (avoid forward-ref issues at import time)
+_status_cache: Dict[bool, Any] = {}
+_status_cache_time: Dict[bool, float] = {}
+_status_cache_lock = threading.Lock()
+
+# Running programs cache (shared by status endpoint and agent bursts)
+_running_programs_cache: Optional[List[Dict[str, str]]] = None
+_running_programs_cache_time: float = 0.0
+_running_programs_cache_lock = threading.Lock()
+
 def handle_notification(title: str, message: str):
     """Handle notification from activity tracker."""
     with _notification_lock:
@@ -369,18 +391,15 @@ async def initialize_agent():
         agent.running_programs = running_programs
         logger.info(f"Found {len(running_programs)} running programs")
         
-        # Pre-warm the system (DISABLED)
-        logger.info("Pre-warming disabled for faster startup")
-        print("Pre-warming disabled - first query will initialize the system.")
-        # try:
-        #     import time
-        #     agent.desktop.get_state(use_vision=False)
-        #     agent.desktop._last_state_time = time.time()  # Set timestamp for caching
-        #     logger.info("System pre-warmed successfully")
-        #     print("System pre-warmed successfully!")
-        # except Exception as e:
-        #     logger.warning(f"Pre-warming failed: {e}")
-        #     print(f"Pre-warming failed: {e}")
+        # Pre-warm the system to avoid first-action latency
+        try:
+            agent.desktop.get_state(use_vision=False)
+            agent.desktop._last_state_time = time.time()  # Seed cache timestamp
+            logger.info("System pre-warmed successfully")
+            print("System pre-warmed successfully.")
+        except Exception as e:
+            logger.warning(f"Pre-warming failed: {e}")
+            print(f"Pre-warming failed: {e}")
         
         # Show TTS status
         if enable_tts:
@@ -975,22 +994,40 @@ async def test_connection():
 
 # System status endpoint
 @app.get("/api/status", response_model=SystemStatus)
-async def get_system_status():
+async def get_system_status(include_programs: bool = Query(default=STATUS_INCLUDE_PROGRAMS_DEFAULT)):
     """Get current system status"""
+    global _status_cache, _status_cache_time
     logger.info(f"System status requested - agent_initialized: {agent_initialized}, agent: {agent is not None}")
     if not agent_initialized or not agent:
         logger.error("System status requested but agent not initialized")
         raise HTTPException(status_code=503, detail="Agent not initialized")
     
     try:
+        now = time.time()
+        cache_key = bool(include_programs)
+        with _status_cache_lock:
+            cached = _status_cache.get(cache_key)
+            cached_time = _status_cache_time.get(cache_key, 0.0)
+            if cached and (now - cached_time) < STATUS_CACHE_TTL:
+                logger.info("System status served from cache")
+                return cached
+
         logger.info("Getting running programs...")
-        # Get running programs
-        running_programs = get_running_programs()
-        apps = [
-            AppInfo(name=prog['name'], title=prog['title'], id=str(prog['id']))
-            for prog in running_programs
-        ]
-        logger.info(f"Found {len(apps)} running programs")
+        apps: List[AppInfo] = []
+        if include_programs:
+            with _running_programs_cache_lock:
+                if (_running_programs_cache is not None and 
+                    (now - _running_programs_cache_time) < RUNNING_PROGRAMS_CACHE_TTL):
+                    running_programs = _running_programs_cache
+                else:
+                    running_programs = get_running_programs()
+                    _running_programs_cache = running_programs
+                    _running_programs_cache_time = now
+            apps = [
+                AppInfo(name=prog.get('name', ''), title=prog.get('title', ''), id=str(prog.get('id', '')))
+                for prog in (running_programs or [])
+            ]
+            logger.info(f"Found {len(apps)} running programs")
         
         # Get memory stats
         memory_stats = {}
@@ -1011,12 +1048,16 @@ async def get_system_status():
             logger.warning(f"Failed to get performance stats: {e}")
         
         logger.info("System status retrieved successfully")
-        return SystemStatus(
+        result = SystemStatus(
             agent_ready=True,
             running_programs=apps,
             memory_stats=memory_stats,
             performance_stats=performance_stats
         )
+        with _status_cache_lock:
+            _status_cache[cache_key] = result
+            _status_cache_time[cache_key] = time.time()
+        return result
     except Exception as e:
         logger.error(f"Error getting system status: {e}")
         raise HTTPException(status_code=500, detail=f"Error getting status: {str(e)}")
