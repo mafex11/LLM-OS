@@ -9,10 +9,9 @@ import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { 
-  BotIcon, 
-  Key01Icon, 
-  ComputerIcon, 
+import {
+  BotIcon,
+  ComputerIcon,
   FloppyDiskIcon, 
   ViewIcon, 
   ViewOffIcon, 
@@ -31,7 +30,7 @@ import {
   VolumeMute01Icon,
   ArrowDown01Icon,
   ArrowUp01Icon,
-  AiBrowserIcon,
+  BrowserIcon,
   Loading03Icon,
   AiBrain01Icon,
   TimeScheduleIcon,
@@ -1554,7 +1553,7 @@ export default function SettingsPage() {
                                 >
                                   <div className="flex items-center gap-2">
                                     <div className="w-7 h-7 flex items-center justify-center rounded-full bg-white shadow-[0_0_12px_rgba(255,255,255,0.65)]">
-                                      <AiBrowserIcon size={16} className="text-black" />
+                                      <BrowserIcon size={16} className="text-black" />
                                     </div>
                                     <div className="flex gap-3">
                                       <span className="text-xs font-thin text-white">
